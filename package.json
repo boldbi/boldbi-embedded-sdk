@@ -1,0 +1,39 @@
+{
+  "name": "@boldbi/boldbi-embedded-sdk",
+  "version": "4.2.68",
+  "description": "A toolkit for embedding BoldBI. This library lets you embed BoldBI dashboard in your Angular, React, VueJS applications",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "prepublish": "tsc",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/boldbi/boldbi-embedded-sdk.git"
+  },
+  "keywords": [
+    "Embedded Dashboard",
+    "Embedded Analytics",
+    "BoldBI",
+    "BoldBI Embed",
+    "Embed SDK",
+    "Dashboard Designer",
+    "Dashboard Viewer",
+    "Dashboard Embedding",
+    "Designer Embedding",
+    "BoldBI Embedded SDK",
+    "Business Intelligence"
+  ],
+  "author": "Syncfusion Inc",
+  "license": "SEE LICENSE IN README.md",
+  "devDependencies": {
+    "eslint": "^7.25.0",
+    "typescript": "^2.7.2"
+  },
+  "dependencies": {
+    "jquery": "https://github.com/jquery/jquery.git#1.10.2"
+  },
+  "homepage": "https://www.boldbi.com"
+}
