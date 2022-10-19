@@ -48,6 +48,11 @@ export declare class BoldBI {
     parentDbrdId: any;
     multiTabTheme: any;
     isNewConnection: any;
+    dashboardDetails: any;
+    pinboardDetails: any;
+    accessToken: any;
+    homepageItemId: any;
+    isVirtualHomepage: any;
     static Mode: Readonly<{
         View: string;
         Design: string;
@@ -78,11 +83,71 @@ export declare class BoldBI {
     loadDashboardWidget(name: any, dashboardId: any): void;
     loadDesigner(dashboardId: any): void;
     loadDatasource(): void;
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
+    *  @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
+    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    */
+    exportDashboardAsPdf(exportInformation: any): void;
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
+    *  @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
+    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter
+    */
+    exportDashboardAsImage(exportInformation: any): void;
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
+    */
+    exportDashboardAsExcel(exportInformation: any): void;
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
+    * @param {string} widgetName - Define the name of the widget to be exported
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
+    *  @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
+    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    */
+    exportWidgetAsPdf(exportInformation: any): void;
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
+    * @param {string} widgetName - Define the name of the widget to be exported
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
+    *  @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
+    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    */
+    exportWidgetAsImage(exportInformation: any): void;
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
+    * @param {string} widgetName - Define the name of the widget to be exported
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
+    */
+    exportWidgetAsExcel(exportInformation: any): void;
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
+    * @param {string} widgetName - Define the name of the widget to be exported
+    * @param {string} fileName - Define the name of the file to be exported
+    */
+    exportWidgetAsCsv(exportInformation: any): void;
     updateDatasource(): void;
     updateFilters(filterParameters: any): void;
     resizeDashboard(filterParameters: any): void;
     refreshDashboard(): void;
     hidePopup(embedId: any): void;
+    /**
+     * @param {string} widgetNames - Define the name of the widget to be Refresh.
+     * @param {boolean} hideLoader - Define whether to show or hide loading indicator while processing.
+     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard.
+     */
+    refreshWidgetData(widgetNames: any, hideLoader: any, dashboardId: any): void;
+    getWidgetData(widgetName: any, clientFnc: any, dashboardId: any): void;
     _initializeEmbedOptions(options: any): void;
     _initializeUrls(): void;
     _loadCloudDepedentFiles(responseInfo: any): void;
@@ -97,6 +162,7 @@ export declare class BoldBI {
     createEmptyList(from: any, to: any): void;
     appendListItem(appendTo: any, count: any): void;
     changeLayout(layout: any): void;
+    _changeLayoutSuccess(result: any): void;
     _createPinboardDom(itemDetail: any): void;
     _checkEmptyHomepage(): boolean;
     _setLayout(layout: any): void;
@@ -132,6 +198,7 @@ export declare class BoldBI {
     _fullscreenExitHandler(boldBIObj: any): void;
     _onBoldBIDashboardBeforeWidgetIconRendered(arg: any): void;
     _onBoldBIBeforeControlMenuOpen(arg: any): void;
+    _onBoldBIBeforeDashboardMobileMenuOpen(arg: any): void;
     _onBoldBIDashboardWidgetIconClick(arg: any): void;
     _onBoldBIDashboardUpdatefavorite(arg: any): void;
     _onBoldBIWidgetExportRender(arg: any): void;
@@ -139,7 +206,7 @@ export declare class BoldBI {
     _onBoldBIBeforeNavigateToDashboard(arg: any): void;
     _onBoldBIAuthorizionComplete(arg: any): void;
     _showLoader(): void;
-    _getAuthorizationToken(dashboardId: any): void;
+    _getAuthorizationToken(dashboardId?: any): void;
     _xhrRequestHelper(type: any, url: any, data: any, headers: any, callBackFn: any): void;
     _emptyHtml(elementID: any): void;
     _removeElement(id: any): void;
