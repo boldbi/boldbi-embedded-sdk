@@ -1,6 +1,6 @@
 {
   "name": "@boldbi/boldbi-embedded-sdk",
-  "version": "4.2.68",
+  "version": "5.2.48",
   "description": "A toolkit for embedding BoldBI. This library lets you embed BoldBI dashboard in your Angular, React, VueJS applications",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -33,7 +33,7 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "jquery": "https://github.com/jquery/jquery.git#1.10.2"
+    "jquery": "*"
   },
   "homepage": "https://www.boldbi.com"
 }

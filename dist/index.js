@@ -1,8 +1,8 @@
 /* eslint-disable */
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BoldBI = void 0;
-const bbEmbed = require("jquery/jquery.js");
+exports.widgetBI = exports.BoldBI = void 0;
+const bbEmbed = require("jquery");
 window.bbEmbed = window.$;
 var tabInstance;
 if (typeof window.bb$ !== 'undefined') {
@@ -103,7 +103,30 @@ class BoldBI {
                 enableFilterOverview: true,
                 enableFullScreen: false,
                 showDashboardParameter: true,
-                dashboardName: ""
+                dashboardName: "",
+                beforePublishAs: "",
+                beforeDesignerToolbarButtons: "",
+                widgetsPanel: {
+                    hideDefaultWidgets: false,
+                    hideExistingWidgets: false,
+                    defaultPanelDisplayText: "",
+                    existingPanelDisplayText: "",
+                    defaultPanelSearchPlaceholder: "",
+                    existingPanelSearchPlaceholder: "",
+                    existingDashboards: [],
+                    dragAndDropSettings: {
+                        rowSpan: null,
+                        columnSpan: null,
+                        isWidgetMode: false
+                    }
+                },
+                dataSourceConfig: {
+                    hideDataSourceConfig: false
+                },
+                viewDataSettings: {
+                    showAllColumns: false
+                },
+                showPreviewAs: true
             },
             widgetSettings: {
                 showExport: true,
@@ -112,6 +135,8 @@ class BoldBI {
                 showFilter: true,
                 beforeIconRender: "",
                 onIconClick: "",
+                beforeWidgetControlMenuOpen: "",
+                onWidgetControlMenuClick: ""
             },
             filterParameters: "",
             dynamicConnection: {
@@ -148,7 +173,7 @@ class BoldBI {
             },
             actionBegin: "",
             actionComplete: "",
-            beforeContextMenuRnder: "",
+            beforeContextMenuRender: "",
             beforeNavigateUrlLinking: "",
             beforeNavigateToDashboard: "",
             beforeFilterApply: "",
@@ -180,7 +205,8 @@ class BoldBI {
                 dashboardId: "",
                 categoryName: ""
             },
-            disableAutoRecover: false
+            disableAutoRecover: false,
+            ajaxBeforeLoad: ""
         };
     }
     // Customer exposed functions
@@ -196,7 +222,10 @@ class BoldBI {
             document.addEventListener('fullscreenchange', function () { boldBIObj._fullscreenExitHandler(boldBIObj); }, false);
             document.addEventListener('MSFullscreenChange', function () { boldBIObj._fullscreenExitHandler(boldBIObj); }, false);
             window.addEventListener('resize', function (event) {
-                if (!boldBIObj._isEmptyOrSpaces(boldBIObj.embedOptions.pinboardName) || !boldBIObj._isNullOrUndefined(boldBIObj.embedOptions.pinboardName)) {
+                if (boldBIObj.isMultiTab) {
+                    boldBIObj.resizeDashboard("");
+                }
+                else if (!boldBIObj._isEmptyOrSpaces(boldBIObj.embedOptions.pinboardName) || !boldBIObj._isNullOrUndefined(boldBIObj.embedOptions.pinboardName)) {
                     boldBIObj.setListMinimumHeight();
                 }
             });
@@ -249,6 +278,7 @@ class BoldBI {
         }
     }
     static getInstance(eleID) {
+        BoldBI._widgetsCollection = [];
         return this._gettinstance(document.getElementById(eleID), "embeddedBoldBI");
     }
     destroy() {
@@ -435,9 +465,9 @@ class BoldBI {
     /**
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
-    *  @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
-    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    * @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
+    * @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
+    * @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
     */
     exportDashboardAsPdf(exportInformation) {
         if (this.isMultiTab) {
@@ -464,9 +494,9 @@ class BoldBI {
     /**
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
-    *  @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
-    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter
+    * @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
+    * @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
+    * @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter
     */
     exportDashboardAsImage(exportInformation) {
         if (this.isMultiTab) {
@@ -493,7 +523,7 @@ class BoldBI {
     /**
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
+    * @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
     */
     exportDashboardAsExcel(exportInformation) {
         if (this.isMultiTab) {
@@ -521,9 +551,9 @@ class BoldBI {
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
     * @param {string} widgetName - Define the name of the widget to be exported
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
-    *  @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
-    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    * @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
+    * @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
+    * @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
     */
     exportWidgetAsPdf(exportInformation) {
         var that = this;
@@ -559,9 +589,9 @@ class BoldBI {
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
     * @param {string} widgetName - Define the name of the widget to be exported
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
-    *  @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
-    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    * @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
+    * @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
+    * @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
     */
     exportWidgetAsImage(exportInformation) {
         var that = this;
@@ -597,7 +627,7 @@ class BoldBI {
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
     * @param {string} widgetName - Define the name of the widget to be exported
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
+    * @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
     */
     exportWidgetAsExcel(exportInformation) {
         var that = this;
@@ -718,6 +748,7 @@ class BoldBI {
                     existingDashboardInstance.resizeDashboard();
                 }
             }
+            this._tabSelected('');
         }
         else if (bbEmbed('.pinBoardDbrd').length > 0) {
             bbEmbed('.pinBoardDbrd').each(function () {
@@ -860,6 +891,92 @@ class BoldBI {
                         clientFnc.call(this, widgetValue);
                     }
                 }
+            }
+        }
+    }
+    /**
+      * @param {string} clientFnc - It denotes the method name to be defined
+      * @param {string} ContainerId - This should be the container id where you want to embed the dashboard
+    */
+    getDashboardCategories(clientFnc, containerId) {
+        var dbrdInstance = (this._isNullOrUndefined(containerId) || this._isEmptyOrSpaces(containerId)) ? this._getDashboardInstance() : this._getDashboardInstance(containerId + "_embeddedbi");
+        if (dbrdInstance != undefined) {
+            var widgetValue = dbrdInstance.GetDashboardCategories(clientFnc);
+            if (window[clientFnc] instanceof Function) {
+                window[clientFnc].call(this, widgetValue);
+            }
+            else {
+                clientFnc.call(this, widgetValue);
+            }
+        }
+    }
+    /**
+      * @param {string} categoryName - Define new category name want to create .
+      * @param {string} categoryDescription - Define the description of new category name .
+      * @param {string} clientFnc - It denotes the method name to be defined
+      * @param {string} ContainerId - This should be the container id where you want to embed the dashboard
+    */
+    createDashboardCategory(categoryName, categoryDescription, clientFnc, containerId) {
+        var dbrdInstance = (this._isNullOrUndefined(containerId) || this._isEmptyOrSpaces(containerId)) ? this._getDashboardInstance() : this._getDashboardInstance(containerId + "_embeddedbi");
+        if (dbrdInstance != undefined) {
+            var widgetValue = dbrdInstance.CreateDashboardCategory(categoryName, categoryDescription, clientFnc);
+            if (window[clientFnc] instanceof Function) {
+                window[clientFnc].call(this, widgetValue);
+            }
+            else {
+                clientFnc.call(this, widgetValue);
+            }
+        }
+    }
+    /**
+      * @param {string} publishModel - Define the information about publish dashboard
+      * @param {string} ContainerId - This should be the container id where you want to embed the dashboard
+    */
+    saveDashboard(publishModel, containerId) {
+        var dbrdInstance = (this._isNullOrUndefined(containerId) || this._isEmptyOrSpaces(containerId)) ? this._getDashboardInstance() : this._getDashboardInstance(containerId + "_embeddedbi");
+        if (dbrdInstance != undefined) {
+            dbrdInstance.saveDashboardToServer(publishModel);
+        }
+    }
+    getWidgetInstance(eleID) {
+        var widgetBIObjvalue = new widgetBI();
+        widgetBIObjvalue.containerID = this.embedOptions.embedContainerId;
+        BoldBI._widgetsCollection[BoldBI._widgetsCollection.length] = eleID;
+        var returnValue = Object.assign(widgetBIObjvalue);
+        if (!BoldBI._hasinstance(document.getElementById(this.embedOptions.embedContainerId), "embeddedBoldBIWidget_" + eleID)) {
+            BoldBI._putinstance(document.getElementById(this.embedOptions.embedContainerId), "embeddedBoldBIWidget_" + eleID, returnValue);
+        }
+        return returnValue;
+    }
+    ;
+    /**
+      * @param {string} ContainerId - This should be the container id where you want to embed the dashboard
+    */
+    updateWidgetFilters(containerId) {
+        var that = this;
+        var filters = this._getWidgetFilterInfo();
+        if (this.isMultiTab) {
+            var dashboardContainer = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+            for (var i = 0; i < dashboardContainer.length; i++) {
+                var embedId = bbEmbed(dashboardContainer[i]).attr('id');
+                var existingDashboardInstance = this._getDashboardInstance(embedId);
+                if (existingDashboardInstance != undefined) {
+                    existingDashboardInstance.updateWidgetFilterValues(filters);
+                }
+            }
+        }
+        else if (bbEmbed('.pinBoardDbrd').length > 0) {
+            bbEmbed('.pinBoardDbrd').each(function () {
+                var existingDashboardInstance = that._getDashboardInstance(this.id);
+                if (existingDashboardInstance != undefined) {
+                    existingDashboardInstance.updateWidgetFilterValues(filters);
+                }
+            });
+        }
+        else {
+            var dbrdInstance = (this._isNullOrUndefined(containerId) || this._isEmptyOrSpaces(containerId)) ? this._getDashboardInstance() : this._getDashboardInstance(containerId + "_embeddedbi");
+            if (dbrdInstance != undefined) {
+                dbrdInstance.updateWidgetFilterValues(filters);
             }
         }
     }
@@ -1090,6 +1207,10 @@ class BoldBI {
                     filterParameters: parameter + (this._isEmptyOrSpaces(this.embedOptions.filterParameters) ? "" : "&") + ((this.isMultiTab && window['multiTabFilterParameter']) ? window['multiTabFilterParameter'] : this.embedOptions.filterParameters),
                     designCanvasSettings: this.embedOptions.designCanvasSettings,
                     widgetContainerSettings: this.embedOptions.widgetContainerSettings,
+                    viewDataSettings: {
+                        checkShowAllColumns: this._isNullOrUndefined(this.embedOptions.dashboardSettings.viewDataSettings) ? false : this.embedOptions.dashboardSettings.viewDataSettings.showAllColumns
+                    },
+                    widgets: this._getWidgetFilterInfo(),
                     actionBegin: function (arg) {
                         that._onBoldBIDashboardInstaceActionBegin(arg, embedContainerId);
                     },
@@ -1134,6 +1255,15 @@ class BoldBI {
                     },
                     beforeDashboardMobileMenuOpen: function (arg) {
                         that._onBoldBIBeforeDashboardMobileMenuOpen(arg);
+                    },
+                    ajaxBeforeLoad: function (arg) {
+                        that._onBoldBIAjaxBeforeLoad(arg);
+                    },
+                    beforeDesignerToolbarButtonsRendered: function (arg) {
+                        that._onBoldBIbeforeDesignerToolbarButtonsRendered(arg);
+                    },
+                    onControlMenuClick: function (arg) {
+                        that._onBoldBIonControlMenuClick(arg);
                     }
                 };
                 if (this.embedOptions.mode == BoldBI.Mode.Design) {
@@ -1172,6 +1302,28 @@ class BoldBI {
                     else {
                         dashboardOptions.configuration = this.cdnLink + "/scripts/settings/" + embedResponse.Branding + "/settings.min.js";
                     }
+                    dashboardOptions.designerSettings = {
+                        widgetsPanel: {
+                            hideExistingWidgets: this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel) ? false : this.embedOptions.dashboardSettings.widgetsPanel.hideExistingWidgets,
+                            hideDefaultWidgets: this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel) ? false : this.embedOptions.dashboardSettings.widgetsPanel.hideDefaultWidgets,
+                            defaultPanelDisplayText: this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel) ? "" : this.embedOptions.dashboardSettings.widgetsPanel.defaultPanelDisplayText,
+                            existingPanelDisplayText: this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel) ? "" : this.embedOptions.dashboardSettings.widgetsPanel.existingPanelDisplayText,
+                            defaultPanelSearchPlaceholder: this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel) ? "" : this.embedOptions.dashboardSettings.widgetsPanel.defaultPanelSearchPlaceholder,
+                            existingPanelSearchPlaceholder: this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel) ? "" : this.embedOptions.dashboardSettings.widgetsPanel.existingPanelSearchPlaceholder,
+                            existingDashboards: this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel) ? [] : this.embedOptions.dashboardSettings.widgetsPanel.existingDashboards,
+                            dragAndDropSettings: {
+                                rowSpan: (!this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel) && !this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel.dragAndDropSettings)) ? this.embedOptions.dashboardSettings.widgetsPanel.dragAndDropSettings.rowSpan : null,
+                                columnSpan: (!this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel) && !this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel.dragAndDropSettings)) ? this.embedOptions.dashboardSettings.widgetsPanel.dragAndDropSettings.columnSpan : null,
+                                isWidgetMode: (!this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel) && !this._isNullOrUndefined(this.embedOptions.dashboardSettings.widgetsPanel.dragAndDropSettings)) ? this.embedOptions.dashboardSettings.widgetsPanel.dragAndDropSettings.isWidgetMode : false,
+                            }
+                        },
+                        dataSourceConfig: {
+                            hideDataSourceConfig: this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceConfig
+                        },
+                    };
+                    dashboardOptions.userSettings = {
+                        hidePreviewAs: this._isNullOrUndefined(this.embedOptions.dashboardSettings.showPreviewAs) ? false : !this.embedOptions.dashboardSettings.showPreviewAs
+                    };
                 }
                 if (this.embedOptions.mode == BoldBI.Mode.DataSource) {
                     dashboardOptions.datasourceName = embedResponse.ItemDetail.Name;
@@ -2122,7 +2274,7 @@ class BoldBI {
         }
     }
     _tabSelected(args) {
-        var containerName = window.bbEmbed(args.selectedItem).parents('.multitab-dbrd').attr('id');
+        var containerName = window.bbEmbed('.multitab-dbrd').attr('id');
         for (var i = 0; i < window.bbEmbed("#" + containerName + " .e-toolbar-item").length; i++) {
             window.bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).attr('style', 'display:block !important');
             if (window.bbEmbed("#" + containerName + " .e-toolbar-item.e-active").attr("aria-controls") === "e-content-" + containerName + "_" + i) {
@@ -2200,6 +2352,15 @@ class BoldBI {
             }
             if (this.embedOptions.beforeFilterApply instanceof Function) {
                 this.embedOptions.beforeFilterApply.call(this, arg);
+            }
+        }
+        if (arg.eventType == 'publishAsAction') {
+            var clientFnc = window[this.embedOptions.dashboardSettings.beforePublishAs];
+            if (clientFnc instanceof Function) {
+                clientFnc.call(this, arg);
+            }
+            if (this.embedOptions.dashboardSettings.beforePublishAs instanceof Function) {
+                this.embedOptions.dashboardSettings.beforePublishAs.call(this, arg);
             }
         }
         if (arg.eventType == 'dataSourceToolbarButtonRender') {
@@ -2425,12 +2586,12 @@ class BoldBI {
         if (serverFnc instanceof Function) {
             serverFnc.call(this, arg);
         }
-        var clientFnc = window[this.embedOptions.beforeContextMenuRnder];
+        var clientFnc = window[this.embedOptions.beforeContextMenuRender];
         if (clientFnc instanceof Function) {
             clientFnc.call(this, arg);
         }
-        if (this.embedOptions.beforeContextMenuRnder instanceof Function) {
-            this.embedOptions.beforeContextMenuRnder.call(this, arg);
+        if (this.embedOptions.beforeContextMenuRender instanceof Function) {
+            this.embedOptions.beforeContextMenuRender.call(this, arg);
         }
     }
     _onBoldBIDashboardSaveFilter(arg) {
@@ -2643,6 +2804,13 @@ class BoldBI {
         if (this.embedOptions.widgetSettings.showExport === false || (this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showCSV === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false)) {
             arg.menuItems = this._arraySlice(arg.menuItems, "id", "export");
         }
+        var clientFnc = window[this.embedOptions.widgetSettings.beforeWidgetControlMenuOpen];
+        if (clientFnc instanceof Function) {
+            clientFnc.call(this, arg);
+        }
+        if (this.embedOptions.widgetSettings.beforeWidgetControlMenuOpen instanceof Function) {
+            this.embedOptions.widgetSettings.beforeWidgetControlMenuOpen.call(this, arg);
+        }
     }
     _onBoldBIBeforeDashboardMobileMenuOpen(arg) {
         var clientFnc = window[this.embedOptions.beforeDashboardMobileMenuOpen];
@@ -2653,6 +2821,26 @@ class BoldBI {
             this.embedOptions.beforeDashboardMobileMenuOpen.call(this, arg);
         }
     }
+    _onBoldBIAjaxBeforeLoad(arg) {
+        var clientFnc = window[this.embedOptions.ajaxBeforeLoad];
+        if (clientFnc instanceof Function) {
+            clientFnc.call(this, arg);
+        }
+        if (this.embedOptions.ajaxBeforeLoad instanceof Function) {
+            this.embedOptions.ajaxBeforeLoad.call(this, arg);
+        }
+    }
+    ;
+    _onBoldBIbeforeDesignerToolbarButtonsRendered(arg) {
+        var clientFnc = window[this.embedOptions.dashboardSettings.beforeDesignerToolbarButtons];
+        if (clientFnc instanceof Function) {
+            clientFnc.call(this, arg);
+        }
+        if (this.embedOptions.dashboardSettings.beforeDesignerToolbarButtons instanceof Function) {
+            this.embedOptions.dashboardSettings.beforeDesignerToolbarButtons.call(this, arg);
+        }
+    }
+    ;
     _onBoldBIDashboardWidgetIconClick(arg) {
         var serverFnc = window[this.onWidgetIconClickFn];
         if (serverFnc instanceof Function) {
@@ -2664,6 +2852,15 @@ class BoldBI {
         }
         if (this.embedOptions.widgetSettings.onIconClick instanceof Function) {
             this.embedOptions.widgetSettings.onIconClick.call(this, arg);
+        }
+    }
+    _onBoldBIonControlMenuClick(arg) {
+        var clientFnc = window[this.embedOptions.widgetSettings.onWidgetControlMenuClick];
+        if (clientFnc instanceof Function) {
+            clientFnc.call(this, arg);
+        }
+        if (this.embedOptions.widgetSettings.onWidgetControlMenuClick instanceof Function) {
+            this.embedOptions.widgetSettings.onWidgetControlMenuClick.call(this, arg);
         }
     }
     _onBoldBIDashboardUpdatefavorite(arg) {
@@ -3081,6 +3278,28 @@ class BoldBI {
         }
         return filterInfoList;
     }
+    _getWidgetFilterInfo() {
+        var widgetId = BoldBI._widgetsCollection;
+        if (Array.isArray(widgetId) == true) {
+            var widgetDetails = [];
+            var j = 0;
+            for (var i = 0; i < widgetId.length; i++) {
+                var filtersDetails = BoldBI._gettinstance(document.getElementById(this.embedOptions.embedContainerId), "embeddedBoldBIWidget_" + widgetId[i]);
+                filtersDetails = Array.isArray(filtersDetails) ? filtersDetails : [filtersDetails];
+                var widgetList = {
+                    id: widgetId[i],
+                    filters: {
+                        values: filtersDetails,
+                        type: "",
+                        columnName: "",
+                    }
+                };
+                widgetDetails[j++] = widgetList;
+            }
+        }
+        return widgetDetails;
+    }
+    ;
     static _putinstance(element, key, obj) {
         //_storage = new WeakMap();
         if (!BoldBI._storage.has(element)) {
@@ -3112,3 +3331,19 @@ BoldBI.EmbedType = Object.freeze({ "Component": "component", "IFrame": "iframe" 
 BoldBI.Environment = Object.freeze({ "Enterprise": "onpremise", "Cloud": "cloud" });
 BoldBI.Theme = Object.freeze({ "Off": "off", "Light": "light", "Dark": "dark" });
 BoldBI._storage = new WeakMap();
+BoldBI._widgetsCollection = [];
+class widgetBI {
+    constructor() {
+        this.containerID = "";
+    }
+    setFilterParameters(filters) {
+        var widgetId = BoldBI._widgetsCollection;
+        if (Array.isArray(widgetId) == true) {
+            if (BoldBI._hasinstance(document.getElementById(this.containerID), "embeddedBoldBIWidget_" + widgetId[widgetId.length - 1])) {
+                BoldBI._putinstance(document.getElementById(this.containerID), "embeddedBoldBIWidget_" + widgetId[widgetId.length - 1], filters);
+            }
+        }
+    }
+}
+exports.widgetBI = widgetBI;
+;
