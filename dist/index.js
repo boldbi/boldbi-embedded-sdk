@@ -3,9 +3,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BoldBI = void 0;
 const bbEmbed = require("jquery/jquery.js");
-//import * as bbEmbed from "../dist/scripts/jquery.min";
-//window.bbEmbed = bbEmbed;
 window.bbEmbed = window.$;
+var tabInstance;
 if (typeof window.bb$ !== 'undefined') {
     window.bbEmbed = window.bb$;
 }
@@ -42,6 +41,11 @@ class BoldBI {
         this.parentDbrdId = "";
         this.isNewConnection = false;
         this.multiTabTheme = "";
+        this.dashboardDetails = {};
+        this.pinboardDetails = {};
+        this.accessToken = "";
+        this.homepageItemId = "";
+        this.isVirtualHomepage = false;
         this.viewerScriptFiles = [
             "ej1.web.all.min.js",
             "ej2.web.all.min.js",
@@ -57,7 +61,7 @@ class BoldBI {
             "ej.dashboarddesigner.min.js"
         ];
         this.ejDesignerDependentFiles = [
-            "dashboard-designer-component.min.js"
+            "codemirror.min.js"
         ];
         this.designerScriptFiles = [
             "ej1.web.all.min.js",
@@ -98,7 +102,8 @@ class BoldBI {
                 enableTheme: true,
                 enableFilterOverview: true,
                 enableFullScreen: false,
-                showDashboardParameter: true
+                showDashboardParameter: true,
+                dashboardName: ""
             },
             widgetSettings: {
                 showExport: true,
@@ -136,6 +141,7 @@ class BoldBI {
                     seconds: 0
                 }
             },
+            isRemoveStyle: false,
             scalingFactor: 1,
             localeSettings: {
                 culture: "en-US",
@@ -145,6 +151,8 @@ class BoldBI {
             beforeContextMenuRnder: "",
             beforeNavigateUrlLinking: "",
             beforeNavigateToDashboard: "",
+            beforeFilterApply: "",
+            afterFilterApply: "",
             toolbarSettings: {
                 showToolbar: true
             },
@@ -171,7 +179,8 @@ class BoldBI {
             preConfiguredWidgets: {
                 dashboardId: "",
                 categoryName: ""
-            }
+            },
+            disableAutoRecover: false
         };
     }
     // Customer exposed functions
@@ -198,6 +207,10 @@ class BoldBI {
                 try {
                     boldBIObj.childContainer = document.createElement("div");
                     boldBIObj.childContainer.id = boldBIObj.embedOptions.embedContainerId + "_embeddedbi";
+                    var _biInstance = BoldBI._gettinstance(document.getElementById(boldBIObj.embedOptions.embedContainerId), "embeddedBoldBI");
+                    if (_biInstance != null || _biInstance != undefined) {
+                        _biInstance.destroy();
+                    }
                     bbEmbed(document.getElementById(boldBIObj.embedOptions.embedContainerId)).html('');
                     document.getElementById(boldBIObj.embedOptions.embedContainerId).append(boldBIObj.childContainer);
                     boldBIObj._initializeUrls();
@@ -235,11 +248,9 @@ class BoldBI {
             return retObj;
         }
     }
-    ;
     static getInstance(eleID) {
         return this._gettinstance(document.getElementById(eleID), "embeddedBoldBI");
     }
-    ;
     destroy() {
         var that = this;
         if (this.isMultiTab) {
@@ -273,17 +284,16 @@ class BoldBI {
             BoldBI._removeinstance(document.getElementById(embedContainerId), "embeddedBoldBI");
             document.getElementById(embedContainerId).innerHTML = "";
         }
-        // (<any>BoldBI)._removeinstance(document.getElementById(embedContainerId), "embeddedBoldBI");
-        // document.getElementById(embedContainerId).innerHTML = "";
-        document.querySelectorAll('link').forEach(function (node) {
-            that.cssFiles.forEach(function (file) {
-                if (node.href.toLowerCase().indexOf(file.toLowerCase()) !== -1) {
-                    node.parentNode.removeChild(node);
-                }
+        if (this.embedOptions.isRemoveStyle == true) {
+            document.querySelectorAll('link').forEach(function (node) {
+                that.cssFiles.forEach(function (file) {
+                    if (node.href.toLowerCase().indexOf(file.toLowerCase()) !== -1) {
+                        node.parentNode.removeChild(node);
+                    }
+                });
             });
-        });
+        }
     }
-    ;
     loadDashboard(dashboardId) {
         if (this.embedOptions.mode !== BoldBI.Mode.View) {
             this._throwError("Invalid embed mode");
@@ -304,16 +314,15 @@ class BoldBI {
         }
         else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
             var iframe = document.createElement('iframe');
-            iframe.frameBorder = "0";
+            iframe.frameBorder = 0;
             iframe.width = this.embedOptions.width;
             iframe.height = this.embedOptions.height;
             iframe.id = this.embedOptions.embedContainerId + "_" + this.embedOptions.dashboardId;
-            iframe.allowFullscreen = this.embedOptions.dashboardSettings.showFullScreen;
+            iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
             iframe.setAttribute("src", this.embedOptions.serverUrl + "/dashboards/" + this.embedOptions.dashboardId + "?isembed=true");
             document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
         }
     }
-    ;
     loadPinboard() {
         if (this.embedOptions.pinboardName === '') {
             this._throwError("Invalid embed pinboard");
@@ -328,11 +337,11 @@ class BoldBI {
         }
         else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
             var iframe = document.createElement('iframe');
-            iframe.frameBorder = "0";
+            iframe.frameBorder = 0;
             iframe.width = this.embedOptions.width;
             iframe.height = this.embedOptions.height;
             iframe.id = this.embedOptions.embedContainerId + "_" + this.embedOptions.dashboardId;
-            iframe.allowFullscreen = this.embedOptions.dashboardSettings.showFullScreen;
+            iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
             iframe.setAttribute("src", this.embedOptions.serverUrl + "/dashboards/" + this.embedOptions.dashboardId + "?isembed=true");
             document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
         }
@@ -340,7 +349,6 @@ class BoldBI {
     loadDashboardView(name) {
         this._throwError("loadDashboardView not implemented");
     }
-    ;
     loadDashboardWidget(name, dashboardId) {
         if (this._isEmptyOrSpaces(name)) {
             this._throwError("Widget name should be empty");
@@ -358,16 +366,15 @@ class BoldBI {
         }
         else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
             var iframe = document.createElement('iframe');
-            iframe.frameBorder = "0";
+            iframe.frameBorder = 0;
             iframe.width = this.embedOptions.width;
             iframe.height = this.embedOptions.height;
             iframe.id = this.embedOptions.embedContainerId + "_" + this.embedOptions.dashboardId;
-            iframe.allowFullscreen = this.embedOptions.dashboardSettings.showFullScreen;
+            iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
             iframe.setAttribute("src", this.embedOptions.serverUrl + "/dashboards/" + this.embedOptions.dashboardId + "?isembed=true");
             document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
         }
     }
-    ;
     loadDesigner(dashboardId) {
         if (this.embedOptions.mode === BoldBI.Mode.View) {
             this._throwError("Invalid embed mode");
@@ -388,16 +395,15 @@ class BoldBI {
         }
         else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
             var iframe = document.createElement('iframe');
-            iframe.frameBorder = "0";
+            iframe.frameBorder = 0;
             iframe.width = this.embedOptions.width;
             iframe.height = this.embedOptions.height;
             iframe.id = this.embedOptions.embedContainerId + "_" + this.embedOptions.dashboardId;
-            iframe.allowFullscreen = this.embedOptions.dashboardSettings.showFullScreen;
+            iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
             iframe.setAttribute("src", this.embedOptions.serverUrl + "/dashboard-designer/" + this.embedOptions.dashboardId + "?isembed=true");
             document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
         }
     }
-    ;
     loadDatasource() {
         if (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) {
             if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
@@ -423,7 +429,239 @@ class BoldBI {
             this._throwError("Invalid Embed mode");
         }
         if (this.embedOptions.mode == BoldBI.Mode.Connection) {
-            bbEmbed("<style type='text/css'> .e-dashboarddesigner .e-dbrd-connection-mode-dlg .e-dbrd-connection-mode-header .e-dbrd-icon-container .e-dbrd-close-icon{ display: none !important} </style>").appendTo("head");
+            bbEmbed("<style type='text/css'> .e-dashboarddesigner .bbi-dbrd-connection-mode-dlg .bbi-dbrd-connection-mode-header .bbi-dbrd-icon-container .bbi-dbrd-close-icon{ display: none !important} </style>").appendTo("head");
+        }
+    }
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
+    *  @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
+    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    */
+    exportDashboardAsPdf(exportInformation) {
+        if (this.isMultiTab) {
+            var dashboardId = exportInformation.dashboardId;
+            dashboardId = dashboardId.replaceAll('-', '');
+            var MultitabDashboardId = 'multi_' + dashboardId + '_embeddedbi';
+            var dbrdInstance = this._getDashboardInstance(MultitabDashboardId);
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportAsPdf(exportInformation.fileName, exportInformation.pageSize, exportInformation.pageOrientation, exportInformation.showAppliedFilters);
+            }
+        }
+        else {
+            var dbrdInstance = this._getDashboardInstance();
+            if (dbrdInstance != undefined) {
+                if (exportInformation) {
+                    dbrdInstance.exportAsPdf(exportInformation.fileName, exportInformation.pageSize, exportInformation.pageOrientation, exportInformation.showAppliedFilters);
+                }
+                else {
+                    dbrdInstance.exportAsPdf();
+                }
+            }
+        }
+    }
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
+    *  @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
+    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter
+    */
+    exportDashboardAsImage(exportInformation) {
+        if (this.isMultiTab) {
+            var dashboardId = exportInformation.dashboardId;
+            dashboardId = dashboardId.replaceAll('-', '');
+            var MultitabDashboardId = 'multi_' + dashboardId + '_embeddedbi';
+            var dbrdInstance = this._getDashboardInstance(MultitabDashboardId);
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportAsImage(exportInformation.fileName, exportInformation.exportImageFormat, exportInformation.resolutionDpi, exportInformation.showAppliedFilters);
+            }
+        }
+        else {
+            var dbrdInstance = this._getDashboardInstance();
+            if (dbrdInstance != undefined) {
+                if (exportInformation) {
+                    dbrdInstance.exportAsImage(exportInformation.fileName, exportInformation.exportImageFormat, exportInformation.resolutionDpi, exportInformation.showAppliedFilters);
+                }
+                else {
+                    dbrdInstance.exportAsImage();
+                }
+            }
+        }
+    }
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
+    */
+    exportDashboardAsExcel(exportInformation) {
+        if (this.isMultiTab) {
+            var dashboardId = exportInformation.dashboardId;
+            dashboardId = dashboardId.replaceAll('-', '');
+            var MultitabDashboardId = 'multi_' + dashboardId + '_embeddedbi';
+            var dbrdInstance = this._getDashboardInstance(MultitabDashboardId);
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportAsExcel(exportInformation.fileName, exportInformation.fileType);
+            }
+        }
+        else {
+            var dbrdInstance = this._getDashboardInstance();
+            if (dbrdInstance != undefined) {
+                if (exportInformation) {
+                    dbrdInstance.exportAsExcel(exportInformation.fileName, exportInformation.fileType);
+                }
+                else {
+                    dbrdInstance.exportAsExcel();
+                }
+            }
+        }
+    }
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
+    * @param {string} widgetName - Define the name of the widget to be exported
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
+    *  @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
+    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    */
+    exportWidgetAsPdf(exportInformation) {
+        var that = this;
+        if (this.isMultiTab) {
+            var dashboardId = exportInformation.dashboardId;
+            dashboardId = dashboardId.replaceAll('-', '');
+            var MultitabDashboardId = 'multi_' + dashboardId + '_embeddedbi';
+            var dbrdInstance = this._getDashboardInstance(MultitabDashboardId);
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportWidgetAsPdf(exportInformation.widgetName, exportInformation.fileName, exportInformation.pageSize, exportInformation.pageOrientation, exportInformation.showAppliedFilters);
+            }
+        }
+        else if (bbEmbed('.pinBoardDbrd').length > 0) {
+            var length = bbEmbed('.pinBoardDbrd').length;
+            for (var i = 0; i < length; i++) {
+                if (that.pinboardIds[i].widgetId == exportInformation.dashboardId) {
+                    var pinboardId = that.pinboardIds[i].pinboardContainerId;
+                    var dbrdInstance = that._getDashboardInstance(pinboardId + '_embeddedbi');
+                    if (dbrdInstance != undefined) {
+                        dbrdInstance.exportWidgetAsPdf(exportInformation.widgetName, exportInformation.fileName, exportInformation.pageSize, exportInformation.pageOrientation, exportInformation.showAppliedFilters);
+                    }
+                }
+            }
+        }
+        else {
+            var dbrdInstance = this._getDashboardInstance();
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportWidgetAsPdf(exportInformation.widgetName, exportInformation.fileName, exportInformation.pageSize, exportInformation.pageOrientation, exportInformation.showAppliedFilters);
+            }
+        }
+    }
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
+    * @param {string} widgetName - Define the name of the widget to be exported
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
+    *  @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
+    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    */
+    exportWidgetAsImage(exportInformation) {
+        var that = this;
+        if (this.isMultiTab) {
+            var dashboardId = exportInformation.dashboardId;
+            dashboardId = dashboardId.replaceAll('-', '');
+            var MultitabDashboardId = 'multi_' + dashboardId + '_embeddedbi';
+            var dbrdInstance = this._getDashboardInstance(MultitabDashboardId);
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportWidgetAsImage(exportInformation.widgetName, exportInformation.fileName, exportInformation.exportImageFormat, exportInformation.resolutionDpi, exportInformation.showAppliedFilters);
+            }
+        }
+        else if (bbEmbed('.pinBoardDbrd').length > 0) {
+            var length = bbEmbed('.pinBoardDbrd').length;
+            for (var i = 0; i < length; i++) {
+                if (that.pinboardIds[i].widgetId == exportInformation.dashboardId) {
+                    var pinboardId = that.pinboardIds[i].pinboardContainerId;
+                    var dbrdInstance = that._getDashboardInstance(pinboardId + '_embeddedbi');
+                    if (dbrdInstance != undefined) {
+                        dbrdInstance.exportWidgetAsImage(exportInformation.widgetName, exportInformation.fileName, exportInformation.exportImageFormat, exportInformation.resolutionDpi, exportInformation.showAppliedFilters);
+                    }
+                }
+            }
+        }
+        else {
+            var dbrdInstance = this._getDashboardInstance();
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportWidgetAsImage(exportInformation.widgetName, exportInformation.fileName, exportInformation.exportImageFormat, exportInformation.resolutionDpi, exportInformation.showAppliedFilters);
+            }
+        }
+    }
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
+    * @param {string} widgetName - Define the name of the widget to be exported
+    * @param {string} fileName - Define the name of the file to be exported
+    *  @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
+    */
+    exportWidgetAsExcel(exportInformation) {
+        var that = this;
+        if (this.isMultiTab) {
+            var dashboardId = exportInformation.dashboardId;
+            dashboardId = dashboardId.replaceAll('-', '');
+            var MultitabDashboardId = 'multi_' + dashboardId + '_embeddedbi';
+            var dbrdInstance = this._getDashboardInstance(MultitabDashboardId);
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportWidgetAsExcel(exportInformation.widgetName, exportInformation.fileName, exportInformation.fileType);
+            }
+        }
+        else if (bbEmbed('.pinBoardDbrd').length > 0) {
+            var length = bbEmbed('.pinBoardDbrd').length;
+            for (var i = 0; i < length; i++) {
+                if (that.pinboardIds[i].widgetId == exportInformation.dashboardId) {
+                    var pinboardId = that.pinboardIds[i].pinboardContainerId;
+                    var dbrdInstance = that._getDashboardInstance(pinboardId + '_embeddedbi');
+                    if (dbrdInstance != undefined) {
+                        dbrdInstance.exportWidgetAsExcel(exportInformation.widgetName, exportInformation.fileName, exportInformation.fileType);
+                    }
+                }
+            }
+        }
+        else {
+            var dbrdInstance = this._getDashboardInstance();
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportWidgetAsExcel(exportInformation.widgetName, exportInformation.fileName, exportInformation.fileType);
+            }
+        }
+    }
+    /**
+    * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
+    * @param {string} widgetName - Define the name of the widget to be exported
+    * @param {string} fileName - Define the name of the file to be exported
+    */
+    exportWidgetAsCsv(exportInformation) {
+        var that = this;
+        if (this.isMultiTab) {
+            var dashboardId = exportInformation.dashboardId;
+            dashboardId = dashboardId.replaceAll('-', '');
+            var MultitabDashboardId = 'multi_' + dashboardId + '_embeddedbi';
+            var dbrdInstance = this._getDashboardInstance(MultitabDashboardId);
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportWidgetAsCsv(exportInformation.widgetName, exportInformation.fileName);
+            }
+        }
+        else if (bbEmbed('.pinBoardDbrd').length > 0) {
+            var length = bbEmbed('.pinBoardDbrd').length;
+            for (var i = 0; i < length; i++) {
+                if (that.pinboardIds[i].widgetId == exportInformation.dashboardId) {
+                    var pinboardId = that.pinboardIds[i].pinboardContainerId;
+                    var dbrdInstance = that._getDashboardInstance(pinboardId + '_embeddedbi');
+                    if (dbrdInstance != undefined) {
+                        dbrdInstance.exportWidgetAsCsv(exportInformation.widgetName, exportInformation.fileName);
+                    }
+                }
+            }
+        }
+        else {
+            var dbrdInstance = this._getDashboardInstance();
+            if (dbrdInstance != undefined) {
+                dbrdInstance.exportWidgetAsCsv(exportInformation.widgetName, exportInformation.fileName);
+            }
         }
     }
     updateDatasource() {
@@ -460,7 +698,6 @@ class BoldBI {
             }
         }
     }
-    ;
     resizeDashboard(filterParameters) {
         var that = this;
         if (this.isMultiTab) {
@@ -511,7 +748,6 @@ class BoldBI {
             }
         }
     }
-    ;
     refreshDashboard() {
         var that = this;
         if (this.isMultiTab) {
@@ -539,7 +775,6 @@ class BoldBI {
             }
         }
     }
-    ;
     hidePopup(embedId) {
         if (this.isMultiTab) {
             var dashboardContainer = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
@@ -558,11 +793,80 @@ class BoldBI {
             }
         }
     }
+    /**
+     * @param {string} widgetNames - Define the name of the widget to be Refresh.
+     * @param {boolean} hideLoader - Define whether to show or hide loading indicator while processing.
+     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard.
+     */
+    refreshWidgetData(widgetNames, hideLoader, dashboardId) {
+        var that = this;
+        if (Array.isArray(widgetNames) == true) {
+            if (this.isMultiTab) {
+                var dashboardContainer = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+                for (var i = 0; i < dashboardContainer.length; i++) {
+                    if (bbEmbed(dashboardContainer[i]).attr('id').includes(dashboardId.toString().replaceAll("-", "")) > 0) {
+                        var embedId = bbEmbed(dashboardContainer[i]).attr('id');
+                        var dbrdInstance = this._getDashboardInstance(embedId);
+                        if (dbrdInstance != undefined) {
+                            dbrdInstance.refreshWidget(widgetNames, hideLoader);
+                        }
+                        break;
+                    }
+                }
+            }
+            else {
+                var dbrdInstance = this._getDashboardInstance();
+                if (dbrdInstance != undefined) {
+                    dbrdInstance.refreshWidget(widgetNames, hideLoader);
+                }
+            }
+        }
+        else {
+            that._throwError("Cannot able to refresh the widget the WigetName should be in array");
+        }
+    }
+    getWidgetData(widgetName, clientFnc, dashboardId) {
+        var widgetValue;
+        if (this.isMultiTab) {
+            var dashboardContainer = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+            for (var i = 0; i < dashboardContainer.length; i++) {
+                if (bbEmbed(dashboardContainer[i]).attr('id').includes(dashboardId.toString().replaceAll("-", "")) > 0) {
+                    var embedId = bbEmbed(dashboardContainer[i]).attr('id');
+                    var dbrdInstance = this._getDashboardInstance(embedId);
+                    if (dbrdInstance != undefined) {
+                        widgetValue = dbrdInstance.getWidgetData(widgetName, clientFnc);
+                        if (widgetValue.toLowerCase().includes('widget') > 0) {
+                            if (window[clientFnc] instanceof Function) {
+                                window[clientFnc].call(this, widgetValue);
+                            }
+                            else {
+                                clientFnc.call(this, widgetValue);
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        else {
+            var dbrdInstance = this._getDashboardInstance();
+            if (dbrdInstance != undefined) {
+                widgetValue = dbrdInstance.getWidgetData(widgetName, clientFnc);
+                if (widgetValue.toLowerCase().includes('widget') > 0) {
+                    if (window[clientFnc] instanceof Function) {
+                        window[clientFnc].call(this, widgetValue);
+                    }
+                    else {
+                        clientFnc.call(this, widgetValue);
+                    }
+                }
+            }
+        }
+    }
     // Internal functions. Will not be accessible outside of this scope.
     _initializeEmbedOptions(options) {
         this.embedOptions = Object.assign(this.embedOptions, options);
     }
-    ;
     _initializeUrls() {
         if (this.embedOptions.environment == BoldBI.Environment.Enterprise) {
             this.rootUrl = this.embedOptions.serverUrl.substr(0, (this.embedOptions.serverUrl.indexOf("/bi/") >= 0 ? (this.embedOptions.serverUrl.indexOf("/bi/") + 3) : (this.embedOptions.serverUrl.indexOf("/bi") + 3)));
@@ -579,18 +883,15 @@ class BoldBI {
         }
         this.scheduleEndpointUrl = this.baseUrl + "/datasources/recurrence-type-page";
     }
-    ;
     _loadCloudDepedentFiles(responseInfo) {
         var responseData = responseInfo.Data;
         this.cdnLink = responseData.CdnUrl;
         this.designerRootUrl = responseData.DesignerServerUrl;
         this._loadDepedentFiles();
     }
-    ;
     _getCloudLinks() {
         this._xhrRequestHelper("Get", this.dashboardServerApiUrl + "/system-settings/get-url", {}, {}, this._loadCloudDepedentFiles);
     }
-    ;
     _loadDepedentFiles() {
         if (this.embedOptions.mode === BoldBI.Mode.Design || this.embedOptions.mode === BoldBI.Mode.DataSource || this.embedOptions.mode === BoldBI.Mode.Connection) {
             this._addedDependentFiles(this, this.designerScriptFiles, false);
@@ -611,7 +912,6 @@ class BoldBI {
         this._loadBingmapDependentFiles(this);
         this._loadDependentDesignerFiles(this);
     }
-    ;
     _loadBingmapDependentFiles(that) {
         var scriptTag = '<script type="text/javascript" src="https://www.bing.com/api/maps/mapcontrol" async></script>';
         bbEmbed(scriptTag).appendTo('head');
@@ -620,18 +920,15 @@ class BoldBI {
         if (window.BoldBIDashboard instanceof Object &&
             window.BoldBIDashboard.createObject instanceof Function &&
             window.Designer instanceof Object) {
+            that._addedDependentFiles(that, that.ejViewerDependentFiles, false);
             if (that.embedOptions.mode === BoldBI.Mode.Design || that.embedOptions.mode === BoldBI.Mode.DataSource || that.embedOptions.mode === BoldBI.Mode.Connection) {
                 that._addedDependentFiles(that, that.ejDesignerDependentFiles, false);
-            }
-            else {
-                that._addedDependentFiles(that, that.ejViewerDependentFiles, false);
             }
         }
         else {
             setTimeout(that._loadDependentDesignerFiles, 50, that);
         }
     }
-    ;
     _addedDependentFiles(that, fileUriArray, isCSS) {
         var fileUri = "";
         fileUriArray.forEach(function (file) {
@@ -680,7 +977,7 @@ class BoldBI {
                         else if (file === "designerlocalization.js")
                             fileUri = that.designerRootUrl + "/localization/" + file;
                         else if (file === "signalr.min.js")
-                            fileUri = that.rootUrl + "/cdn/scripts/signalr/" + file;
+                            fileUri = that.cdnLink + "/scripts/signalr/" + file;
                         else
                             fileUri = that.cdnLink + "/scripts/designer/" + file;
                     }
@@ -692,11 +989,7 @@ class BoldBI {
                 }
             }
         }.bind(that));
-        if (that.embedOptions.pinboardName !== "") {
-            bbEmbed("<style type='text/css'> .e-dbrd-designcanvas-container{ border-width: 0 0 0 0 !important; background-color: #fff !important; overflow: hidden !important;} .e-canvas.e-dbrd-control-container{ box-shadow: none !important} </style>").appendTo("head");
-        }
     }
-    ;
     _checkDepedentFileExists(file, isCSS) {
         var isFileExists = false;
         var selectItem = isCSS ? "link" : "script";
@@ -713,7 +1006,6 @@ class BoldBI {
         });
         return isFileExists;
     }
-    ;
     _renderDashboard(responseInfo) {
         var that = this;
         var parameter = "";
@@ -729,10 +1021,9 @@ class BoldBI {
                 this._renderMultiTabDashboard(embedResponse);
             }
             else {
-                if (typeof (responseInfo.Data.ItemDetail) !== "undefined") {
-                    embedResponse.ItemDetail = this.embedOptions.mode != BoldBI.Mode.Connection ? JSON.parse(responseInfo.Data.ItemDetail) : null;
-                }
+                embedResponse.ItemDetail = this.embedOptions.mode != BoldBI.Mode.Connection ? JSON.parse(responseInfo.Data.ItemDetail) : null;
                 var embedContainerId;
+                var dashboardName = "";
                 if (this.pinboardIds.length > 0) {
                     bbEmbed.map(this.pinboardIds, function (value, index) {
                         if (value['widgetId'] === embedResponse.WidgetId) {
@@ -745,9 +1036,19 @@ class BoldBI {
                 }
                 else if (this.isMultiTab) {
                     embedContainerId = 'multi_' + embedResponse.ItemDetail.Id.toString().replaceAll("-", "");
+                    if (!that._isNullOrUndefined(that.embedOptions.dashboardSettings.dashboardName) && typeof that.embedOptions.dashboardSettings.dashboardName != 'string') {
+                        bbEmbed.map(that.embedOptions.dashboardSettings.dashboardName, function (val, index) {
+                            if (embedResponse.ItemDetail.Id == val.dashboardId) {
+                                dashboardName = val.dashboardName;
+                            }
+                        });
+                    }
                 }
                 else {
                     embedContainerId = this.embedOptions.embedContainerId;
+                    if (!that._isNullOrUndefined(that.embedOptions.dashboardSettings.dashboardName) && typeof that.embedOptions.dashboardSettings.dashboardName === 'string') {
+                        dashboardName = that.embedOptions.dashboardSettings.dashboardName;
+                    }
                 }
                 var height = this.pinboardIds.length > 0 ? bbEmbed('#' + embedContainerId).height() : this.isMultiTab ? (this.embedOptions.height.indexOf('%') > 0 ? (this.embedOptions.height.includes('calc') ? 'calc(100% - 36px)' : 'calc(' + this.embedOptions.height + ' - 36px)') : (parseInt(this.embedOptions.height) - 36 + 'px')) : this.embedOptions.height;
                 if (typeof (responseInfo.Data.UserDetail) !== "undefined") {
@@ -775,7 +1076,7 @@ class BoldBI {
                     itemId: this.embedOptions.mode != BoldBI.Mode.Connection ? embedResponse.ItemDetail.Id : '',
                     dashboardPath: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : embedResponse.ItemDetail.ItemLocation,
                     serviceAuthorizationToken: embedResponse.access_token,
-                    dashboardName: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : embedResponse.ItemDetail.Name,
+                    dashboardName: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : this._isEmptyOrSpaces(dashboardName) ? embedResponse.ItemDetail.Name : dashboardName,
                     dashboardDescription: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : embedResponse.ItemDetail.Description,
                     theme: this._isEmptyOrSpaces(this.multiTabTheme) ? this.embedOptions.theme : this.multiTabTheme,
                     enableTheme: this.embedOptions.dashboardSettings.enableTheme,
@@ -830,19 +1131,23 @@ class BoldBI {
                     },
                     beforeControlMenuOpen: function (arg) {
                         that._onBoldBIBeforeControlMenuOpen(arg);
+                    },
+                    beforeDashboardMobileMenuOpen: function (arg) {
+                        that._onBoldBIBeforeDashboardMobileMenuOpen(arg);
                     }
                 };
                 if (this.embedOptions.mode == BoldBI.Mode.Design) {
                     if (embedResponse.ItemDetail.IsDraft) {
                         dashboardOptions.dashboardPath = "";
-                        var datasourceId = !this._isEmptyOrSpaces(embedResponse.DatasourceId) ? embedResponse.DatasourceId : "";
-                        if (!this._isEmptyOrSpaces(datasourceId)) {
-                            dashboardOptions.datasource = datasourceId;
-                        }
-                        if (this.embedOptions.datasources.length > 0) {
-                            dashboardOptions.datasources = this.embedOptions.datasources;
-                        }
                     }
+                    var datasourceId = !this._isEmptyOrSpaces(embedResponse.DatasourceId) ? embedResponse.DatasourceId : "";
+                    if (!this._isEmptyOrSpaces(datasourceId)) {
+                        dashboardOptions.datasource = datasourceId;
+                    }
+                    if (this.embedOptions.datasources.length > 0) {
+                        dashboardOptions.datasources = this.embedOptions.datasources;
+                    }
+                    dashboardOptions.disableAutoRecover = this.embedOptions.disableAutoRecover;
                     dashboardOptions.schedule = {
                         endPoint: this.scheduleEndpointUrl,
                         summaryText: ''
@@ -891,11 +1196,6 @@ class BoldBI {
                 if (this.embedOptions.dynamicConnection.isEnabled) {
                     dashboardOptions.customIdentity = this.embedOptions.dynamicConnection.identity;
                 }
-                //if (this.embedOptions.environment == BoldBI.Environment.Enterprise) {
-                //    dashboardOptions.cdnPath = this.rootUrl + "/webdesignerservice/scripts/";
-                //} else {
-                //    dashboardOptions.cdnPath = this.cdnLink + "/scripts/designer/";
-                //}
                 if (this.embedOptions.autoRefreshSettings.enabled) {
                     dashboardOptions.enableAutoRefresh = true;
                     dashboardOptions.autoRefreshSettings = {
@@ -909,11 +1209,11 @@ class BoldBI {
                         }
                     };
                 }
-                if (bbEmbed instanceof Function) {
-                    var embedContainer = bbEmbed.call(that, "#" + (that.pinboardIds.length > 0 ? (embedContainerId + '_embeddedbi') : that.childContainer.id));
+                if (window.bbEmbed instanceof Function) {
+                    var embedContainer = window.bbEmbed.call(that, "#" + (that.pinboardIds.length > 0 ? (embedContainerId + '_embeddedbi') : that.childContainer.id));
                     var embedChildId;
                     if (embedContainer.length === 0) {
-                        embedContainer = bbEmbed.call(that, "#" + embedContainerId + '_embeddedbi');
+                        embedContainer = window.bbEmbed.call(that, "#" + embedContainerId + '_embeddedbi');
                         embedChildId = embedContainerId + '_embeddedbi';
                     }
                     if (window.BoldBIDashboardDesigner instanceof Function) {
@@ -931,14 +1231,14 @@ class BoldBI {
                     }
                 }
                 else {
-                    this._throwError("jQuery is not defined");
+                    this._throwError("bbEmbed is not defined");
                 }
                 this._removeElementsClass(embedContainerId, ".preloader-wrap", "viewer-blue-loader");
             }
         }
     }
     _renderPinboard(itemDetail) {
-        var widgetContainer = bbEmbed('<div id="server-app-container" style="background: #f9f9f9; overflow: hidden !important;min-height: 600px; width:' + this.embedOptions.width + ';"><div id="content-area" class="clearfix col-xs-12 e-waitingpopup e-js" style="padding: 0;padding-bottom: 30px"><div id="homepage-page-container"><div id="homepage-header" style="display:' + (this.embedOptions.pinboardSettings.enablePinboardHeader ? "block" : "none") + '"><div id="element-container"><div id="homepage-menu" style="margin-top: 5px"><span id="homepage-list-container" style="font-size: 15px;width: 165px;line-height: 18px;padding: 25px;">' + this.embedOptions.pinboardName + '</span></div><div id="options-container"><div id="pinboard-fullscreen" class="server-banner-icon e-dashboard-banner-icon e-dbrd-designer-hoverable su su-maximize-1 e-icon-dbrd-theme" data-tooltip="Fullscreen" data-name="fullscreen" data-event="true" style="font-size: 14px;display: block;float: left;margin: 8px 15px 0 7px; cursor: pointer"></div><div id="divider"></div><div id="layout-container"><div id="layout" class="dropdown-toggle" data-toggle="dropdown">Edit Layout</div><div class="dropdown-menu" id="layout-items" role="menu"><span class="su su-single-column" id="1"></span><span class="su su-two-column" id="11"></span><span class="su su-small-big-column" id="12"></span><span class="su su-big-small-column" id="21"></span><span class="su su-three-column" id="111"></span></div></div></div></div></div><div id="widget-container" data-homepage-id="" data-current-layout="" data-virtual-homepage="" style="margin-bottom: 30px"></div></div></div></div>');
+        var widgetContainer = bbEmbed('<div id="server-app-container" style="background: #f9f9f9; overflow: hidden !important;min-height: 600px; width:' + this.embedOptions.width + ';"><div id="content-area" class="clearfix col-xs-12 e-waitingpopup e-js" style="padding: 0;padding-bottom: 30px"><div id="homepage-page-container"><div id="homepage-header" style="display:' + (this.embedOptions.pinboardSettings.enablePinboardHeader ? "block" : "none") + '"><div id="element-container"><div id="homepage-menu" style="margin-top: 5px"><span id="homepage-list-container" style="font-size: 15px;width: 165px;line-height: 18px;padding: 25px;">' + this.embedOptions.pinboardName + '</span></div><div id="options-container"><div id="pinboard-fullscreen" class="server-banner-icon e-dashboard-banner-icon bbi-dbrd-designer-hoverable su su-maximize-1 e-icon-dbrd-theme" data-tooltip="Fullscreen" data-name="fullscreen" data-event="true" style="font-size: 14px;display: block;float: left;margin: 8px 15px 0 7px; cursor: pointer"></div><div id="divider"></div><div id="layout-container"><div id="layout" class="dropdown-toggle" data-toggle="dropdown">Edit Layout</div><div class="dropdown-menu" id="layout-items" role="menu"><span class="su su-single-column" id="1"></span><span class="su su-two-column" id="11"></span><span class="su su-small-big-column" id="12"></span><span class="su su-big-small-column" id="21"></span><span class="su su-three-column" id="111"></span></div></div></div></div></div><div id="widget-container" data-homepage-id="" data-current-layout="" data-virtual-homepage="" style="margin-bottom: 30px"></div></div></div></div>');
         bbEmbed('#' + this.embedOptions.embedContainerId).append(widgetContainer);
         this._createPinboardDom(itemDetail);
         this._renderItem(itemDetail);
@@ -946,7 +1246,7 @@ class BoldBI {
         var that = this;
         bbEmbed(document).on("click", ".unpin-widget", function (e) {
             e.preventDefault();
-            var unpinWidgetInstance = window.bbEmbed('#' + bbEmbed(e.target).parents('li').find('.pinWidget').attr('id') + '_embeddedbi').data('BoldBIDashboardDesigner');
+            var unpinWidgetInstance = bbEmbed('#' + bbEmbed(e.target).parents('li').find('.pinWidget').attr('id') + '_embeddedbi').data('BoldBIDashboardDesigner');
             var clientFnc = window[that.embedOptions.onUnpin];
             if (clientFnc instanceof Function) {
                 clientFnc.call(this, unpinWidgetInstance);
@@ -1081,6 +1381,18 @@ class BoldBI {
                     break;
             }
         });
+        bbEmbed.map(that.pinboardDetails, function (value) {
+            that.isWidgetMode = true;
+            that.widgetName = value.WidgetId;
+            that.isDashboardViewMode = false;
+            that.dashboardViewName = "";
+            var response = {
+                Apistatus: true,
+                Data: JSON.parse(value),
+                Status: true
+            };
+            that._renderDashboard(response);
+        });
     }
     createEmptyList(from, to) {
         for (var i = from; i <= to; i++) {
@@ -1097,31 +1409,52 @@ class BoldBI {
         }
     }
     changeLayout(layout) {
-        var homepageItemId = bbEmbed("#widget-container").attr("data-homepage-id");
         var that = this;
-        var isVirtualHomepage = bbEmbed("#widget-container").attr("data-virtual-homepage");
-        if (homepageItemId === "" && isVirtualHomepage === "true") {
-            //homepageItemId = saveVirtualHomepage();
+        var data;
+        that.homepageItemId = bbEmbed("#widget-container").attr("data-homepage-id");
+        that.isVirtualHomepage = bbEmbed("#widget-container").attr("data-virtual-homepage");
+        if (that.homepageItemId === "" && that.isVirtualHomepage === "true") {
+            //that.homepageItemId = saveVirtualHomepage();
             bbEmbed("#initial-message").hide();
         }
         var embedQuerString = "embed_nonce=" + this._uuidv4Generartor() +
-            "&homepageId=" + homepageItemId +
+            "&homepageId=" + that.homepageItemId +
             "&layout=" + layout +
             "&embed_mode=" + this.embedOptions.mode +
             "&embed_timestamp=" + Math.round((new Date()).getTime() / 1000) +
             "&embed_expirationtime=" + this.embedOptions.expirationTime;
-        var data = {
-            embedQuerString: encodeURI(embedQuerString),
-            dashboardServerApiUrl: this.dashboardServerApiUrl
-        };
-        this._xhrRequestHelper("POST", this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, function (result) {
-            if (result.Status && homepageItemId !== "" && isVirtualHomepage === "true") {
-                this.afterVirtualHomepageSave(homepageItemId);
-            }
-            else if (!result.Status) {
-                that._throwError("Change layout failure due to" + result.Message);
-            }
-        });
+        if (!that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
+            data = {
+                embedQuerString: encodeURI(embedQuerString),
+                dashboardServerApiUrl: this.dashboardServerApiUrl
+            };
+            this._xhrRequestHelper("POST", this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._changeLayoutSuccess);
+        }
+        else {
+            data = {
+                'homepageId': that.homepageItemId,
+                'layout': layout
+            };
+            bbEmbed.ajax({
+                async: false,
+                type: 'POST',
+                url: that.dashboardServerApiUrl + "/embed/get-details",
+                headers: {
+                    'Authorization': "Bearer " + that.accessToken
+                },
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: bbEmbed.proxy(that._changeLayoutSuccess, that)
+            });
+        }
+    }
+    _changeLayoutSuccess(result) {
+        if (result.Status && this.homepageItemId !== "" && this.isVirtualHomepage === "true") {
+            this.afterVirtualHomepageSave(this.homepageItemId);
+        }
+        else if (!result.Status) {
+            this._throwError("Change layout failure due to" + result.Message);
+        }
     }
     _createPinboardDom(itemDetail) {
         var that = this;
@@ -1150,7 +1483,6 @@ class BoldBI {
                                 bbEmbed('#column-' + (i + 1)).append('<li class="list-item" ' + styleAttr + '><div class="widget" id=widget_' + (i + 1) + '_' + (j + 1) + ' data-dashboardurl="' + href + '" style="height:100%;width:100%;"></div></li>');
                             }
                             else {
-                                //<i data-href="' + href + '" class="items view-item su su-open-link-newtab" data-toggle="tooltip" data-original-title="Go To Dashboard" style="color: black;" />
                                 var deleteIconDiv = that.embedOptions.pinboardSettings.enableUnpinWidget ? '<div id="widget-icons"><i class="items unpin-widget su su-delete" data-toggle="tooltip" data-original-title="Unpin Widget"  style="color: black;" /></div>' : '';
                                 bbEmbed('#column-' + (i + 1)).append('<li class="list-item" ' + styleAttr + '><div class="widget" id=widget_' + (i + 1) + '_' + (j + 1) + ' data-dashboardurl="' + href + '" style="height: ' + height + 'px;width:100%;background:#fff;"><div class="widget-sortable" style="width:100%;float:left;display:block;height:0px"><div style="height:100%;width:100%;cursor:move;"><div id="item-name">' + itemName + '</div>' + deleteIconDiv + '</div></div></div></li>');
                             }
@@ -1234,13 +1566,6 @@ class BoldBI {
                 dbrdInstance.resizeDashboard();
             });
         }
-        //bbEmbed.map(bbEmbed("#widget-container").find('ul'), function (value, index) {
-        //    bbEmbed.map(bbEmbed(value).find('li'), function (liValue, liIndex) {
-        //        if (liIndex !== 0) {
-        //            bbEmbed(liValue).css('margin-top', '30px');
-        //        };
-        //    });
-        //});
     }
     setListMinimumHeight() {
         var tempArr = [];
@@ -1258,11 +1583,11 @@ class BoldBI {
     enableSorting() {
         var that = this;
         var isSyncfusionIdentifier = false;
-        jQuery("#column-1, #column-2, #column-3").sortable({
+        window.bbEmbed("#column-1, #column-2, #column-3").sortable({
             connectWith: "ul",
             placeholder: "placeholder",
-            handle: ".e-dbrd-control-header:not(.e-dbrd-control-menu-icon)",
-            cancel: ".empty, .e-dbrd-control-menu-icon",
+            handle: ".bbi-dbrd-control-header:not(.bbi-dbrd-control-menu-icon)",
+            cancel: ".empty, .bbi-dbrd-control-menu-icon",
             containment: "#" + that.embedOptions.embedContainerId,
             cursor: "move",
             tolerance: "pointer",
@@ -1281,7 +1606,7 @@ class BoldBI {
                 that.fromPosition = ui.item.index() + 1;
                 that.toColumn = bbEmbed(event.target).data("column-id");
                 that.toPosition = ui.item.index() + 1;
-                var dragPinWidgetInstance = window.bbEmbed('#' + ui.item.find('.pinWidget').attr('id') + '_embeddedbi').data('BoldBIDashboardDesigner');
+                var dragPinWidgetInstance = bbEmbed('#' + ui.item.find('.pinWidget').attr('id') + '_embeddedbi').data('BoldBIDashboardDesigner');
                 var clientFnc = window[that.embedOptions.onDrag];
                 if (clientFnc instanceof Function) {
                     clientFnc.call(this, dragPinWidgetInstance);
@@ -1293,7 +1618,7 @@ class BoldBI {
             stop: function (event, ui) {
                 that.showEmptyList();
                 var clientFnc = window[that.embedOptions.onDrop];
-                var dropPinWidgetInstance = window.bbEmbed('#' + ui.item.find('.pinWidget').attr('id') + '_embeddedbi').data('BoldBIDashboardDesigner');
+                var dropPinWidgetInstance = bbEmbed('#' + ui.item.find('.pinWidget').attr('id') + '_embeddedbi').data('BoldBIDashboardDesigner');
                 if (clientFnc instanceof Function) {
                     clientFnc.call(this, dropPinWidgetInstance);
                 }
@@ -1302,14 +1627,14 @@ class BoldBI {
                 }
                 if (!(that.fromColumn === that.toColumn && that.fromPosition === that.toPosition)) {
                     if (that.fromColumn !== that.toColumn) {
-                        window.bbEmbed('#' + ui.item.find('.pinWidget').attr('id') + '_embeddedbi').data('BoldBIDashboardDesigner').resizeDashboard();
+                        window.bbEmbed('#' + ui.item.find('.pinWidget').attr('id') + '_embeddedbi').data("BoldBIDashboardDesigner").resizeDashboard();
                     }
                     that.dragAndDrop(that.fromColumn, that.toColumn, that.fromPosition, that.toPosition, ui);
                 }
                 that.setListMinimumHeight();
             }
         });
-        jQuery("#column-1, #column-2, #column-3").disableSelection();
+        window.bbEmbed("#column-1, #column-2, #column-3").disableSelection();
     }
     showEmptyList() {
         bbEmbed("#widget-container ul").each(function (i) {
@@ -1319,18 +1644,11 @@ class BoldBI {
         });
     }
     dragAndDrop(fromColumn, toColumn, fromPosition, toPosition, ui) {
+        var that = this;
+        var data;
         var homepageItemId = bbEmbed("#widget-container").attr("data-homepage-id");
         var from = { Column: fromColumn, Position: fromPosition };
         var to = { Column: toColumn, Position: toPosition };
-        //bbEmbed.map(bbEmbed("#widget-container").find('ul'), function (value, index) {
-        //    bbEmbed.map(bbEmbed(value).find('li'), function (liValue, liIndex) {
-        //        if (liIndex !== 0) {
-        //            bbEmbed(liValue).css('margin-top', '30px');
-        //        } else {
-        //            bbEmbed(liValue).css('margin-top', '10px');
-        //        }
-        //    });
-        //});
         var embedQuerString = "embed_nonce=" + this._uuidv4Generartor() +
             "&homepageId=" + homepageItemId +
             "&moveFrom=" + JSON.stringify(from) +
@@ -1338,13 +1656,35 @@ class BoldBI {
             "&embed_mode=" + this.embedOptions.mode +
             "&embed_timestamp=" + Math.round((new Date()).getTime() / 1000) +
             "&embed_expirationtime=" + this.embedOptions.expirationTime;
-        var data = {
-            embedQuerString: encodeURI(embedQuerString),
-            dashboardServerApiUrl: this.dashboardServerApiUrl
-        };
-        this._xhrRequestHelper("POST", this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._dragAndDropSuccess);
+        if (!that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
+            data = {
+                embedQuerString: encodeURI(embedQuerString),
+                dashboardServerApiUrl: this.dashboardServerApiUrl
+            };
+            this._xhrRequestHelper("POST", this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._dragAndDropSuccess);
+        }
+        else {
+            data = {
+                'homepageId': homepageItemId,
+                'moveFrom': JSON.stringify(from),
+                'moveTo': JSON.stringify(to)
+            };
+            bbEmbed.ajax({
+                async: false,
+                type: 'POST',
+                url: that.dashboardServerApiUrl + "/embed/get-details",
+                data: JSON.stringify(data),
+                headers: {
+                    'Authorization': "Bearer " + that.accessToken
+                },
+                contentType: 'application/json',
+                success: bbEmbed.proxy(that._dragAndDropSuccess, that)
+            });
+        }
     }
     _unPinItem(column, position, event) {
+        var that = this;
+        var data;
         var homepageItemId = bbEmbed("#widget-container").attr("data-homepage-id");
         var unpinPosition = { Column: column, Position: position };
         var embedQuerString = "embed_nonce=" + this._uuidv4Generartor() +
@@ -1354,11 +1694,31 @@ class BoldBI {
             "&embed_mode=" + this.embedOptions.mode +
             "&embed_timestamp=" + Math.round((new Date()).getTime() / 1000) +
             "&embed_expirationtime=" + this.embedOptions.expirationTime;
-        var data = {
-            embedQuerString: encodeURI(embedQuerString),
-            dashboardServerApiUrl: this.dashboardServerApiUrl
-        };
-        this._xhrRequestHelper("POST", this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._unPinSuccess);
+        if (!that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
+            data = {
+                embedQuerString: encodeURI(embedQuerString),
+                dashboardServerApiUrl: this.dashboardServerApiUrl
+            };
+            this._xhrRequestHelper("POST", this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._unPinSuccess);
+        }
+        else {
+            data = {
+                'homepageId': homepageItemId,
+                'unpinPosition': JSON.stringify(unpinPosition),
+                'isUnpin': true
+            };
+            bbEmbed.ajax({
+                async: false,
+                type: 'POST',
+                url: that.dashboardServerApiUrl + "/embed/get-details",
+                headers: {
+                    'Authorization': "Bearer " + that.accessToken
+                },
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: bbEmbed.proxy(that._unPinSuccess, that)
+            });
+        }
     }
     _unPinSuccess(result) {
         if (result.Status) {
@@ -1369,15 +1729,6 @@ class BoldBI {
                 bbEmbed("#widget-container ul li.empty .empty-content").find(".drag-widget").hide();
                 bbEmbed("#widget-container ul li.empty .empty-content").removeClass("non-empty-homepage").addClass("empty-homepage");
             }
-            //bbEmbed.map(bbEmbed("#widget-container").find('ul'), function (value, index) {
-            //    bbEmbed.map(bbEmbed(value).find('li'), function (liValue, liIndex) {
-            //        if (liIndex !== 0) {
-            //            bbEmbed(liValue).css('margin-top', '30px');
-            //        } else {
-            //            bbEmbed(liValue).css('margin-top', '10px');
-            //        }
-            //    });
-            //});
             this.setListMinimumHeight();
         }
     }
@@ -1445,15 +1796,15 @@ class BoldBI {
                                         bbEmbed("#widget_" + (i + 1) + "_" + (j + 1) + " .e-control-heading span").hasClass("e-control-title") == false ? bbEmbed("#widget_" + (i + 1) + "_" + (j + 1) + " .e-control-heading").text(args[i].Item[j].Name) : "";
                                     }
                                     if (args[i].Item[j].IsActive && !args[i].Item[j].IsHavingPermission) {
-                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find(".e-dbrd-control").remove();
-                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find(".e-dbrd-control-container").append("<div class='no-permission'><span class='message'>" + window.Server.App.LocalizationContent.PermissionDeniedWidget + "</span></div>");
+                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find(".bbi-dbrd-control").remove();
+                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find(".bbi-dbrd-control-container").append("<div class='no-permission'><span class='message'>" + window.Server.App.LocalizationContent.PermissionDeniedWidget + "</span></div>");
                                     }
                                     else if (!args[i].Item[j].IsActive && !args[i].Item[j].IsHavingPermission) {
-                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find(".e-dbrd-control").remove();
-                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find(".e-dbrd-control-container").append("<div class='no-permission'><span class='message'>" + window.Server.App.LocalizationContent.DeletedWidgetMessage + "</span></div>");
+                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find(".bbi-dbrd-control").remove();
+                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find(".bbi-dbrd-control-container").append("<div class='no-permission'><span class='message'>" + window.Server.App.LocalizationContent.DeletedWidgetMessage + "</span></div>");
                                     }
                                     if (args[i].Item[j].IsActive && args[i].Item[j].IsHavingPermission && args[i].Item[j].QueryString != null) {
-                                        var currentElement = window.bbEmbed("#widget_" + (i + 1) + "_" + (j + 1));
+                                        var currentElement = bbEmbed("#widget_" + (i + 1) + "_" + (j + 1));
                                         currentElement.find("#filter-info").parent().append('<div class="filter-overview"><span id="heading">' + window.Server.App.LocalizationContent.AppliedFilters + '</span><div id="outer-div"><div id="scroller-content"><div id="applied-filters-container"></div></div></div></div>');
                                         var parsedQueryFilter = currentElement.data("ejDashboardViewer")._parseParameterQuery(args[i].Item[j].QueryString);
                                         //var filtersDom = buildAppliedFiltersDom(parsedQueryFilter);
@@ -1472,21 +1823,21 @@ class BoldBI {
                                     if (event.widgetInformation.Name.toLowerCase() != "widget not configured") {
                                         if (!window.IsMobile) {
                                             if (event.widgetInformation.Name.toLowerCase() != "card") {
-                                                window.bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).data("ejDashboardViewer").model.size.height = "400px";
+                                                bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).data("ejDashboardViewer").model.size.height = "400px";
                                             }
                                             else {
-                                                window.bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).data("ejDashboardViewer").model.size.height = "250px";
+                                                bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).data("ejDashboardViewer").model.size.height = "250px";
                                             }
                                         }
                                         else {
-                                            window.bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).data("ejDashboardViewer").model.size.height = "250px";
+                                            bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).data("ejDashboardViewer").model.size.height = "250px";
                                         }
                                     }
                                     else {
-                                        window.bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).data("ejDashboardViewer").model.size.height = "200px";
-                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find(".e-dbrd-control-container").append("<div class='no-permission'><span class='message'>" + window.Server.App.LocalizationContent.DeletedWidgetMessage + "</span></div>");
+                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).data("ejDashboardViewer").model.size.height = "200px";
+                                        bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find(".bbi-dbrd-control-container").append("<div class='no-permission'><span class='message'>" + window.Server.App.LocalizationContent.DeletedWidgetMessage + "</span></div>");
                                     }
-                                    if (event.iconsinformation.length > 0 && event.iconsinformation[0].classname == "e-dbrd-link-enable") {
+                                    if (event.iconsinformation.length > 0 && event.iconsinformation[0].classname == "bbi-dbrd-link-enable") {
                                         event.iconsinformation[0].margintop = "1px";
                                     }
                                     if (!window.IsMobile) {
@@ -1533,8 +1884,6 @@ class BoldBI {
                             });
                         }
                         else {
-                            //bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).addClass("sydj-format").append("<div class='no-permission'><span class='message'>" + window.Server.App.LocalizationContent.SydjWidgetMessage + "</span></div>");
-                            //bbEmbed("#homepage-list").selectpicker("refresh");
                             var height = 0;
                             var widgetType = column[i].Item[j].WidgetType;
                             if (widgetType != null && (widgetType.includes("Card") || widgetType.includes("Image"))) {
@@ -1543,12 +1892,11 @@ class BoldBI {
                             else {
                                 height = 375;
                             }
-                            //bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).append("<iframe width='100%' height='100%' style='border:0;height: " + height + "px;' src='" + that.baseUrl.trimEnd("/") + "/dashboards/" + column[i].Item[j].ItemId + "/" + column[i].Item[j].CategoryName + "/" + column[i].Item[j].ItemName + "?isWidgetMode=true&widgetId=" + column[i].Item[j].Id + "'></iframe>");
                             var pinboardIdName = that.embedOptions.embedContainerId + '_pinBoard_' + (i + 1) + '_' + (j + 1);
                             bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).append('<div class="pinWidget" style="height:calc(100% - 5px);width:93%;overflow: hidden !important;" id="' + pinboardIdName + '"><div id="' + pinboardIdName + '_embeddedbi" class="pinBoardDbrd"></div ></div>');
                             that.pinBoardRendered = false;
                             that.pinboardIds.push({ 'widgetId': column[i].Item[j].Id, 'pinboardContainerId': pinboardIdName });
-                            that.loadDashboardWidget(column[i].Item[j].Id, column[i].Item[j].ItemId);
+                            that.pinboardDetails[column[i].Item[j].Id] = column[i].Item[j].WidgetDetails;
                             if (column[i].Item[j].IsActive && !column[i].Item[j].IsHavingPermission) {
                                 bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).find("iframe").remove();
                                 bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).append("<div class='no-permission'><span class='message'>" + window.Server.App.LocalizationContent.PermissionDeniedWidget + "</span></div>");
@@ -1560,11 +1908,9 @@ class BoldBI {
                         }
                     });
                     bbEmbed("#widget-container").show();
-                    //hideWaitingPopup("content-area");
                 }
                 else {
                     bbEmbed("#widget-container").show();
-                    //hideWaitingPopup("content-area");
                 }
             });
             this.enableSorting();
@@ -1579,7 +1925,7 @@ class BoldBI {
                     // serviceUrl: dashboardServiceUrl,
                     // serverUrl: dashboardServerUrl,
                     // _enableHyperLinkOnErrorMessage: false,
-                    // cdnFilePath: isUseCdn ? this.cdnLink + "/scripts/viewer" : "",
+                    // cdnFilePath: isUseCdn ? cdnLink + "/scripts/viewer" : "",
                     dashboardPath: itemDetail.ColumnInfo.Column[0].Item[0].Path,
                     _itemId: itemDetail.ColumnInfo.Column[0].Item[0].ItemId,
                     reportName: "",
@@ -1651,7 +1997,6 @@ class BoldBI {
             };
             this._xhrRequestHelper("POST", this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, function (result) {
                 if (result.Status) {
-                    //bbEmbed('#' + that.embedOptions.embedContainerId).find('#server-app-container').remove();
                     that._addWidgetInPinboard(result.Data);
                 }
                 else if (!result.Status) {
@@ -1692,7 +2037,6 @@ class BoldBI {
         else {
             pinWidgetHeight = 375;
         }
-        //bbEmbed("#widget_" + (i + 1) + "_" + (j + 1)).append("<iframe width='100%' height='100%' style='border:0;height: " + height + "px;' src='" + that.baseUrl.trimEnd("/") + "/dashboards/" + column[i].Item[j].ItemId + "/" + column[i].Item[j].CategoryName + "/" + column[i].Item[j].ItemName + "?isWidgetMode=true&widgetId=" + column[i].Item[j].Id + "'></iframe>");
         var pinboardIdName = this.embedOptions.embedContainerId + '_pinBoard_1' + '_' + (ulElementLilength + 1);
         bbEmbed("#widget_1" + "_" + (ulElementLilength + 1)).append('<div class="pinWidget" style="height:calc(100% - 5px);width:93%;overflow: hidden !important;" id="' + pinboardIdName + '"><div id="' + pinboardIdName + '_embeddedbi" class="pinBoardDbrd"></div ></div>');
         this.pinBoardRendered = false;
@@ -1705,11 +2049,9 @@ class BoldBI {
     _renderMultiTabDashboard(embedResponse) {
         if (this.embedOptions.mode === BoldBI.Mode.View && !this.isWidgetMode) {
             this.isMultiTab = true;
-            this.parentDbrdId = embedResponse[0].ParentId;
             var that = this;
-            var tabObj;
             var tabIndex = 0;
-            var embedContainer = bbEmbed('#' + that.embedOptions.embedContainerId); //.parent();
+            var embedContainer = bbEmbed('#' + that.embedOptions.embedContainerId);
             embedContainer.html('');
             var containerName = that.embedOptions.embedContainerId + "_multi_tab_dashboard";
             var multiTabContainer = bbEmbed("<div id=" + containerName + " class='multitab-dbrd' style='height: 100% !important'></div>");
@@ -1717,20 +2059,25 @@ class BoldBI {
             var tabHeader = bbEmbed('<div class="e-tab-header"></div>');
             var tabContent = bbEmbed('<div class="e-content"></div>');
             bbEmbed.map(embedResponse, function (value, index) {
-                var dashboardId = 'multi_' + value.DashboardId.toString().replaceAll("-", "");
-                tabHeader.append(bbEmbed('<div>' + value.Name + '</div>'));
-                var multitabDbrdEle = bbEmbed('<div style="height:100%;width:100%;overflow: hidden !important;" id="' + dashboardId + '"></div>');
-                tabContent.append(bbEmbed('<div></div>').append(multitabDbrdEle.append('<div id="' + dashboardId + '_embeddedbi" class="bbembed-multitab-dbrd"></div>')));
-                if (index === 0) {
-                    that._getAuthorizationToken(value.DashboardId);
+                var dashboardItemDetail = JSON.parse(value.ItemDetail);
+                that.parentDbrdId = value.parentId;
+                var dashboardId = dashboardItemDetail.Id.replaceAll("-", "");
+                that.dashboardDetails[dashboardId] = value;
+                if (!that._isNullOrUndefined(that.embedOptions.dashboardSettings.dashboardName) && typeof that.embedOptions.dashboardSettings.dashboardName != 'string') {
+                    bbEmbed.map(that.embedOptions.dashboardSettings.dashboardName, function (val, index) {
+                        dashboardItemDetail.Name = (dashboardId == val.dashboardId.replaceAll("-", "")) ? that._isEmptyOrSpaces(val.dashboardName) ? dashboardItemDetail.Name : val.dashboardName : dashboardItemDetail.Name;
+                    });
                 }
+                tabHeader.append(bbEmbed('<div>' + dashboardItemDetail.Name + '</div>'));
+                var multitabDbrdEle = bbEmbed('<div style="height:100%;width:100%;overflow: hidden !important;" id="multi_' + dashboardId + '"></div>');
+                tabContent.append(bbEmbed('<div></div>').append(multitabDbrdEle.append('<div id="multi_' + dashboardId + '_embeddedbi" class="bbembed-multitab-dbrd"></div>')));
             });
             multiTabContainer.append(tabHeader).append(tabContent);
-            tabObj = new ejdashboard.navigations.Tab({
+            tabInstance = new ejdashboard.navigations.Tab({
                 enableAnimation: false,
                 selected: bbEmbed.proxy(this._tabSelected, this)
             });
-            tabObj.appendTo("#" + containerName);
+            tabInstance.appendTo("#" + containerName);
             bbEmbed('.e-tab-header .e-toolbar-item .e-tab-text').css({ 'display': 'inline-block', 'width': '150px', 'white-space': 'nowrap', 'overflow': 'hidden', 'text-overflow': 'ellipsis', 'color': '#000', 'text-transform': 'none' });
             bbEmbed("<style type='text/css'> .embed-multi-tab-indicator{ background: #0565ff !important; border-radius: 4px; display: block !important; height: 3px !important;}</style>").appendTo("head");
             bbEmbed('.e-control.e-tab .e-tab-header .e-indicator').addClass('embed-multi-tab-indicator');
@@ -1744,35 +2091,60 @@ class BoldBI {
             });
             bbEmbed(embedContainer).css({ 'overflow-x': 'hidden', 'overflow-y': 'hidden', 'width': that.embedOptions.width });
             bbEmbed("#" + containerName).css({ 'width': bbEmbed(".e-content.e-lib.e-touch").width(), 'height': this.embedOptions.height });
-            tabObj.refreshActElePosition();
+            bbEmbed(".e-tab-header")[0].ej2_instances[0].refreshOverflow();
+            tabInstance.resizeContext();
+            bbEmbed.map(embedResponse, function (value, index) {
+                if (index === 0) {
+                    var response = {
+                        Apistatus: true,
+                        Data: value,
+                        Status: true
+                    };
+                    that._renderDashboard(response);
+                }
+            });
         }
         else {
             if (this.isWidgetMode) {
+                var ele = document.getElementById(this.embedOptions.embedContainerId);
+                if (BoldBI._hasinstance(ele, "embeddedBoldBI")) {
+                    BoldBI._removeinstance(ele, "embeddedBoldBI");
+                }
                 this._throwError("Can't able to render the widget mode in Multitab dashboard");
             }
             else {
+                var ele = document.getElementById(this.embedOptions.embedContainerId);
+                if (BoldBI._hasinstance(ele, "embeddedBoldBI")) {
+                    BoldBI._removeinstance(ele, "embeddedBoldBI");
+                }
                 this._throwError("Can't able to render the Multitab dashboard in design mode");
             }
         }
     }
     _tabSelected(args) {
-        var containerName = bbEmbed(args.selectedItem).parents('.multitab-dbrd').attr('id'); //args.selectedItem.parentNode.parentNode.parentElement.attributes['id'].value;
-        for (var i = 0; i < bbEmbed("#" + containerName + " .e-toolbar-item").length; i++) {
-            bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).attr('style', 'display:block !important');
-            if (bbEmbed("#" + containerName + " .e-toolbar-item.e-active").attr("aria-controls") === "e-content-" + containerName + "_" + i) {
-                bbEmbed(bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).children()).css({ "display": "block", "position": "absolute", "left": 0 });
-                var dbrdInstance = window.bbEmbed('#' + bbEmbed(bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).children()).children().attr('id')).data('BoldBIDashboardDesigner');
+        var containerName = window.bbEmbed(args.selectedItem).parents('.multitab-dbrd').attr('id');
+        for (var i = 0; i < window.bbEmbed("#" + containerName + " .e-toolbar-item").length; i++) {
+            window.bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).attr('style', 'display:block !important');
+            if (window.bbEmbed("#" + containerName + " .e-toolbar-item.e-active").attr("aria-controls") === "e-content-" + containerName + "_" + i) {
+                window.bbEmbed(window.bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).children()).css({ "display": "block", "position": "absolute", "left": 0 });
+                var dbrdInstance = window.bbEmbed('#' + window.bbEmbed(window.bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).children()).children().attr('id')).data('BoldBIDashboardDesigner');
                 if (dbrdInstance === null || dbrdInstance === undefined) {
-                    this._getAuthorizationToken(bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).children().attr('id').split('_')[1]);
+                    var dashboardId = window.bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).children().attr('id').split('_')[1];
+                    var response = {
+                        Apistatus: true,
+                        Data: this.dashboardDetails[dashboardId],
+                        Status: true
+                    };
+                    this._renderDashboard(response);
                 }
             }
             else {
-                bbEmbed(bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).children()).css({ "display": "block", "position": "absolute", "left": bbEmbed(".e-content.e-lib.e-touch").width() * (i + 1) });
+                window.bbEmbed(window.bbEmbed('.e-content').find("#e-content-" + containerName + "_" + i).children()).css({ "display": "block", "position": "absolute", "left": window.bbEmbed(".e-content.e-lib.e-touch").width() * (i + 1) });
             }
         }
     }
     _isDependencyLoaded(that, dashboardId) {
-        if (bbEmbed instanceof Function &&
+        if (window.bbEmbed instanceof Function &&
             window.BoldBIDashboard instanceof Object && !that._isNullOrUndefined(window.BoldBIDashboard) &&
             window.BoldBIDashboard.Designer instanceof Object &&
             window.BoldBIDashboardDesigner instanceof Function &&
@@ -1787,15 +2159,15 @@ class BoldBI {
             setTimeout(that._isDependencyLoaded, 500, that);
         }
     }
-    ;
     _getDashboardInstance(embedChildId) {
-        var ele = window.jQuery.call(this, "#" + (embedChildId ? embedChildId : this.childContainer.id))[0];
-        return window.jQuery.data.call(this, ele, "BoldBIDashboardDesigner");
+        var ele = window.bbEmbed.call(this, "#" + (embedChildId ? embedChildId : this.childContainer.id))[0];
+        if (ele) {
+            return window.bbEmbed.data.call(this, ele, "BoldBIDashboardDesigner");
+        }
     }
-    ;
     _onBoldBIDashboardInstaceActionBegin(arg, embedContainerId) {
         if (this.embedOptions.theme != BoldBI.Theme.Light && this.isMultiTab && parseInt(bbEmbed(".e-content .e-active").attr('id').split('_')[bbEmbed(".e-content .e-active").attr('id').split('_').length - 1]) === 0) {
-            var dashboadInstance = window.bbEmbed(".e-content .e-active").find(".bbembed-multitab-dbrd").data('BoldBIDashboardDesigner');
+            var dashboadInstance = bbEmbed(".e-content .e-active").find(".bbembed-multitab-dbrd").data('BoldBIDashboardDesigner');
             this.setDefaultTheme(dashboadInstance.modules.themeHelper.getBannerBackground(), dashboadInstance.modules.themeHelper.getBannerTextColor(), dashboadInstance.modules.themeHelper.getBannerIconColor());
         }
         if (typeof (arg) != "undefined") {
@@ -1821,33 +2193,80 @@ class BoldBI {
         if (arg.eventType == 'dataSourceSaveAction') {
             this._onBoldBIBeforeDatasourceSaveAction(arg);
         }
+        if (arg.eventType == 'filterInteraction') {
+            var clientFnc = window[this.embedOptions.beforeFilterApply];
+            if (clientFnc instanceof Function) {
+                clientFnc.call(this, arg);
+            }
+            if (this.embedOptions.beforeFilterApply instanceof Function) {
+                this.embedOptions.beforeFilterApply.call(this, arg);
+            }
+        }
         if (arg.eventType == 'dataSourceToolbarButtonRender') {
             this._onBoldBIBeforeDataSourceToolbarButtonRenders(arg);
         }
     }
-    ;
     _onBoldBIDashboardInstaceActionComplete(arg) {
+        var that = this;
+        var data;
         var serverFnc = window[this.actionCompleteFn];
         if (!this._isNullOrUndefined(arg.data)) {
             if (arg.data.event == "createConnection") {
                 this.embedOptions.datasourceId = arg.data.source.data;
                 this.embedOptions.mode = BoldBI.Mode.DataSource;
                 this.isNewConnection = true;
-                this._getAuthorizationToken(null);
+                if (!that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
+                    this._getAuthorizationToken();
+                }
+                else {
+                    data = {
+                        'embed_datasource_id': that.embedOptions.datasourceId,
+                        'embed_mode': that.embedOptions.mode
+                    };
+                    bbEmbed.ajax({
+                        async: false,
+                        type: 'POST',
+                        url: that.dashboardServerApiUrl + "/embed/get-details",
+                        headers: {
+                            'Authorization': "Bearer " + that.accessToken
+                        },
+                        data: JSON.stringify(data),
+                        contentType: 'application/json',
+                        success: bbEmbed.proxy(that._renderDashboard, that)
+                    });
+                }
             }
             if (arg.data.event == "cancelDataSource") {
                 this.embedOptions.mode = BoldBI.Mode.Connection;
-                this._getAuthorizationToken(null);
+                if (!that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
+                    this._getAuthorizationToken();
+                }
+                else {
+                    data = {
+                        'embed_mode': that.embedOptions.mode
+                    };
+                    bbEmbed.ajax({
+                        async: false,
+                        type: 'POST',
+                        url: that.dashboardServerApiUrl + "/embed/get-details",
+                        headers: {
+                            'Authorization': "Bearer " + that.accessToken
+                        },
+                        data: JSON.stringify(data),
+                        contentType: 'application/json',
+                        success: bbEmbed.proxy(that._renderDashboard, that)
+                    });
+                }
             }
         }
-        if (this.pinboardIds.length > 0 && arg.eventType == "renderWidget" && arg.source.element.find('.e-dbrd-control-header .e-dbrd-control-title-wrapper').length == 0) {
+        if (this.pinboardIds.length > 0 && arg.eventType == "renderWidget" && arg.source.element.find('.bbi-dbrd-control-header .bbi-dbrd-control-title-wrapper').length == 0) {
             arg.source.element.parents('.widget').find('#widget-icons').css('margin-top', '8px');
             if (arg.source.element.attr('data-name').toLowerCase().includes('card')) {
-                arg.source.element.find('.e-dbrd-control').css('top', '20px');
+                arg.source.element.find('.bbi-dbrd-control').css('top', '20px');
             }
         }
         if (arg.eventType == "interactionCompleted") {
-            var data = {
+            data = {
                 filterData: this._getFilterData(arg.source.data.encryptedData),
                 data: arg
             };
@@ -1871,11 +2290,19 @@ class BoldBI {
                 this.embedOptions.actionComplete.call(this, arg);
             }
         }
+        if (arg.eventType == "filterInteraction") {
+            var clientFnc = window[this.embedOptions.afterFilterApply];
+            if (clientFnc instanceof Function) {
+                clientFnc.call(this, arg);
+            }
+            if (this.embedOptions.afterFilterApply instanceof Function) {
+                this.embedOptions.afterFilterApply.call(this, arg);
+            }
+        }
         if (arg.eventType == 'dataSourceSaveAction' && JSON.parse(arg.schema.schema).length > 0) {
             this._onBoldBIAfterDatasourceSaveAction(arg);
         }
     }
-    ;
     _onBoldBIBeforeDataSourceToolbarButtonRenders(arg) {
         for (var i = arg.buttons.length - 1; i >= 0; i--) {
             if (!this.isNewConnection) {
@@ -1891,7 +2318,6 @@ class BoldBI {
         }
         this.isNewConnection = false;
     }
-    ;
     _onBoldBIBeforeDatasourceSaveAction(arg) {
         var clientFnc = window[this.embedOptions.beforeDatasourceSave];
         if (clientFnc instanceof Function) {
@@ -1911,9 +2337,7 @@ class BoldBI {
         }
     }
     _onBoldBIDashboardBeforeBannerIconRender(arg) {
-        if ((this.embedOptions.dashboardSettings.showMoreOption === false && this.embedOptions.dashboardSettings.showRefresh === false && this.embedOptions.dashboardSettings.showExport === false && this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false && this.embedOptions.exportSettings.showCSV === false) ||
-            (this.embedOptions.dashboardSettings.showRefresh === false && this.embedOptions.dashboardSettings.showExport === false && this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false && this.embedOptions.exportSettings.showCSV === false) ||
-            (this.embedOptions.dashboardSettings.showRefresh === false && this.embedOptions.dashboardSettings.showExport === true && this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false && this.embedOptions.exportSettings.showCSV === false)) {
+        if (this.embedOptions.dashboardSettings.showMoreOption === false || (this.embedOptions.dashboardSettings.showRefresh === false && this.embedOptions.dashboardSettings.showExport === false)) {
             arg.iconsinformation = this._arraySlice(arg.iconsinformation, "groupName", "Option");
         }
         var filterOverviewOption = arg.iconsinformation.shift();
@@ -1930,6 +2354,7 @@ class BoldBI {
                 groupId: "dashboard-comment-view",
                 groupName: "Dashboard Comment & Views",
                 items: [
+                    this._createBannerIcon("<div/>", "dashboard-refresh", "e-dbrd-banner-refresh", "Refresh", "refreshdashboard", true, false, { "display": "none", "font-size": "14px" }),
                     this._createBannerIcon("<div/>", "dashboard-fullscreen", "su su-maximize-1", "Fullscreen", "fullscreen", true, false, { "font-size": "14px" })
                 ]
             };
@@ -1948,14 +2373,14 @@ class BoldBI {
         if (this.embedOptions.dashboardSettings.beforeIconRender instanceof Function) {
             this.embedOptions.dashboardSettings.beforeIconRender.call(this, arg);
         }
+        bbEmbed("<style type='text/css'> #dashboard-refresh { display: none !important} </style>").appendTo("head");
     }
-    ;
     _createBannerIcon(tag, id, className, label, dataName, dataEvent, showText, css, href) {
         if (showText) {
             return bbEmbed(tag, {
                 id: id,
                 html: bbEmbed('<span/>', { "class": "icon-with-label", text: label, css: { "font-family": "Roboto", "padding": "10px" } }),
-                "class": "server-banner-icon e-dashboard-banner-icon e-dbrd-designer-hoverable " + className,
+                "class": "server-banner-icon e-dashboard-banner-icon bbi-dbrd-designer-hoverable " + className,
                 "data-name": dataName,
                 "data-event": dataEvent,
                 "href": href,
@@ -1965,7 +2390,7 @@ class BoldBI {
         else {
             return bbEmbed(tag, {
                 id: id,
-                "class": "server-banner-icon e-dashboard-banner-icon e-dbrd-designer-hoverable " + className,
+                "class": "server-banner-icon e-dashboard-banner-icon bbi-dbrd-designer-hoverable " + className,
                 "data-tooltip": label,
                 "data-name": dataName,
                 "data-event": dataEvent,
@@ -1977,8 +2402,7 @@ class BoldBI {
         if (this.embedOptions.dashboardSettings.showRefresh === false) {
             arg.iconsinformation = this._arraySlice(arg.iconsinformation, "groupName", "refresh");
         }
-        if ((this.embedOptions.widgetSettings.showExport === false && this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showCSV === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false)
-            || (this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showCSV === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false)) {
+        if (this.embedOptions.dashboardSettings.showExport === false) {
             arg.iconsinformation = this._arraySlice(arg.iconsinformation, "groupName", "export");
         }
         arg.iconsinformation.forEach(function (x, y) {
@@ -2009,7 +2433,6 @@ class BoldBI {
             this.embedOptions.beforeContextMenuRnder.call(this, arg);
         }
     }
-    ;
     _onBoldBIDashboardSaveFilter(arg) {
         var serverFnc = window[this.onSaveFilterFn];
         if (serverFnc instanceof Function) {
@@ -2023,7 +2446,6 @@ class BoldBI {
             this.embedOptions.filterSettings.onSaveFilter.call(this, arg);
         }
     }
-    ;
     _onBoldBIDashboardSaveAsFilter(arg) {
         var serverFnc = window[this.onSaveAsFilterFn];
         if (serverFnc instanceof Function) {
@@ -2037,7 +2459,6 @@ class BoldBI {
             this.embedOptions.filterSettings.onSaveAsFilter.call(this, arg);
         }
     }
-    ;
     _onBoldBIDashboardOpenViewSection(arg) {
         var serverFnc = window[this.onViewSavedFiltersFn];
         if (serverFnc instanceof Function) {
@@ -2051,10 +2472,19 @@ class BoldBI {
             this.embedOptions.filterSettings.onViewSavedFilters.call(this, arg);
         }
     }
-    ;
     _onBoldBIDashboardBannerIconClick(arg) {
         if (arg.name.toLowerCase() === 'fullscreen') {
             this._switchFullscreenMode(arg);
+        }
+        if (arg.name.toLowerCase() === 'refreshdashboard') {
+            if (this.isMultiTab) {
+                var dashboardInstance = window.bbEmbed(".e-content .e-active").find(".bbembed-multitab-dbrd").data('BoldBIDashboardDesigner');
+                dashboardInstance.updateDashboard();
+            }
+            else {
+                var dashboardInstance = this._getDashboardInstance();
+                dashboardInstance.updateDashboard();
+            }
         }
         var serverFnc = window[this.onBannerIconClickFn];
         if (serverFnc instanceof Function) {
@@ -2074,10 +2504,10 @@ class BoldBI {
                 var dashboadInstance = window.bbEmbed(".e-content .e-active").find(".bbembed-multitab-dbrd").data('BoldBIDashboardDesigner');
                 dashboadInstance.applyDashboardTheme(arg.selectedTheme);
                 this.setDefaultTheme(dashboadInstance.modules.themeHelper.getBannerBackground(), dashboadInstance.modules.themeHelper.getBannerTextColor(), dashboadInstance.modules.themeHelper.getBannerIconColor());
-                var dashboardContainer = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+                var dashboardContainer = window.bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
                 for (var i = 0; i < dashboardContainer.length; i++) {
-                    if (bbEmbed(bbEmbed(".e-content .e-active").find(".bbembed-multitab-dbrd")).attr('id') != bbEmbed(dashboardContainer[i]).attr('id')) {
-                        var embedId = bbEmbed(dashboardContainer[i]).attr('id');
+                    if (window.bbEmbed(window.bbEmbed(".e-content .e-active").find(".bbembed-multitab-dbrd")).attr('id') != window.bbEmbed(dashboardContainer[i]).attr('id')) {
+                        var embedId = window.bbEmbed(dashboardContainer[i]).attr('id');
                         var dashboardViewerInstance = this._getDashboardInstance(embedId);
                         if (dashboardViewerInstance != undefined) {
                             dashboardViewerInstance.applyDashboardTheme(arg.selectedTheme);
@@ -2091,7 +2521,6 @@ class BoldBI {
             }
         }
     }
-    ;
     setDefaultTheme(bgColor, textColor, iconColor) {
         bbEmbed(".e-tab-header.e-control.e-toolbar.e-lib.e-keyboard").css("color", iconColor);
         bbEmbed(".e-toolbar-item .e-tab-text").css("color", textColor);
@@ -2120,7 +2549,7 @@ class BoldBI {
                     wscript.SendKeys("{F11}");
                     setTimeout(function () {
                         if ((screen.availHeight || screen.height - 30) <= window.innerHeight) {
-                            bbEmbed("<style id='embed-fullscreen' type='text/css'> .hide-dashboard-icons #dashboard-refresh {  display: block !important; } .hide-dashboard-icons ul.options, .hide-dashboard-icons .su-pin, .hide-dashboard-icons .su-edit, .hide-dashboard-icons .e-dbrd-banner-link, .hide-dashboard-icons .e-dbrd-banner-menu, .hide-dashboard-icons .e-dbrd-banner-text-icon, .hide-dashboard-icons .e-dbrd-banner-widget-withoutcomments, .hide-dashboard-icons .e-dbrd-banner-widget-withcomments, .hide-dashboard-icons .e-dbrd-control-menu, .hide-dashboard-icons .e-dashboard-banner-menu, .hide-dashboard-icons .e-dashboard-banner-link, .hide-dashboard-icons .su-icon, .hide-dashboard-icons .e-dbrd-control-menu-icon, .hide-dashboard-icons .e-dashboard-banner-icon:not(#dashboard-fullscreen):not(#dashboard-refresh):not(#pinboard-fullscreen), .hide-dashboard-icons .e-dashboard-banner-description, .hide-dashboard-icons .server-banner-icon + .e-banner-verticalsplitline, .hide-dashboard-icons #dashboard_bannerPanel div a + .e-banner-verticalsplitline, .hide-dashboard-icons .e-dashboard-widget-menu { display: none !important; } .hide-dashboard-icons #dashboard { width: 100% !important; } .hide-embed-dashboard-icons .e-dbrd-banner-link, .hide-embed-dashboard-icons .e-dbrd-banner-menu, .hide-embed-dashboard-icons .e-dbrd-banner-text-icon, .hide-embed-dashboard-icons .e-dbrd-banner-widget-withoutcomments, .hide-embed-dashboard-icons .e-dbrd-banner-widget-withcomments, .hide-embed-dashboard-icons .e-dbrd-control-menu, .hide-embed-dashboard-icons .e-dashboard-banner-menu, .hide-embed-dashboard-icons .e-dashboard-banner-link, .hide-embed-dashboard-icons .e-dashboard-banner-icon:not(#dashboard-fullscreen):not(#dashboard-refresh):not(#dashboard_otheroption):not(#dashboard-view):not(#dashboard-comment):not(#dashboard_dashboardmenu), .hide-embed-dashboard-icons #dashboard_bannerPanel div a + .e-banner-verticalsplitline, .hide-embed-dashboard-icons .saved-view .su.cursor-pointer { display: none !important; } </style>").appendTo("head");
+                            bbEmbed("<style id='embed-fullscreen' type='text/css'> .hide-dashboard-icons #dashboard-refresh {  display: block !important; } .hide-dashboard-icons ul.options, .hide-dashboard-icons .su-pin, .hide-dashboard-icons .su-edit, .hide-dashboard-icons .bbi-dbrd-banner-link, .hide-dashboard-icons .bbi-dbrd-banner-menu, .hide-dashboard-icons .bbi-dbrd-banner-text-icon, .hide-dashboard-icons .bbi-dbrd-banner-widget-withoutcomments, .hide-dashboard-icons .bbi-dbrd-banner-widget-withcomments, .hide-dashboard-icons .bbi-dbrd-control-menu, .hide-dashboard-icons .e-dashboard-banner-menu, .hide-dashboard-icons .e-dashboard-banner-link, .hide-dashboard-icons .su-icon, .hide-dashboard-icons .bbi-dbrd-control-menu-icon, .hide-dashboard-icons .e-dashboard-banner-icon:not(#dashboard-fullscreen):not(#dashboard-refresh):not(#pinboard-fullscreen), .hide-dashboard-icons .e-dashboard-banner-description, .hide-dashboard-icons .server-banner-icon + .e-banner-verticalsplitline, .hide-dashboard-icons #dashboard_bannerPanel div a + .e-banner-verticalsplitline, .hide-dashboard-icons .bbi-dashboard-widget-menu { display: none !important; } .hide-dashboard-icons #dashboard { width: 100% !important; } .hide-embed-dashboard-icons .bbi-dbrd-banner-link, .hide-embed-dashboard-icons .bbi-dbrd-banner-menu, .hide-embed-dashboard-icons .bbi-dbrd-banner-text-icon, .hide-embed-dashboard-icons .bbi-dbrd-banner-widget-withoutcomments, .hide-embed-dashboard-icons .bbi-dbrd-banner-widget-withcomments, .hide-embed-dashboard-icons .bbi-dbrd-control-menu, .hide-embed-dashboard-icons .e-dashboard-banner-menu, .hide-embed-dashboard-icons .e-dashboard-banner-link, .hide-embed-dashboard-icons .e-dashboard-banner-icon:not(#dashboard-fullscreen):not(#dashboard-refresh):not(#dashboard_otheroption):not(#dashboard-view):not(#dashboard-comment):not(#dashboard_dashboardmenu), .hide-embed-dashboard-icons #dashboard_bannerPanel div a + .e-banner-verticalsplitline, .hide-embed-dashboard-icons .saved-view .su.cursor-pointer { display: none !important; } </style>").appendTo("head");
                             bbEmbed("body").addClass("hide-dashboard-icons");
                             bbEmbed("#dashboard-fullscreen").removeClass("su-maximize-1").addClass("su-minimize").attr("data-tooltip", "Exit Fullscreen");
                         }
@@ -2155,15 +2584,26 @@ class BoldBI {
         if (!document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) {
             bbEmbed('#embed-fullscreen').remove();
             bbEmbed("body").removeClass("hide-dashboard-icons");
-            bbEmbed('#' + boldBIObj.embedOptions.embedContainerId).find('.multitab-dbrd').css('width', '100%');
-            bbEmbed("#dashboard-fullscreen").addClass("su-maximize-1").removeClass("su-minimize").attr("data-tooltip", "Fullscreen");
+            if (boldBIObj.isMultiTab) {
+                bbEmbed('#' + boldBIObj.embedOptions.embedContainerId).find('.multitab-dbrd').css('width', '100%');
+                bbEmbed('#' + boldBIObj.embedOptions.embedContainerId).find('.multitab-dbrd .e-content .e-active').find("#dashboard-fullscreen").addClass("su-maximize-1").removeClass("su-minimize").attr("data-tooltip", "Fullscreen");
+            }
+            else {
+                bbEmbed("#dashboard-fullscreen").addClass("su-maximize-1").removeClass("su-minimize").attr("data-tooltip", "Fullscreen");
+            }
             bbEmbed("#pinboard-fullscreen").addClass("su-maximize-1").removeClass("su-minimize").attr("data-tooltip", "Fullscreen");
             bbEmbed('#server-app-container').attr('style', 'background-color: #f9f9f9; height:' + bbEmbed("#content-area").height() + 'px;overflow: hidden !important;min-height: 600px; width:' + boldBIObj.embedOptions.width + '');
         }
         else {
-            bbEmbed("<style id='embed-fullscreen' type='text/css'> .hide-dashboard-icons #dashboard-refresh {  display: block !important; } .hide-dashboard-icons ul.options, .hide-dashboard-icons .su-pin, .hide-dashboard-icons .su-edit, .hide-dashboard-icons .e-dbrd-banner-link, .hide-dashboard-icons .e-dbrd-banner-menu, .hide-dashboard-icons .e-dbrd-banner-text-icon, .hide-dashboard-icons .e-dbrd-banner-widget-withoutcomments, .hide-dashboard-icons .e-dbrd-banner-widget-withcomments, .hide-dashboard-icons .e-dbrd-control-menu, .hide-dashboard-icons .e-dashboard-banner-menu, .hide-dashboard-icons .e-dashboard-banner-link, .hide-dashboard-icons .su-icon, .hide-dashboard-icons .e-dbrd-control-menu-icon, .hide-dashboard-icons .e-dashboard-banner-icon:not(#dashboard-fullscreen):not(#dashboard-refresh):not(#pinboard-fullscreen), .hide-dashboard-icons .e-dashboard-banner-description, .hide-dashboard-icons .server-banner-icon + .e-banner-verticalsplitline, .hide-dashboard-icons #dashboard_bannerPanel div a + .e-banner-verticalsplitline, .hide-dashboard-icons .e-dashboard-widget-menu { display: none !important; } .hide-dashboard-icons #dashboard { width: 100% !important; } .hide-embed-dashboard-icons .e-dbrd-banner-link, .hide-embed-dashboard-icons .e-dbrd-banner-menu, .hide-embed-dashboard-icons .e-dbrd-banner-text-icon, .hide-embed-dashboard-icons .e-dbrd-banner-widget-withoutcomments, .hide-embed-dashboard-icons .e-dbrd-banner-widget-withcomments, .hide-embed-dashboard-icons .e-dbrd-control-menu, .hide-embed-dashboard-icons .e-dashboard-banner-menu, .hide-embed-dashboard-icons .e-dashboard-banner-link, .hide-embed-dashboard-icons .e-dashboard-banner-icon:not(#dashboard-fullscreen):not(#dashboard-refresh):not(#dashboard_otheroption):not(#dashboard-view):not(#dashboard-comment):not(#dashboard_dashboardmenu), .hide-embed-dashboard-icons #dashboard_bannerPanel div a + .e-banner-verticalsplitline, .hide-embed-dashboard-icons .saved-view .su.cursor-pointer { display: none !important; } </style>").appendTo("head");
+            var displayVal = (this.embedOptions.dashboardSettings.showRefresh != false) ? "block !important" : "none !important";
+            bbEmbed("<style id='embed-fullscreen' type='text/css'> .hide-dashboard-icons #dashboard-refresh { display:" + displayVal + "; } .hide-dashboard-icons ul.options, .hide-dashboard-icons .su-pin, .hide-dashboard-icons .su-edit, .hide-dashboard-icons .bbi-dbrd-banner-link, .hide-dashboard-icons .bbi-dbrd-banner-menu, .hide-dashboard-icons .bbi-dbrd-banner-text-icon, .hide-dashboard-icons .bbi-dbrd-banner-widget-withoutcomments, .hide-dashboard-icons .bbi-dbrd-banner-widget-withcomments, .hide-dashboard-icons .bbi-dbrd-control-menu, .hide-dashboard-icons .e-dashboard-banner-menu, .hide-dashboard-icons .e-dashboard-banner-link, .hide-dashboard-icons .su-icon, .hide-dashboard-icons .bbi-dbrd-control-menu-icon, .hide-dashboard-icons .e-dashboard-banner-icon:not(#dashboard-fullscreen):not(#dashboard-refresh):not(#pinboard-fullscreen), .hide-dashboard-icons .e-dashboard-banner-description, .hide-dashboard-icons .server-banner-icon + .e-banner-verticalsplitline, .hide-dashboard-icons #dashboard_bannerPanel div a + .e-banner-verticalsplitline, .hide-dashboard-icons .bbi-dashboard-widget-menu { display: none !important; } .hide-dashboard-icons #dashboard { width: 100% !important; } .hide-embed-dashboard-icons .bbi-dbrd-banner-link, .hide-embed-dashboard-icons .bbi-dbrd-banner-menu, .hide-embed-dashboard-icons .bbi-dbrd-banner-text-icon, .hide-embed-dashboard-icons .bbi-dbrd-banner-widget-withoutcomments, .hide-embed-dashboard-icons .bbi-dbrd-banner-widget-withcomments, .hide-embed-dashboard-icons .bbi-dbrd-control-menu, .hide-embed-dashboard-icons .e-dashboard-banner-menu, .hide-embed-dashboard-icons .e-dashboard-banner-link, .hide-embed-dashboard-icons .e-dashboard-banner-icon:not(#dashboard-fullscreen):not(#dashboard-refresh):not(#dashboard_otheroption):not(#dashboard-view):not(#dashboard-comment):not(#dashboard_dashboardmenu), .hide-embed-dashboard-icons #dashboard_bannerPanel div a + .e-banner-verticalsplitline, .hide-embed-dashboard-icons .saved-view .su.cursor-pointer { display: none !important; } </style>").appendTo("head");
             bbEmbed("body").addClass("hide-dashboard-icons");
-            bbEmbed("#dashboard-fullscreen").removeClass("su-maximize-1").addClass("su-minimize").attr("data-tooltip", "Exit Fullscreen");
+            if (boldBIObj.isMultiTab) {
+                bbEmbed('#' + boldBIObj.embedOptions.embedContainerId).find('.multitab-dbrd .e-content .e-active').find("#dashboard-fullscreen").removeClass("su-maximize-1").addClass("su-minimize").attr("data-tooltip", "Exit Fullscreen");
+            }
+            else {
+                bbEmbed("#dashboard-fullscreen").removeClass("su-maximize-1").addClass("su-minimize").attr("data-tooltip", "Exit Fullscreen");
+            }
             bbEmbed("#pinboard-fullscreen").removeClass("su-maximize-1").addClass("su-minimize").attr("data-tooltip", "Exit Fullscreen");
             bbEmbed('#server-app-container').attr('style', 'background-color: #f9f9f9; overflow: auto !important');
         }
@@ -2175,8 +2615,7 @@ class BoldBI {
         if (this.embedOptions.widgetSettings.showFilter === false) {
             arg.iconsinformation = this._arraySlice(arg.iconsinformation, "name", "filter");
         }
-        if ((this.embedOptions.widgetSettings.showExport === false && this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showCSV === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false)
-            || (this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showCSV === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false)) {
+        if (this.embedOptions.widgetSettings.showExport === false) {
             arg.iconsinformation = this._arraySlice(arg.iconsinformation, "name", "export");
             if (!this._isNullOrUndefined(arg.widgetInformation) &&
                 !this._isNullOrUndefined(arg.widgetInformation.widgetJson) &&
@@ -2185,8 +2624,7 @@ class BoldBI {
                 arg.iconsinformation = this._arraySlice(arg.iconsinformation, "name", "menu");
             }
         }
-        if ((this.embedOptions.widgetSettings.showMoreOption === false && this.embedOptions.widgetSettings.showExport === false && this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showCSV === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false)
-            || (this.embedOptions.widgetSettings.showMoreOption === false && this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showCSV === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false)) {
+        if (this.embedOptions.widgetSettings.showMoreOption === false) {
             arg.iconsinformation = this._arraySlice(arg.iconsinformation, "name", "menu");
         }
         var serverFnc = window[this.beforeWidgetIconRenderedFn];
@@ -2201,14 +2639,20 @@ class BoldBI {
             this.embedOptions.widgetSettings.beforeIconRender.call(this, arg);
         }
     }
-    ;
     _onBoldBIBeforeControlMenuOpen(arg) {
-        if ((this.embedOptions.widgetSettings.showExport === false && this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showCSV === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false)
-            || (this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showCSV === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false)) {
+        if (this.embedOptions.widgetSettings.showExport === false || (this.embedOptions.exportSettings.showExcel === false && this.embedOptions.exportSettings.showCSV === false && this.embedOptions.exportSettings.showImage === false && this.embedOptions.exportSettings.showPDF === false)) {
             arg.menuItems = this._arraySlice(arg.menuItems, "id", "export");
         }
     }
-    ;
+    _onBoldBIBeforeDashboardMobileMenuOpen(arg) {
+        var clientFnc = window[this.embedOptions.beforeDashboardMobileMenuOpen];
+        if (clientFnc instanceof Function) {
+            clientFnc.call(this, arg);
+        }
+        if (this.embedOptions.beforeDashboardMobileMenuOpen instanceof Function) {
+            this.embedOptions.beforeDashboardMobileMenuOpen.call(this, arg);
+        }
+    }
     _onBoldBIDashboardWidgetIconClick(arg) {
         var serverFnc = window[this.onWidgetIconClickFn];
         if (serverFnc instanceof Function) {
@@ -2222,7 +2666,6 @@ class BoldBI {
             this.embedOptions.widgetSettings.onIconClick.call(this, arg);
         }
     }
-    ;
     _onBoldBIDashboardUpdatefavorite(arg) {
         var serverFnc = window[this.onFavoriteStateChangeFn];
         if (serverFnc instanceof Function) {
@@ -2236,7 +2679,6 @@ class BoldBI {
             this.embedOptions.dashboardSettings.onFavoriteIconClick.call(this, arg);
         }
     }
-    ;
     _onBoldBIWidgetExportRender(arg) {
         if (this.embedOptions.exportSettings.showExcel === false) {
             arg.iconsinformation = this._arraySlice(arg.exportOptionCollection, "id", "excel");
@@ -2251,7 +2693,6 @@ class BoldBI {
             arg.iconsinformation = this._arraySlice(arg.exportOptionCollection, "id", "csv");
         }
     }
-    ;
     _onBoldBIBeforeNavigateUrlLinking(arg) {
         var clientFnc = window[this.embedOptions.beforeNavigateUrlLinking];
         if (clientFnc instanceof Function) {
@@ -2261,7 +2702,6 @@ class BoldBI {
             this.embedOptions.beforeNavigateUrlLinking.call(this, arg);
         }
     }
-    ;
     _onBoldBIBeforeNavigateToDashboard(arg) {
         var clientFnc = window[this.embedOptions.beforeNavigateToDashboard];
         if (clientFnc instanceof Function) {
@@ -2271,7 +2711,6 @@ class BoldBI {
             this.embedOptions.beforeNavigateToDashboard.call(this, arg);
         }
     }
-    ;
     _onBoldBIAuthorizionComplete(arg) {
         var clientFnc = window[this.embedOptions.authorizationServer.authorizionComplete];
         if (clientFnc instanceof Function) {
@@ -2281,7 +2720,6 @@ class BoldBI {
             this.embedOptions.authorizationServer.authorizionComplete.call(this, arg);
         }
     }
-    ;
     _showLoader() {
         var loaderStyle = document.createElement('style');
         loaderStyle.innerHTML = '#' + this.embedOptions.embedContainerId + ' .viewer-blue-loader { display: block !important; }	' +
@@ -2298,7 +2736,6 @@ class BoldBI {
         this._removeElement("embedded-bi-error");
         document.getElementById(this.embedOptions.embedContainerId).insertAdjacentHTML('afterbegin', loader);
     }
-    ;
     _getAuthorizationToken(dashboardId) {
         var embedDbrdId = dashboardId ? dashboardId : this.embedOptions.dashboardId;
         var embedQuerString = "embed_nonce=" + this._uuidv4Generartor() +
@@ -2337,7 +2774,6 @@ class BoldBI {
         }
         this.pinBoardRendered = true;
     }
-    ;
     _xhrRequestHelper(type, url, data, headers, callBackFn) {
         var that = this;
         var http = new XMLHttpRequest();
@@ -2360,32 +2796,26 @@ class BoldBI {
         };
         http.send(JSON.stringify(data));
     }
-    ;
     _emptyHtml(elementID) {
         document.getElementById(elementID).innerHTML = "";
     }
-    ;
     _removeElement(id) {
         var elem = document.getElementById(id);
         if (elem !== null)
             elem.parentNode.removeChild(elem);
     }
-    ;
     _uuidv4Generartor() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
     }
-    ;
     _isEmptyOrSpaces(str) {
         return typeof (str) === "undefined" || str === null || str.match(/^ *$/) !== null;
     }
-    ;
     _isNullOrUndefined(value) {
         return value === undefined || value === null;
     }
-    ;
     _validateOptions(options) {
         if (this._isEmptyOrSpaces(options.embedContainerId)) {
             this._throwError("Please provide the valid Embed container Id");
@@ -2415,7 +2845,6 @@ class BoldBI {
         }
         return true;
     }
-    ;
     _isUrl(str) {
         let url;
         try {
@@ -2438,9 +2867,8 @@ class BoldBI {
         }
         throw "BoldBI Embedded: " + errorMsg;
     }
-    ;
     _removeElementsClass(id, childElement, targeClass) {
-        var nodeList;
+        var nodeList = [];
         if (this._isEmptyOrSpaces(id)) {
             nodeList = document.querySelector(childElement);
         }
@@ -2454,20 +2882,17 @@ class BoldBI {
             this._removeClass(element, targeClass);
         }.bind(this));
     }
-    ;
     _hasClass(el, className) {
         if (el.classList)
             return el.classList.contains(className);
         return !!el.className.match(new RegExp('(\\s|^)' + className + '(\\s|$)'));
     }
-    ;
     _addClass(el, className) {
         if (el.classList)
             el.classList.add(className);
         else if (!this._hasClass(el, className))
             el.className += " " + className;
     }
-    ;
     _removeClass(el, className) {
         if (el.classList)
             el.classList.remove(className);
@@ -2476,7 +2901,6 @@ class BoldBI {
             el.className = el.className.replace(reg, ' ');
         }
     }
-    ;
     _arraySlice(arr, key, value) {
         arr.forEach(function (item, index, object) {
             if (item[key] === value) {
@@ -2485,7 +2909,6 @@ class BoldBI {
         }.bind(this));
         return arr;
     }
-    ;
     _getFilterData(filterQuery) {
         var processData;
         var decryptfilterParam = decodeURI(filterQuery).
@@ -2512,7 +2935,6 @@ class BoldBI {
         }
         return this._createFilterCollection(processData.masterData);
     }
-    ;
     _createFilterCollection(masterdata) {
         if (masterdata) {
             var collection = [];
@@ -2537,13 +2959,12 @@ class BoldBI {
             return collection;
         }
     }
-    ;
     _lengthensSelectedFilterInfo(shortenFilterInfoList) {
         var unMinifiedList = [];
         var shortenListLen = shortenFilterInfoList.length;
         for (var index = 0; index < shortenListLen; index++) {
             var minObj = shortenFilterInfoList[index];
-            let unMinifyObj = SelectedFilterValue();
+            var unMinifyObj = new SelectedFilterValue();
             if (this._hasValue(minObj, shortenEnum.UniqueColumnName)) {
                 unMinifyObj[lengthenEnum.UniqueColumnName] = minObj[shortenEnum.UniqueColumnName];
             }
@@ -2626,14 +3047,11 @@ class BoldBI {
                     unMinifyObj.PoPFilter[lengthenEnum.SecondaryType] = minObj[shortenEnum.PoPFilter][shortenEnum.SecondaryType];
                 }
                 if (this._hasValue(minObj[shortenEnum.PoPFilter], shortenEnum.PrimaryCustomRange)) {
-                    //tslint:disable-next-line:max-line-length
                     unMinifyObj.PoPFilter[lengthenEnum.PrimaryCustomRange][lengthenEnum.StartRange] = minObj[shortenEnum.PoPFilter][shortenEnum.PrimaryCustomRange][shortenEnum.StartRange];
-                    //tslint:disable-next-line:max-line-length
                     unMinifyObj.PoPFilter[lengthenEnum.PrimaryCustomRange][lengthenEnum.EndRange] = minObj[shortenEnum.PoPFilter][shortenEnum.PrimaryCustomRange][shortenEnum.EndRange];
                 }
                 if (this._hasValue(minObj[shortenEnum.PoPFilter], shortenEnum.SecondaryCustomRange)) {
                     if (minObj[shortenEnum.PoPFilter][shortenEnum.SecondaryCustomRange].length > 0) {
-                        //tslint:disable-next-line:max-line-length
                         unMinifyObj.PoPFilter[lengthenEnum.SecondaryCustomRange][0][lengthenEnum.StartRange] = minObj[shortenEnum.PoPFilter][shortenEnum.SecondaryCustomRange][0][shortenEnum.StartRange];
                         unMinifyObj.PoPFilter[lengthenEnum.SecondaryCustomRange][0][lengthenEnum.EndRange] = minObj[shortenEnum.PoPFilter][shortenEnum.SecondaryCustomRange][0][shortenEnum.EndRange];
                     }
@@ -2645,17 +3063,14 @@ class BoldBI {
         }
         return { masterData: unMinifiedList };
     }
-    ;
     _hasValue(filterObj, property) {
         return !this._isNullOrUndefined(filterObj) && !this._isNullOrUndefined(filterObj[property]);
     }
-    ;
     _unEscapeSelectedFilterDataforURLFilter(filterInfoList) {
         for (var index = 0; index < filterInfoList.length; index++) {
             var filterInfo = filterInfoList[index];
             if ((!this._isNullOrUndefined(filterInfo.InitialDimensionFilter.Text) && filterInfo.InitialDimensionFilter.Text.length !== 0)) {
                 for (var i = 0; i < filterInfo.InitialDimensionFilter.Text.length; i++) {
-                    //tslint:disable-next-line:max-line-length
                     filterInfo.InitialDimensionFilter.Text[i] = filterInfo.InitialDimensionFilter.Text[i].replaceAll(String.fromCharCode(252) + String.fromCharCode(252), ',').
                         replaceAll(String.fromCharCode(251) + String.fromCharCode(251), '&').
                         replaceAll(String.fromCharCode(250) + String.fromCharCode(250), '=').
@@ -2666,7 +3081,6 @@ class BoldBI {
         }
         return filterInfoList;
     }
-    ;
     static _putinstance(element, key, obj) {
         //_storage = new WeakMap();
         if (!BoldBI._storage.has(element)) {
