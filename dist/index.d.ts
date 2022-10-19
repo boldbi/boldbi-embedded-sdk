@@ -73,6 +73,7 @@ export declare class BoldBI {
         Dark: string;
     }>;
     static _storage: any;
+    static _widgetsCollection: any[];
     constructor();
     static create(options: any): any;
     static getInstance(eleID: any): any;
@@ -86,48 +87,48 @@ export declare class BoldBI {
     /**
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
-    *  @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
-    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    * @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
+    * @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
+    * @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
     */
     exportDashboardAsPdf(exportInformation: any): void;
     /**
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
-    *  @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
-    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter
+    * @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
+    * @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
+    * @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter
     */
     exportDashboardAsImage(exportInformation: any): void;
     /**
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
+    * @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
     */
     exportDashboardAsExcel(exportInformation: any): void;
     /**
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
     * @param {string} widgetName - Define the name of the widget to be exported
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
-    *  @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
-    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    * @param {string} pageSize - Define the size of the page('A3','A4','A5','Letter').
+    * @param {string} pageOrientation - Define the page orientation('Landscape','Portrait').
+    * @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
     */
     exportWidgetAsPdf(exportInformation: any): void;
     /**
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
     * @param {string} widgetName - Define the name of the widget to be exported
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
-    *  @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
-    *  @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
+    * @param {string} exportImageFormat - Define the format of the image to be exported('jpg','png'and'bmp').
+    * @param {number} resolutionDpi - Define the resolution of the image (Integer value above 96).
+    * @param {boolean} showAppliedFilters - Define whether we need to export the dashboard with or without a filter.
     */
     exportWidgetAsImage(exportInformation: any): void;
     /**
     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard or widget id present in the pinboard
     * @param {string} widgetName - Define the name of the widget to be exported
     * @param {string} fileName - Define the name of the file to be exported
-    *  @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
+    * @param {string} fileType - Define the type of file to be exported ('xlsx','xls').
     */
     exportWidgetAsExcel(exportInformation: any): void;
     /**
@@ -148,6 +149,28 @@ export declare class BoldBI {
      */
     refreshWidgetData(widgetNames: any, hideLoader: any, dashboardId: any): void;
     getWidgetData(widgetName: any, clientFnc: any, dashboardId: any): void;
+    /**
+      * @param {string} clientFnc - It denotes the method name to be defined
+      * @param {string} ContainerId - This should be the container id where you want to embed the dashboard
+    */
+    getDashboardCategories(clientFnc: any, containerId: any): void;
+    /**
+      * @param {string} categoryName - Define new category name want to create .
+      * @param {string} categoryDescription - Define the description of new category name .
+      * @param {string} clientFnc - It denotes the method name to be defined
+      * @param {string} ContainerId - This should be the container id where you want to embed the dashboard
+    */
+    createDashboardCategory(categoryName: any, categoryDescription: any, clientFnc: any, containerId: any): void;
+    /**
+      * @param {string} publishModel - Define the information about publish dashboard
+      * @param {string} ContainerId - This should be the container id where you want to embed the dashboard
+    */
+    saveDashboard(publishModel: any, containerId: any): void;
+    getWidgetInstance(eleID: any): any;
+    /**
+      * @param {string} ContainerId - This should be the container id where you want to embed the dashboard
+    */
+    updateWidgetFilters(containerId: any): void;
     _initializeEmbedOptions(options: any): void;
     _initializeUrls(): void;
     _loadCloudDepedentFiles(responseInfo: any): void;
@@ -199,7 +222,10 @@ export declare class BoldBI {
     _onBoldBIDashboardBeforeWidgetIconRendered(arg: any): void;
     _onBoldBIBeforeControlMenuOpen(arg: any): void;
     _onBoldBIBeforeDashboardMobileMenuOpen(arg: any): void;
+    _onBoldBIAjaxBeforeLoad(arg: any): void;
+    _onBoldBIbeforeDesignerToolbarButtonsRendered(arg: any): void;
     _onBoldBIDashboardWidgetIconClick(arg: any): void;
+    _onBoldBIonControlMenuClick(arg: any): void;
     _onBoldBIDashboardUpdatefavorite(arg: any): void;
     _onBoldBIWidgetExportRender(arg: any): void;
     _onBoldBIBeforeNavigateUrlLinking(arg: any): void;
@@ -228,8 +254,14 @@ export declare class BoldBI {
     };
     _hasValue(filterObj: any, property: any): boolean;
     _unEscapeSelectedFilterDataforURLFilter(filterInfoList: any): any;
+    _getWidgetFilterInfo(): any[];
     static _putinstance(element: any, key: any, obj: any): void;
     static _gettinstance(element: any, key: any): any;
     static _hasinstance(element: any, key: any): any;
     static _removeinstance(element: any, key: any): any;
+}
+export declare class widgetBI {
+    containerID: any;
+    constructor();
+    setFilterParameters(filters: any): void;
 }
