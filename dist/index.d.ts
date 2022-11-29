@@ -5,6 +5,7 @@ export declare class BoldBI {
     siteIdentifier: any;
     dashboardServerApiUrl: any;
     designerRootUrl: any;
+    customThemeUrl: any;
     scheduleEndpointUrl: any;
     childContainer: any;
     cdnLink: any;
@@ -40,6 +41,8 @@ export declare class BoldBI {
     designerScriptFiles: any;
     cssFiles: any;
     designerCssFiles: any;
+    applicationThemeCssFiles: any;
+    dashboardThemeCssFiles: any;
     embedOptions: any;
     afterVirtualHomepageSave: any;
     id: any;
@@ -53,6 +56,13 @@ export declare class BoldBI {
     accessToken: any;
     homepageItemId: any;
     isVirtualHomepage: any;
+    dashboardUrl: any;
+    commentsArgs: any;
+    _widgetsCollection: any;
+    jQueryDepedentFile: any;
+    jqConflictFile: any;
+    isFullscreen: any;
+    wrapperDependentScriptFiles: any;
     static Mode: Readonly<{
         View: string;
         Design: string;
@@ -174,10 +184,12 @@ export declare class BoldBI {
     _initializeEmbedOptions(options: any): void;
     _initializeUrls(): void;
     _loadCloudDepedentFiles(responseInfo: any): void;
+    _addJquerydependentFiles(): void;
     _getCloudLinks(): void;
     _loadDepedentFiles(): void;
     _loadBingmapDependentFiles(that: any): void;
     _loadDependentDesignerFiles(that: any): void;
+    _addWrapperDependentFiles(obj: any, fileUriArray: any): void;
     _addedDependentFiles(that: any, fileUriArray: any, isCSS: any): void;
     _checkDepedentFileExists(file: any, isCSS: any): boolean;
     _renderDashboard(responseInfo: any): void;
@@ -216,6 +228,63 @@ export declare class BoldBI {
     _onBoldBIDashboardSaveAsFilter(arg: any): void;
     _onBoldBIDashboardOpenViewSection(arg: any): void;
     _onBoldBIDashboardBannerIconClick(arg: any): void;
+    getComments(commentType: any, args: any, callBackFn: any): void;
+    /**
+         * @param {object} arg - It is an object that holds "content" - Defines the comment you want to add, "dashboardId" -Defines the unique id of the dashboard,"parentCommentId" Defines the comment Id of the comment for which the reply comment is to be added. It should be defined only when adding a reply to the dashboard comment. For other cases, it should be null,"multitabDashboardId"Defines the unique id of the multitab dashboard. It should be defined only when adding a multitab dashboard comment. For other cases, it should be null.
+         * @param {string} arg.content
+         * @param {string} arg.dashboardId
+         * @param {string} arg.parentCommentId
+         * @param {string} arg.multitabDashboardId
+         * @param {string} callBackFn - It denotes the callback method name that must be defined. It would returns the updated comments as arguments.
+     */
+    addDashboardComment(arg: any, callBackFn: any): void;
+    /**
+         * @param {object} arg - It is an object that holds "content" - Defines the comment you want to add,"widgetId" - Defines the unique id of the widget,"dashboardId" -Defines the unique id of the dashboard,"parentCommentId" - Defines the comment Id of the comment for which the reply comment is to be added. It should be defined only when adding a reply to the widget comment. For other cases, it should be null,"multitabDashboardId"- Defines the unique id of the multitab dashboard. It should be defined only when adding a multitab widget comment. For other cases, it should be null.
+         * @param {string} arg.content
+         * @param {string} arg.widgetId
+         * @param {string} arg.dashboardId
+         * @param {string} arg.parentCommentId
+         * @param {string} arg.multitabDashboardId
+        * @param {string} callBackFn -  It denotes the callback method name that must be defined. It would returns the updated comments as arguments.
+    */
+    addWidgetComment(arg: any, callBackFn: any): void;
+    /**
+      * @param {object} arg - It is an object that holds "commentId" - Defines the comment Id of the comment you want to delete,"dashboardId" - Defines the unique dashboard Id,"multitabDashboardId" - Defines the unique id of the multitab dashboard. It should be defined only when deleting a multitab dashboard comment. For other cases, it should be null.
+      * @param {string} arg.commentId
+      * @param {string} arg.dashboardId
+      * @param {string} arg.multitabDashboardId
+      * @param {string} callBackFn - It denotes the callback method name that must be defined. It would returns the updated comments as arguments.
+    */
+    deleteDashboardComment(arg: any, callBackFn: any): void;
+    /**
+        * @param {object} arg - It is an object that holds "commentId" - It defines the comment Id of the comment that you want to delete,"widgetId" -Defines the unique widget Id,"dashboardId" -Defines the unique id of the dashboard,"multitabDashboardId" - Defines the unique id of the multitab dashboard. It should be defined only when deleting a multitab widget comment. For other cases, it should be null.
+        * @param {string} arg.commentId
+        * @param {string} arg.widgetId
+        * @param {string} arg.dashboardId
+        * @param {string} arg.multitabDashboardId
+        * @param {string} callBackFn -  It denotes the callback method name that must be defined. It would returns the updated comments as arguments.
+    */
+    deleteWidgetComment(arg: any, callBackFn: any): void;
+    /**
+    * @param {object} arg - It is an object that holds "content" - Defines the comment you have edited,"commentId" - Defines the comment Id of the comment you have edited,"dashboardId" - Defines the unique dashboard Id,"multitabDashboardId" - Defines the unique id of the multitab dashboard. It should be defined only when editing a multitab widget comment. For other cases, it should be null.
+    * @param {string} arg.content
+    * @param {string} arg.commentId
+    * @param {string} arg.dashboardId
+    * @param {string} arg.multitabDashboardId
+    * @param {string} callBackFn -  It denotes the callback method name that must be defined. It would returns the updated comments as arguments.
+    */
+    editDashboardComment(arg: any, callBackFn: any): void;
+    /**
+      * @param {object} arg - It is an object that holds,"content" - Defines the comment you have edited,"commentId" - Defines the comment Id of the comment you have edited,"widgetId" - Defines the unique widget Id,"dashboardId" - Defines the unique id of the dashboard,"multitabDashboardId" - Defines the unique id of the multitab dashboard. It should be defined only when editing a multitab dashboard comment or widget comment. For other cases, it should be null.
+      * @param {string} arg.content
+      * @param {string} arg.commentId
+      * @param {string} arg.widgetId
+      * @param {string} arg.dashboardId
+      * @param {string} arg.multitabDashboardId
+      * @param {string} callBackFn - It denotes the callback method name that must be defined. It would returns the updated comments as arguments.
+    */
+    editWidgetComment(arg: any, callBackFn: any): void;
+    ajaxErrorFnc(jqXHR: any): void;
     setDefaultTheme(bgColor: any, textColor: any, iconColor: any): void;
     _switchFullscreenMode(arg: any): void;
     _fullscreenExitHandler(boldBIObj: any): void;
@@ -224,6 +293,11 @@ export declare class BoldBI {
     _onBoldBIBeforeDashboardMobileMenuOpen(arg: any): void;
     _onBoldBIAjaxBeforeLoad(arg: any): void;
     _onBoldBIbeforeDesignerToolbarButtonsRendered(arg: any): void;
+    _onBoldBIbeforeDatasourceToolbarButtonsRendered(arg: any): void;
+    _onBoldBIbeforeDatasourceToolbarIconsRendered(arg: any): void;
+    _onBoldBIbeforeDesignerToolbarIconsRendered(arg: any): void;
+    _onBoldBItoolbarClick(arg: any): void;
+    _onBoldBIbeforeWidgetItemsListed(arg: any): void;
     _onBoldBIDashboardWidgetIconClick(arg: any): void;
     _onBoldBIonControlMenuClick(arg: any): void;
     _onBoldBIDashboardUpdatefavorite(arg: any): void;
@@ -262,6 +336,7 @@ export declare class BoldBI {
 }
 export declare class widgetBI {
     containerID: any;
+    widgetCollection: any;
     constructor();
     setFilterParameters(filters: any): void;
 }
