@@ -1,12 +1,13 @@
 {
   "name": "@boldbi/boldbi-embedded-sdk",
-  "version": "5.3.53",
+  "version": "6.1.8",
   "description": "A toolkit for embedding BoldBI. This library lets you embed BoldBI dashboard in your Angular, React, VueJS applications",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "build": "tsc",
+    "es-lint": "eslint -c .eslintrc.json --ext .ts ./src/** -f html -o ./cireports/eslint/eslint.html"
   },
   "prepublish": "tsc",
   "repository": {
@@ -29,11 +30,19 @@
   "author": "Syncfusion Inc",
   "license": "SEE LICENSE IN README.md",
   "devDependencies": {
-    "eslint": "^7.25.0",
-    "typescript": "^2.7.2"
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^5.48.2",
+    "@typescript-eslint/parser": "^5.48.0",
+    "eslint": "^8.32.0",
+    "eslint-plugin-jsdoc": "^39.6.4",
+    "eslint-plugin-security": "^1.5.0",
+    "typescript": "^4.8.3"
   },
   "dependencies": {
-    "jquery": "*"
+    "gulp": "^4.0.2",
+    "jquery": "*",
+    "require-dir": "^1.2.0",
+    "shelljs": "^0.8.5"
   },
   "homepage": "https://www.boldbi.com"
 }
