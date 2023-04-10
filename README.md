@@ -36,12 +36,7 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-* Provided an option to hide the get embed code for the dashboard and widgets. Provided an option to hide the get embed code for the dashboard and widgets.
-* Events to customize the designer and data source toolbar icons.
-* Option to customize the theming in the embedded dashboard.
-* Provided an event to customize the data source configuration option.
-* #394442 – Fixed data table is not rendering on second time during data source embedding.
-* #409638 – Fixed multi selection window for dimension filtering aligned right on embedding.
+* #421696 – Showcase a filtered data connector list in embedding based on whether they are enabled or disabled on the Bold BI Server.
 
 ## License Information
 
