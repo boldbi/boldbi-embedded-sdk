@@ -366,7 +366,7 @@ class BoldBI {
             this._throwError('Invalid embed mode');
         }
         if (this.embedOptions.pinboardName != '') {
-            this._throwError('Invalid embed pinboard');
+            this.embedOptions.pinboardName = '';
         }
         if (dashboardId != undefined) {
             this.embedOptions.dashboardId = dashboardId;
@@ -427,7 +427,7 @@ class BoldBI {
             this._throwError('Cant able to render the Widget in design mode');
         }
         if (this.embedOptions.pinboardName != '' && this.pinBoardRendered) {
-            this._throwError('Invalid embed pinboard');
+            this.embedOptions.pinboardName = '';
         }
         if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
             this.isWidgetMode = true;
@@ -453,7 +453,7 @@ class BoldBI {
             this._throwError('Invalid embed mode');
         }
         if (this.embedOptions.pinboardName != '') {
-            this._throwError('Invalid embed pinboard');
+            this.embedOptions.pinboardName = '';
         }
         if (dashboardId != undefined) {
             this.embedOptions.dashboardId = dashboardId;
@@ -478,6 +478,12 @@ class BoldBI {
         }
     }
     loadDatasource() {
+        if (this.embedOptions.dashboardId || this.embedOptions.dashboardPath) {
+            this.embedOptions.dashboardId = this.embedOptions.dashboardPath = '';
+        }
+        if (this.embedOptions.pinboardName != '') {
+            this.embedOptions.pinboardName = '';
+        }
         if (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) {
             if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
                 this.isWidgetMode = false;
@@ -1512,6 +1518,9 @@ class BoldBI {
                     dashboardOptions.userSettings = {
                         hidePreviewAs: this._isNullOrUndefined(this.embedOptions.dashboardSettings.showPreviewAs) ? false : !this.embedOptions.dashboardSettings.showPreviewAs
                     };
+                }
+                if (this.embedOptions.mode == BoldBI.Mode.Connection) {
+                    dashboardOptions.connectionList = embedResponse.ConnectionList;
                 }
                 if (this.embedOptions.mode == BoldBI.Mode.DataSource) {
                     dashboardOptions.datasourceName = embedResponse.ItemDetail.Name;
