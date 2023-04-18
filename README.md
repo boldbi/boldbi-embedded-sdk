@@ -36,7 +36,7 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-* #421696 – Showcase a filtered data connector list in embedding based on whether they are enabled or disabled on the Bold BI Server.
+* Hided buttons are shown, while culture sets to applocale in embedding.
 
 ## License Information
 

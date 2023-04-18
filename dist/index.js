@@ -3427,13 +3427,14 @@ class BoldBI {
     }
     _onBoldBIbeforeDatasourceToolbarButtonsRendered(arg) {
         for (let i = arg.toolbarButtons.length - 1; i >= 0; i--) {
+            // For Datasource Edit Mode.
             if (!this.isNewConnection && this.embedOptions.mode != BoldBI.Mode.Design) {
-                if (arg.toolbarButtons[`${i}`].label == 'Continue to Dashboard' || arg.toolbarButtons[`${i}`].label == 'Cancel') {
+                if (arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_continue_dashboard_button' || arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_cancelButton') {
                     arg.toolbarButtons.splice(i, 1);
                 }
             }
-            else {
-                if (arg.toolbarButtons[`${i}`].label == 'Continue to Dashboard') {
+            else { // For Datasource Connection Mode.
+                if (arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_continue_dashboard_button') {
                     arg.toolbarButtons.splice(i, 1);
                 }
             }
