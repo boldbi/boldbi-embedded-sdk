@@ -3993,7 +3993,7 @@ export class BoldBI {
     }
 
     _getFilterData(filterQuery: any): any {
-        let processData: any;
+        const processData: any = {masterData: []};
         const decryptfilterParam: any = decodeURI(filterQuery).
             replace(/~&~/g, String.fromCharCode(251) + String.fromCharCode(251)).
             replace(/~=~/g, String.fromCharCode(250) + String.fromCharCode(250)).
@@ -4010,7 +4010,7 @@ export class BoldBI {
                 const filterValue: string = splitFilterQuery[1];
                 const filterData: any = bbEmbed.parseJSON(filterValue);
                 if (filterData != '' && filterData.length != 0) {
-                    processData = this._lengthensSelectedFilterInfo(filterData);
+                    processData.masterData = this._lengthensSelectedFilterInfo(filterData);
                     this._unEscapeSelectedFilterDataforURLFilter(processData.masterData);
                 }
                 continue;
@@ -4151,7 +4151,7 @@ export class BoldBI {
                 unMinifiedList.push(unMinifyObj);
             }
         }
-        return { masterData: unMinifiedList };
+        return unMinifiedList;
     }
 
     _hasValue(filterObj: any, property: any): any {
