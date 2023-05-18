@@ -36,8 +36,7 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-* Console issue for removing dashboard embedding filters has been fixed.
-* The group-based authorization 401 issue in JS-based embedding has been fixed.
+* Multiple embedding concurrently such as on Multi-tab dashboards and Pinboards was fixed.
 
 ## License Information
 

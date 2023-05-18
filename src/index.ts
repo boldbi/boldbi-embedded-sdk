@@ -217,7 +217,7 @@ export class BoldBI {
                 beforeIconRender: '',
                 onIconClick: '',
                 onInteraction: '',
-                enableTheme: true,
+                enableTheme: false,
                 enableFilterOverview: true,
                 enableFullScreen: false,
                 showDashboardParameter: true,
@@ -1194,12 +1194,18 @@ export class BoldBI {
             };
         }
         else {
-            bbEmbed = window.bbEmbed = window.$;
-            if (typeof window.bb$ != 'undefined') {
-                bbEmbed = window.bbEmbed = window.bb$;
-            }
-            this._addWrapperDependentFiles(this, this.wrapperDependentScriptFiles);
-            this._loadDepedentFiles();
+            // Wait for jQuery to finish loading
+            const checkjQueryLoaded: any = setInterval(() => {
+                if (window.jQuery) {
+                    clearInterval(checkjQueryLoaded);
+                    bbEmbed = window.bbEmbed = window.$;
+                    if (typeof window.bb$ != 'undefined') {
+                        bbEmbed = window.bbEmbed = window.bb$;
+                    }
+                    this._addWrapperDependentFiles(this, this.wrapperDependentScriptFiles);
+                    this._loadDepedentFiles();
+                }
+            }, 1000);
         }
     }
 
@@ -1496,7 +1502,7 @@ export class BoldBI {
                     dashboardName: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' :  this._isEmptyOrSpaces(dashboardName) ? embedResponse.ItemDetail.Name : dashboardName,
                     dashboardDescription: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : embedResponse.ItemDetail.Description,
                     theme: this._isEmptyOrSpaces(this.multiTabTheme) ? this.embedOptions.theme : this.multiTabTheme,
-                    enableTheme: this.embedOptions.dashboardSettings.enableTheme,
+                    enableTheme: this.embedOptions.dashboardSettings.enableTheme === undefined ? false : this.embedOptions.dashboardSettings.enableTheme,
                     enableFilterOverview: this.embedOptions.dashboardSettings.enableFilterOverview,
                     isPinWidget: this.pinboardIds.length > 0,
                     export: {
