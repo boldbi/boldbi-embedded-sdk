@@ -2416,7 +2416,7 @@ class BoldBI {
             });
             tabInstance.appendTo('#' + containerName);
             bbEmbed('.e-tab-header .e-toolbar-item .e-tab-text').css({ 'display': 'inline-block', 'width': '150px', 'white-space': 'nowrap', 'overflow': 'hidden', 'text-overflow': 'ellipsis', 'color': '#000', 'text-transform': 'none' });
-            bbEmbed('<style type="text/css"> .embed-multi-tab-indicator{ background: #0565ff !important; border-radius: 4px; display: block !important; height: 3px !important;}</style>').appendTo('head');
+            bbEmbed('<style type="text/css"> .embed-multi-tab-indicator{ background: var(--primary-branding-color) !important; border-radius: 4px; display: block !important; height: 5px !important;}</style>').appendTo('head');
             bbEmbed('.e-control.e-tab .e-tab-header .e-indicator').addClass('embed-multi-tab-indicator');
             bbEmbed.map(bbEmbed('.e-tab-header .e-toolbar-item .e-tab-text'), function (value, index) {
                 bbEmbed(value).attr('title', bbEmbed(value).text());
@@ -2625,7 +2625,7 @@ class BoldBI {
             if (serverFnc instanceof Function) {
                 serverFnc.call(this, arg);
             }
-            const clientFnc = window[this.embedOptions.actionCompconste];
+            const clientFnc = window[this.embedOptions.actionComplete];
             if (clientFnc instanceof Function) {
                 clientFnc.call(this, arg);
             }
