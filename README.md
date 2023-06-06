@@ -36,7 +36,8 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-* Multiple embedding concurrently such as on Multi-tab dashboards and Pinboards was fixed.
+* The “actionComplete” event not being triggered on the client side for JavaScript-based embedding has been fixed.
+* The issue with the custom theme not being applied to the multi-tab switching indicator in JS-based embedding has been resolved.
 
 ## License Information
 
