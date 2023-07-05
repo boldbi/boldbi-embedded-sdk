@@ -35,6 +35,12 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 ## Release Notes
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
+Improvements
+* Provided support for JavaScript-based embedding of the Public dashboard rendering without AuthorizationServer API.
+* To eliminate the waiting popup in dashboard embedding, the hidewaitingpopup method was introduced.
+
+Bugs
+* Fixed the Pinboard Header issue that occurs when the Unpin Widget API is disabled in Pinboard Embedding.
 
 ## License Information
 
