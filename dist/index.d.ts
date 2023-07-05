@@ -43,6 +43,8 @@ export declare class BoldBI {
     designerCssFiles: Array<string>;
     applicationThemeCssFiles: Array<string>;
     dashboardThemeCssFiles: Array<string>;
+    embedAuthorizeEndPoint: string;
+    embedGetDetailsEndPoint: string;
     embedOptions: any;
     afterVirtualHomepageSave: Function;
     id: any;
@@ -183,6 +185,7 @@ export declare class BoldBI {
     resizeDashboard(filterParameters?: string): any;
     refreshDashboard(): any;
     hidePopup(): any;
+    hideWaitingPopup(): any;
     /**
      * @param {string} widgetNames - Define the name of the widget to be Refresh.
      * @param {boolean} hideLoader - Define whether to show or hide loading indicator while processing.

@@ -53,6 +53,8 @@ class BoldBI {
         this.jQueryDepedentFile = 'jquery-1.10.2.min.js';
         this.jqConflictFile = 'window.bb$ = jQuery.noConflict();';
         this.isFullscreen = false;
+        this.embedAuthorizeEndPoint = '/embed/authorize';
+        this.embedGetDetailsEndPoint = '/embed/get-details';
         this.wrapperDependentScriptFiles = [
             'jquery.easing.1.3.min.js',
             'jquery-ui.min.js',
@@ -877,6 +879,12 @@ class BoldBI {
             }
         }
     }
+    hideWaitingPopup() {
+        const waitingPopupInstance = bbEmbed('.bbi-dashboarddesigner-designAreaContainer').data('BoldBIDashboardWaitingPopup');
+        if (waitingPopupInstance !== null && waitingPopupInstance !== undefined) {
+            waitingPopupInstance.destroy();
+        }
+    }
     /**
      * @param {string} widgetNames - Define the name of the widget to be Refresh.
      * @param {boolean} hideLoader - Define whether to show or hide loading indicator while processing.
@@ -1593,7 +1601,7 @@ class BoldBI {
         }
     }
     _renderPinboard(itemDetail) {
-        const widgetContainer = bbEmbed('<div id="server-app-container" style="background: #f9f9f9; overflow: hidden !important;min-height: 600px; width:' + this.embedOptions.width + ';"><div id="content-area" class="clearfix col-xs-12 e-waitingpopup e-js" style="padding: 0;padding-bottom: 30px"><div id="homepage-page-container"><div id="homepage-header" style="display:' + (this.embedOptions.pinboardSettings.enablePinboardHeader ? 'block' : 'none') + '"><div id="element-container"><div id="homepage-menu" style="margin-top: 5px"><span id="homepage-list-container" style="font-size: 15px;width: 165px;line-height: 18px;padding: 25px;">' + this.embedOptions.pinboardName + '</span></div><div id="options-container"><div id="pinboard-fullscreen" class="server-banner-icon e-dashboard-banner-icon bbi-dbrd-designer-hoverable su su-maximize-1 e-icon-dbrd-theme" data-tooltip="Fullscreen" data-name="fullscreen" data-event="true" style="font-size: 14px;display: block;float: left;margin: 8px 15px 0 7px; cursor: pointer"></div><div id="divider"></div><div id="layout-container"><div id="layout" class="dropdown-toggle" data-toggle="dropdown">Edit Layout</div><div class="dropdown-menu" id="layout-items" role="menu"><span class="su su-single-column" id="1"></span><span class="su su-two-column" id="11"></span><span class="su su-small-big-column" id="12"></span><span class="su su-big-small-column" id="21"></span><span class="su su-three-column" id="111"></span></div></div></div></div></div><div id="widget-container" data-homepage-id="" data-current-layout="" data-virtual-homepage="" style="margin-bottom: 30px"></div></div></div></div>');
+        const widgetContainer = bbEmbed('<div id="server-app-container" style="background: #f9f9f9; overflow: hidden !important;min-height: 600px; width:' + this.embedOptions.width + ';"><div id="content-area" class="clearfix col-xs-12 e-waitingpopup e-js" style="padding: 0;padding-bottom: 30px"><div id="homepage-page-container"><div id="homepage-header" style="display:' + (this.embedOptions.pinboardSettings.enablePinboardHeader || this.embedOptions.pinboardSettings.enablePinboardHeader === undefined ? 'block' : 'none') + '"><div id="element-container"><div id="homepage-menu" style="margin-top: 5px"><span id="homepage-list-container" style="font-size: 15px;width: 165px;line-height: 18px;padding: 25px;">' + this.embedOptions.pinboardName + '</span></div><div id="options-container"><div id="pinboard-fullscreen" class="server-banner-icon e-dashboard-banner-icon bbi-dbrd-designer-hoverable su su-maximize-1 e-icon-dbrd-theme" data-tooltip="Fullscreen" data-name="fullscreen" data-event="true" style="font-size: 14px;display: block;float: left;margin: 8px 15px 0 7px; cursor: pointer"></div><div id="divider"></div><div id="layout-container"><div id="layout" class="dropdown-toggle" data-toggle="dropdown">Edit Layout</div><div class="dropdown-menu" id="layout-items" role="menu"><span class="su su-single-column" id="1"></span><span class="su su-two-column" id="11"></span><span class="su su-small-big-column" id="12"></span><span class="su su-big-small-column" id="21"></span><span class="su su-three-column" id="111"></span></div></div></div></div></div><div id="widget-container" data-homepage-id="" data-current-layout="" data-virtual-homepage="" style="margin-bottom: 30px"></div></div></div></div>');
         bbEmbed('#' + this.embedOptions.embedContainerId).append(widgetContainer);
         this._createPinboardDom(itemDetail);
         this._renderItem(itemDetail);
@@ -1794,7 +1802,7 @@ class BoldBI {
             bbEmbed.ajax({
                 async: false,
                 type: 'POST',
-                url: that.dashboardServerApiUrl + '/embed/get-details',
+                url: that.dashboardServerApiUrl + this.embedGetDetailsEndPoint,
                 headers: {
                     'Authorization': 'Bearer ' + that.accessToken
                 },
@@ -1839,7 +1847,7 @@ class BoldBI {
                                 bbEmbed('#column-' + (i + 1)).append('<li class="list-item" ' + styleAttr + '><div class="widget" id=widget_' + (i + 1) + '_' + (j + 1) + ' data-dashboardurl="' + href + '" style="height:100%;width:100%;"></div></li>');
                             }
                             else {
-                                const deleteIconDiv = that.embedOptions.pinboardSettings.enableUnpinWidget ? '<div id="widget-icons"><i class="items unpin-widget su su-delete" data-toggle="tooltip" data-original-title="Unpin Widget"  style="color: black;" /></div>' : '';
+                                const deleteIconDiv = that.embedOptions.pinboardSettings.enableUnpinWidget || that.embedOptions.pinboardSettings.enableUnpinWidget === undefined ? '<div id="widget-icons"><i class="items unpin-widget su su-delete" data-toggle="tooltip" data-original-title="Unpin Widget"  style="color: black;" /></div>' : '';
                                 bbEmbed('#column-' + (i + 1)).append('<li class="list-item" ' + styleAttr + '><div class="widget" id=widget_' + (i + 1) + '_' + (j + 1) + ' data-dashboardurl="' + href + '" style="height: ' + height + 'px;width:100%;background:#fff;"><div class="widget-sortable" style="width:100%;float:left;display:block;height:0px"><div style="height:100%;width:100%;cursor:move;"><div id="item-name">' + itemName + '</div>' + deleteIconDiv + '</div></div></div></li>');
                             }
                         });
@@ -2027,7 +2035,7 @@ class BoldBI {
             bbEmbed.ajax({
                 async: false,
                 type: 'POST',
-                url: that.dashboardServerApiUrl + '/embed/get-details',
+                url: that.dashboardServerApiUrl + this.embedGetDetailsEndPoint,
                 data: JSON.stringify(data),
                 headers: {
                     'Authorization': 'Bearer ' + that.accessToken
@@ -2065,7 +2073,7 @@ class BoldBI {
             bbEmbed.ajax({
                 async: false,
                 type: 'POST',
-                url: that.dashboardServerApiUrl + '/embed/get-details',
+                url: that.dashboardServerApiUrl + this.embedGetDetailsEndPoint,
                 headers: {
                     'Authorization': 'Bearer ' + that.accessToken
                 },
@@ -2569,7 +2577,7 @@ class BoldBI {
                     bbEmbed.ajax({
                         async: false,
                         type: 'POST',
-                        url: that.dashboardServerApiUrl + '/embed/get-details',
+                        url: that.dashboardServerApiUrl + this.embedGetDetailsEndPoint,
                         headers: {
                             'Authorization': 'Bearer ' + that.accessToken
                         },
@@ -2591,7 +2599,7 @@ class BoldBI {
                     bbEmbed.ajax({
                         async: false,
                         type: 'POST',
-                        url: that.dashboardServerApiUrl + '/embed/get-details',
+                        url: that.dashboardServerApiUrl + this.embedGetDetailsEndPoint,
                         headers: {
                             'Authorization': 'Bearer ' + that.accessToken
                         },
@@ -3583,6 +3591,7 @@ class BoldBI {
         document.getElementById(this.embedOptions.embedContainerId).insertAdjacentHTML('afterbegin', loader);
     }
     _getAuthorizationToken(dashboardId) {
+        const that = this;
         const embedDbrdId = dashboardId ? dashboardId : this.embedOptions.dashboardId;
         let embedQuerString = 'embed_nonce=' + this._uuidv4Generartor() +
             '&embed_dashboard_id=' + embedDbrdId +
@@ -3615,8 +3624,18 @@ class BoldBI {
         if (this.embedOptions.authorizationServer.url != '') {
             this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._renderDashboard);
         }
-        else {
+        else if (this._isNullOrUndefined(this.embedOptions.authorizationServer.data) && this.embedOptions.authorizationServer.data == '') {
             this._renderDashboard(this.embedOptions.authorizationServer.data);
+        }
+        else {
+            bbEmbed.ajax({
+                async: true,
+                type: 'POST',
+                url: this.dashboardServerApiUrl + this.embedAuthorizeEndPoint,
+                data: JSON.stringify(embedQuerString),
+                contentType: 'application/json',
+                success: bbEmbed.proxy(that._renderDashboard, that)
+            });
         }
         this.pinBoardRendered = true;
     }
