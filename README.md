@@ -52,10 +52,6 @@ Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](h
 * Fixed the UI glitch in view underlying data in Pinboard embedding.
 * Fixed the issue when an invalid dashboard path and pinboard name are provided in JS embedding.
 
-**Improvement**
-
-* The hidewaitingpopup method, originally supported in normal dashboards, has now been extended to multi-dashboard embedding as well
-
 ## License Information
 
 For licensing information about `Bold BI Embedding`, Take a look at the Bold BI License Agreements from [here](https://www.boldbi.com/terms-of-use).
