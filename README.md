@@ -35,12 +35,26 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 ## Release Notes
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
-Improvements
-* Provided support for JavaScript-based embedding of the Public dashboard rendering without AuthorizationServer API.
-* To eliminate the waiting popup in dashboard embedding, the hidewaitingpopup method was introduced.
 
-Bugs
-* Fixed the Pinboard Header issue that occurs when the Unpin Widget API is disabled in Pinboard Embedding.
+
+**Breaking changes**
+
+* By default, the download of a BingMap related file is deactivated to avoid unwanted delay in dashboard loading. To enable BingMap rendering, you can enable it by setting the isBingmapRequired member to true in JS embedding.
+
+**Bug**
+
+* Fixed the scroller issue in multi-tab dashboard embedding's Dashboard Parameter panel.
+* Fixed the More Options UI glitches in Pinboard embedding.
+* Handled drag and drop for the text widget in the Pinboard embedding.
+* Resolved the issue with images exporting for both widgets and dashboards  where the resolution DPI wasn't configured properly.
+* Fixed the issue in pinboard embedding; it is necessary to provide a widget name while adding a new widget to pinboard.
+* Embedding the data source and connection in the loadDesigner method is not supported.
+* Fixed the UI glitch in view underlying data in Pinboard embedding.
+* Fixed the issue when an invalid dashboard path and pinboard name are provided in JS embedding.
+
+**Improvement**
+
+* The hidewaitingpopup method, originally supported in normal dashboards, has now been extended to multi-dashboard embedding as well
 
 ## License Information
 

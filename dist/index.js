@@ -188,6 +188,7 @@ class BoldBI {
             theme: '',
             authorizationServer: {
                 url: '',
+                data: '',
                 headers: {},
                 authorizionComplete: ''
             },
@@ -244,7 +245,7 @@ class BoldBI {
             },
             disableAutoRecover: false,
             ajaxBeforeLoad: '',
-            isBingMapRequired: true
+            isBingMapRequired: false
         };
     }
     // Customer exposed functions
@@ -451,7 +452,7 @@ class BoldBI {
         }
     }
     loadDesigner(dashboardId) {
-        if (this.embedOptions.mode == BoldBI.Mode.View) {
+        if (this.embedOptions.mode != BoldBI.Mode.Design) {
             this._throwError('Invalid embed mode');
         }
         if (this.embedOptions.pinboardName != '') {
@@ -549,6 +550,9 @@ class BoldBI {
      * @param {boolean} exportInformation.showAppliedFilters - Define whether we need to export the dashboard with or without a filter
      */
     exportDashboardAsImage(exportInformation) {
+        if (parseInt(exportInformation.resolutionDpi, 10) > 300) {
+            exportInformation.resolutionDpi = '300';
+        }
         if (this.isMultiTab) {
             let dashboardId = exportInformation.dashboardId;
             dashboardId = dashboardId.replaceAll('-', '');
@@ -648,6 +652,9 @@ class BoldBI {
      */
     exportWidgetAsImage(exportInformation) {
         const that = this;
+        if (parseInt(exportInformation.resolutionDpi, 10) > 300) {
+            exportInformation.resolutionDpi = '300';
+        }
         if (this.isMultiTab) {
             let dashboardId = exportInformation.dashboardId;
             dashboardId = dashboardId.replaceAll('-', '');
@@ -880,9 +887,21 @@ class BoldBI {
         }
     }
     hideWaitingPopup() {
-        const waitingPopupInstance = bbEmbed('.bbi-dashboarddesigner-designAreaContainer').data('BoldBIDashboardWaitingPopup');
-        if (waitingPopupInstance !== null && waitingPopupInstance !== undefined) {
-            waitingPopupInstance.destroy();
+        if (this.isMultiTab) {
+            const dashboardContainer = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+            for (let i = 0; i < dashboardContainer.length; i++) {
+                const embedId = bbEmbed(dashboardContainer[`${i}`]).attr('id');
+                const waitingPopupInstance = bbEmbed('#' + embedId + '_designAreaContainer').data('BoldBIDashboardWaitingPopup');
+                if (waitingPopupInstance !== null && waitingPopupInstance !== undefined) {
+                    waitingPopupInstance.destroy();
+                }
+            }
+        }
+        else {
+            const waitingPopupInstance = bbEmbed('.bbi-dashboarddesigner-designAreaContainer').data('BoldBIDashboardWaitingPopup');
+            if (waitingPopupInstance !== null && waitingPopupInstance !== undefined) {
+                waitingPopupInstance.destroy();
+            }
         }
     }
     /**
@@ -954,6 +973,59 @@ class BoldBI {
                 }
             }
         }
+    }
+    getWidgetDataWithFilters(widgetName, dashboardId, filter, clientFnc) {
+        let responseData;
+        const data = JSON.stringify({
+            'dashboardId': dashboardId, 'widgetName': widgetName, 'filter': filter
+        });
+        if (this._isEmptyOrSpaces(dashboardId)) {
+            responseData = {
+                'status': false, 'message': 'dashboardId is invalid', 'request': data
+            };
+            return responseData;
+        }
+        if (this._isEmptyOrSpaces(widgetName)) {
+            responseData = {
+                'status': false, 'message': 'widgetName is invalid', 'request': data
+            };
+            return responseData;
+        }
+        const thatIns = this;
+        bbEmbed.ajax({
+            type: 'POST',
+            url: this.designerRootUrl + '/v1.0/design/loadwidgetdata',
+            data: data,
+            contentType: 'application/json; charset=utf-8',
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader('Authorization', 'bearer ' + thatIns.accessToken);
+                xhr.setRequestHeader('Caller', thatIns.dashboardServerApiUrl);
+            },
+            success: function (result) {
+                if (result.Status) {
+                    const widgetValue = JSON.parse(result.Data);
+                    responseData = {
+                        'status': result.Status, 'data': widgetValue, 'message': result.Message, 'request': data
+                    };
+                }
+                else {
+                    responseData = {
+                        'status': result.Status, 'message': result.Message, 'request': data
+                    };
+                }
+                clientFnc.call(thatIns, responseData);
+            },
+            error: function (request, message) {
+                responseData = {
+                    'status': false, 'message': message, 'request': request
+                };
+                clientFnc.call(thatIns, responseData);
+            }
+        });
+        responseData = {
+            'status': true, 'message': 'Data fetching initiated.', 'request': data
+        };
+        return responseData;
     }
     /**
      * @param {string} clientFnc - It denotes the method name to be defined
@@ -1949,7 +2021,7 @@ class BoldBI {
         window.bbEmbed('#column-1, #column-2, #column-3').sortable({
             connectWith: 'ul',
             placeholder: 'placeholder',
-            handle: '.bbi-dbrd-control-header:not(.bbi-dbrd-control-menu-icon)',
+            handle: '.e-rteItem .e-rte-content, .bbi-dbrd-control-header:not(.bbi-dbrd-control-menu-icon)',
             cancel: '.empty, .bbi-dbrd-control-menu-icon',
             containment: '#server-app-container',
             cursor: 'move',
@@ -2332,7 +2404,7 @@ class BoldBI {
         }
     }
     addWidgetToPinboard(dashboardId, widgetId, widgetName) {
-        if (!this._isEmptyOrSpaces(dashboardId) && !this._isEmptyOrSpaces(widgetId)) {
+        if (!this._isEmptyOrSpaces(dashboardId) && !this._isEmptyOrSpaces(widgetId) && !this._isEmptyOrSpaces(widgetName)) {
             const homepageItemId = bbEmbed('#widget-container').attr('data-homepage-id');
             const that = this;
             const embedQuerString = 'embed_nonce=' + this._uuidv4Generartor() +
@@ -2359,7 +2431,7 @@ class BoldBI {
             });
         }
         else {
-            this._throwError('Please provide the valid dashboard id and widget id');
+            this._throwError('Please provide the valid dashboard id, widget id and widget name');
         }
     }
     _addWidgetInPinboard(itemDetails) {
@@ -2381,7 +2453,7 @@ class BoldBI {
         }
         const queryString = column.Item[0].QueryString != null ? column.Item[0].QueryString : '';
         const href = column.Item[0].TabId == null ? (item + '/' + column.Item[0].ItemId + '/' + (column.Item[0].Id != null ? (column.Item[0].CategoryName + '/') : '') + column.Item[0].ItemName + (queryString != '' ? '?' + queryString : queryString)) : (item + '/' + column.Item[0].ItemId + '/' + (column.Item[0].Id != null ? (column.Item[0].CategoryName + '/') : '') + column.Item[0].ItemName + '?tab=' + column.Item[0].TabId + (queryString != '' ? '&' + queryString : queryString));
-        const deleteIconDiv = this.embedOptions.pinboardSettings.enableUnpinWidget ? '<div id="widget-icons"><i class="items unpin-widget su su-delete" data-toggle="tooltip" data-original-title="Unpin Widget"  style="color: black;" /></div>' : '';
+        const deleteIconDiv = this.embedOptions.pinboardSettings.enableUnpinWidget || this.embedOptions.pinboardSettings.enableUnpinWidget === undefined ? '<div id="widget-icons"><i class="items unpin-widget su su-delete" data-toggle="tooltip" data-original-title="Unpin Widget"  style="color: black;" /></div>' : '';
         bbEmbed(ulElement).prepend('<li class="list-item"><div class="widget" id=widget_' + 1 + '_' + (ulElementLilength + 1) + ' data-dashboardurl="' + href + '" style="height: ' + height + 'px;width:100%;background:#fff;"><div class="widget-sortable" style="width:100%;float:left;display:block;height:0px"><div style="height:100%;width:100%;cursor:move;"><div id="item-name">' + itemName + '</div>' + deleteIconDiv + '</div></div></div></li>');
         const pinboardIdName = this.embedOptions.embedContainerId + '_pinBoard_1' + '_' + (ulElementLilength + 1);
         bbEmbed('#widget_1' + '_' + (ulElementLilength + 1)).append('<div class="pinWidget" style="height:calc(100% - 5px);width:93%;overflow: hidden !important;" id="' + pinboardIdName + '"><div id="' + pinboardIdName + '_embeddedbi" class="pinBoardDbrd"></div ></div>');
@@ -2610,10 +2682,17 @@ class BoldBI {
                 }
             }
         }
-        if (this.pinboardIds.length > 0 && arg.eventType == 'renderWidget' && arg.source.element.find('.bbi-dbrd-control-header .bbi-dbrd-control-title-wrapper').length == 0) {
-            arg.source.element.parents('.widget').find('#widget-icons').css('margin-top', '8px');
-            if (arg.source.element.attr('data-name').toLowerCase().includes('card')) {
-                arg.source.element.find('.bbi-dbrd-control').css('top', '20px');
+        if (this.pinboardIds.length > 0 && arg.eventType === 'renderWidget') {
+            const controlHeaderWrapper = arg.source.element.find('.bbi-dbrd-control-header .bbi-dbrd-control-title-wrapper');
+            if (controlHeaderWrapper.length === 0) {
+                arg.source.element.parents('.widget').find('#widget-icons').css('margin-top', '8px');
+                if (arg.source.element.attr('data-name').toLowerCase().includes('card')) {
+                    arg.source.element.find('.bbi-dbrd-control').css('top', '20px');
+                }
+            }
+            else {
+                arg.source.element.find('.bbi-dbrd-control-header').css('margin-left', '-8px');
+                arg.source.element.find('.bbi-dbrd-control-title-wrapper').css('margin-left', '8px');
             }
         }
         if (arg.eventType == 'interactionCompleted') {
@@ -2831,6 +2910,16 @@ class BoldBI {
                 const dashboardInstance = this._getDashboardInstance();
                 dashboardInstance.updateDashboard();
             }
+        }
+        if (arg.name.toLowerCase() == 'dashboardparameters') {
+            const styleElement = document.createElement('style');
+            styleElement.innerHTML = '.remove-scroller-dashboard-parameter { width: 100% !important; height: 100% !important; color: #333; background: #fff; border-radius: 0; }';
+            document.head.appendChild(styleElement);
+            const that = this;
+            setTimeout(function () {
+                const dashboardInstance = that.isMultiTab ? window.bbEmbed('.e-content .e-active').find('.bbembed-multitab-dbrd').data('BoldBIDashboardDesigner') : that._getDashboardInstance();
+                bbEmbed('#' + dashboardInstance._id + '_dashboardparameter_dialog').addClass('remove-scroller-dashboard-parameter');
+            }, 50);
         }
         const serverFnc = window[this.onBannerIconClickFn];
         if (serverFnc instanceof Function) {
@@ -3703,14 +3792,16 @@ class BoldBI {
         }
         if (this._isEmptyOrSpaces(options.dashboardId) && this._isEmptyOrSpaces(options.dashboardPath) && options.mode != BoldBI.Mode.Design && this._isEmptyOrSpaces(options.datasourceId) && this._isEmptyOrSpaces(options.datasourceName)) {
             if (options.mode != BoldBI.Mode.DataSource) {
-                this._throwError('Dashboard id or path cannot be empty', options.embedContainerId);
+                if (this._isEmptyOrSpaces(options.pinboardName) && !this._isNullOrUndefined(options.pinboardName)) {
+                    this._throwError('Pinboard name cannot be empty', options.embedContainerId);
+                }
+                else {
+                    this._throwError('Dashboard id or path cannot be empty', options.embedContainerId);
+                }
             }
             else {
                 this._throwError('Datasource id or name cannot be empty', options.embedContainerId);
             }
-        }
-        if (this._isEmptyOrSpaces(options.embedContainerId)) {
-            throw new Error('BoldBI Embedded: Embedded DOM id cannot be empty');
         }
         if (options.environment != 'onpremise' && options.environment != 'cloud') {
             this._throwError(options.environment += ' is not valid environment. Please provide valid environment value.', options.embedContainerId);
@@ -3731,6 +3822,16 @@ class BoldBI {
         embedContainerId = this._isEmptyOrSpaces(embedContainerId) ? this.embedOptions.embedContainerId : embedContainerId;
         if (embedContainerId) {
             this._removeElementsClass(embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
+            if (errorMsg === 'Object reference not set to an instance of an object.') {
+                if (this.embedOptions.mode === 'view' || this.embedOptions.mode === 'design') {
+                    if (!this._isEmptyOrSpaces(this.embedOptions.dashboardId) || !this._isEmptyOrSpaces(this.embedOptions.dashboardPath)) {
+                        errorMsg = 'Invalid dashboard path.';
+                    }
+                    if (!this._isEmptyOrSpaces(this.embedOptions.pinboardName)) {
+                        errorMsg = 'Invalid pinboard name.';
+                    }
+                }
+            }
             const errorMessage = '<div id="embedded-bi-error" style="display:table;height:100%;width:100%;"><div style="display: table-cell;vertical-align: middle;text-align: center;"><div style="display: inline-block;"><img src=' + this.errorImage + ' style="float: left"/><div style="float: left;margin-left: 10px;line-height: 20px;">BoldBI Embedded: ' + errorMsg + '</div></div>';
             document.getElementById(embedContainerId).innerHTML = errorMessage;
         }
