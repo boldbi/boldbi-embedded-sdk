@@ -193,6 +193,7 @@ export declare class BoldBI {
      */
     refreshWidgetData(widgetNames: string, hideLoader: boolean, dashboardId: string): any;
     getWidgetData(widgetName: string, clientFnc: Function, dashboardId: string): any;
+    getWidgetDataWithFilters(widgetName: string, dashboardId: string, filter: any, clientFnc: Function): any;
     /**
      * @param {string} clientFnc - It denotes the method name to be defined
      * @param {string} containerId - This should be the container id where you want to embed the dashboard
