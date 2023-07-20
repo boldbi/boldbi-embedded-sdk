@@ -36,12 +36,11 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-
 **Breaking changes**
 
 * By default, the download of a BingMap related file is deactivated to avoid unwanted delay in dashboard loading. To enable BingMap rendering, you can enable it by setting the isBingmapRequired member to true in JS embedding.
 
-**Bug**
+**Bugs**
 
 * Fixed the scroller issue in multi-tab dashboard embedding's Dashboard Parameter panel.
 * Fixed the More Options UI glitches in Pinboard embedding.
