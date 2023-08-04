@@ -65,6 +65,7 @@ export declare class BoldBI {
     jqConflictFile: string;
     isFullscreen: boolean;
     wrapperDependentScriptFiles: Array<string>;
+    isMultipleWidgetMode: boolean;
     static Mode: any;
     static EmbedType: any;
     static Environment: any;
@@ -79,6 +80,7 @@ export declare class BoldBI {
     loadPinboard(): any;
     loadDashboardView(): any;
     loadDashboardWidget(name: string, dashboardId?: string): any;
+    loadMultipleWidgets(dashboardId?: string): any;
     loadDesigner(dashboardId?: string): any;
     loadDatasource(): any;
     /**
