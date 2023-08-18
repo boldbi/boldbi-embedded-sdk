@@ -66,23 +66,27 @@ export declare class BoldBI {
     isFullscreen: boolean;
     wrapperDependentScriptFiles: Array<string>;
     isMultipleWidgetMode: boolean;
+    invalidDetail: boolean;
     static Mode: any;
     static EmbedType: any;
     static Environment: any;
     static Theme: any;
     static _storage: any;
     static _widgetsCollection: any;
+    loadDashboard: any;
+    loadDashboardWidget: any;
+    loadMultipleWidgets: any;
+    loadDesigner: any;
+    refreshWidgetData: any;
+    addWidgetToPinboard: any;
     constructor();
     static create(options: object): any;
     static getInstance(eleID: string): any;
+    Invoke<T extends (...args: any[]) => any>(originalMethod: T): T;
     destroy(): any;
-    loadDashboard(dashboardId?: string): any;
-    loadPinboard(): any;
+    loadPinboard: any;
     loadDashboardView(): any;
-    loadDashboardWidget(name: string, dashboardId?: string): any;
-    loadMultipleWidgets(dashboardId?: string): any;
-    loadDesigner(dashboardId?: string): any;
-    loadDatasource(): any;
+    loadDatasource: any;
     /**
      * @param {object} exportInformation - It is an object that holds "dashboardId" - Define the unique id of the dashboard if it is present within the multitab dashboard, "fileName" - Define the name of the file to be exported, "pageSize" - Define the size of the page('A3','A4','A5','Letter'), "pageOrientation" - Define the page orientation('Landscape','Portrait'), "showAppliedFilters" - Define whether we need to export the dashboard with or without a filter.
      * @param {string} exportInformation.dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard
@@ -187,13 +191,7 @@ export declare class BoldBI {
     resizeDashboard(filterParameters?: string): any;
     refreshDashboard(): any;
     hidePopup(): any;
-    hideWaitingPopup(): any;
-    /**
-     * @param {string} widgetNames - Define the name of the widget to be Refresh.
-     * @param {boolean} hideLoader - Define whether to show or hide loading indicator while processing.
-     * @param {string} dashboardId - Define the unique id of the dashboard if it is present within the multitab dashboard.
-     */
-    refreshWidgetData(widgetNames: string, hideLoader: boolean, dashboardId: string): any;
+    hideWaitingIndicator(): any;
     getWidgetData(widgetName: string, clientFnc: Function, dashboardId: string): any;
     getWidgetDataWithFilters(widgetName: string, dashboardId: string, filter: any, clientFnc: Function): any;
     /**
@@ -229,14 +227,14 @@ export declare class BoldBI {
         datasourceId?: string;
         datasourceName?: string;
     }): any;
-    _initializeUrls(): any;
+    _initializeUrls: any;
     _loadCloudDepedentFiles(responseInfo: {
         Data: {
             CdnUrl: string;
             DesignerServerUrl: string;
         };
     }): any;
-    _addJquerydependentFiles(): any;
+    _addJquerydependentFiles: any;
     _getCloudLinks(): any;
     _loadDepedentFiles(): any;
     _loadBingmapDependentFiles(): any;
@@ -244,25 +242,13 @@ export declare class BoldBI {
     _addWrapperDependentFiles(obj: BoldBI, fileUriArray: Array<string>): any;
     _addedDependentFiles(that: BoldBI, fileUriArray: Array<string>, isCSS: boolean): any;
     _checkDepedentFileExists(file: string, isCSS: boolean): any;
-    _renderDashboard(responseInfo: {
-        Status?: boolean;
-        Message?: string;
-        Data?: any;
-    }): any;
+    _renderDashboard: any;
     _renderPinboard(itemDetail: object): any;
     createEmptyList(from: number, to: number): any;
     appendListItem(appendTo: number, count: number): any;
     changeLayout(layout: number): any;
-    _changeLayoutSuccess(result: {
-        Status: boolean;
-        Message: string;
-    }): any;
-    _createPinboardDom(itemDetail: {
-        ColumnInfo?: any;
-        ItemType?: any;
-        Id?: any;
-        IsVirtualHomepage?: any;
-    }): any;
+    _changeLayoutSuccess: any;
+    _createPinboardDom: any;
     _checkEmptyHomepage(): boolean;
     _setLayout(layout: number): any;
     setListMinimumHeight(): any;
@@ -274,19 +260,15 @@ export declare class BoldBI {
         Status: boolean;
     }): any;
     checkEmptyHomepage(): boolean;
-    _dragAndDropSuccess(result: {
-        Status: boolean;
-        Message: string;
-    }): any;
+    _dragAndDropSuccess: any;
     _renderItem(itemDetail: {
         ItemType?: any;
         ColumnInfo?: any;
     }): any;
-    addWidgetToPinboard(dashboardId: string, widgetId: string, widgetName: string): any;
     _addWidgetInPinboard(itemDetails: {
         ColumnInfo?: any;
     }): any;
-    _renderMultiTabDashboard(embedResponse: object): any;
+    _renderMultiTabDashboard: any;
     _tabSelected(): any;
     _isDependencyLoaded(that: BoldBI, dashboardId?: string): any;
     _getDashboardInstance(embedChildId?: string): any;
@@ -453,19 +435,10 @@ export declare class BoldBI {
     _uuidv4Generartor(): string;
     _isEmptyOrSpaces(str: string): any;
     _isNullOrUndefined(value: string): any;
-    _validateOptions(options: {
-        embedContainerId?: string;
-        serverUrl?: string;
-        pinboardName?: string;
-        mode?: any;
-        dashboardId?: string;
-        dashboardPath?: string;
-        environment?: any;
-        datasourceId?: string;
-        datasourceName?: string;
-    }): any;
+    _validateOptions: any;
     _isUrl(str: string): any;
     _throwError(errorMsg: string, embedContainerId?: string): any;
+    onErrorClient(errorMessage: any): any;
     _removeElementsClass(id: string, childElement: string, targeClass: string): any;
     _hasClass(el: {
         classList?: any;

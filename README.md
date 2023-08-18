@@ -36,13 +36,13 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-**Bugs**
+**Breaking Changes**
 
-* Fixed an issue where special characters were not properly handled when passing them as dashboard parameters in JS embedding. 
+* The method hideWaitingPopup has been renamed to hideWaitingIndicator to hide the waiting indicator in dashboard embedding.
 
-* Fixed the UI typo error in the authentication settings and provider. 
+**Improvements**
 
-* Resolved the group-based authorization issue in JS embedding. 
+* Implemented an event as onError in JS embedding to catch the errors at client side.
 
 ## License Information
 
