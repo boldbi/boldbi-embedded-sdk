@@ -76,7 +76,7 @@ class BoldBI {
                 this.siteIdentifier = this.embedOptions.serverUrl.indexOf('/site/') >= 0 ? this.embedOptions.serverUrl.substr(this.embedOptions.serverUrl.indexOf('/site/') + 1) : '';
                 this.dashboardServerApiUrl = this.rootUrl + '/api' + (this._isEmptyOrSpaces(this.siteIdentifier) ? '' : ('/' + this.siteIdentifier));
                 this.designerRootUrl = this.rootUrl + '/designer';
-                this.customThemeUrl = this.rootUrl.replace('/bi', '/ums/theme/styles');
+                this.customThemeUrl = this.rootUrl.replace(/\/bi(?!.*\/bi)/, '/ums/theme/styles');
             }
             else {
                 this.rootUrl = this.embedOptions.serverUrl.endsWith('/') ? this.embedOptions.serverUrl.slice(0, -1) : this.embedOptions.serverUrl;
@@ -3938,7 +3938,7 @@ class BoldBI {
         if (this.embedOptions.authorizationServer.url != '') {
             this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._renderDashboard);
         }
-        else if (this._isNullOrUndefined(this.embedOptions.authorizationServer.data) && this.embedOptions.authorizationServer.data == '') {
+        else if (!(this._isNullOrUndefined(this.embedOptions.authorizationServer.data)) && this.embedOptions.authorizationServer.data != '' && this.embedOptions.authorizationServer.url == '') {
             this._renderDashboard(this.embedOptions.authorizationServer.data);
         }
         else {
