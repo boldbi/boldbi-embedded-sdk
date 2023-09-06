@@ -36,13 +36,11 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-**Breaking Changes**
+**Bugs**
 
-* The method hideWaitingPopup has been renamed to hideWaitingIndicator to hide the waiting indicator in dashboard embedding.
-
-**Improvements**
-
-* Implemented an event as onError in JS embedding to catch the errors at client side.
+* Resolved the dashboard embedding issue in non-web applications.
+* Fixed the invalid error message showing unauthorized user access in JS embedding.
+* Resolved the multi-tab dashboard rendering issue with group-based authorization in JS embedding.
 
 ## License Information
 
