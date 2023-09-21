@@ -38,9 +38,17 @@ Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](h
 
 **Bugs**
 
-* Resolved the dashboard embedding issue in non-web applications.
-* Fixed the invalid error message showing unauthorized user access in JS embedding.
-* Resolved the multi-tab dashboard rendering issue with group-based authorization in JS embedding.
+* Resolved the issue of group-based authorization with Azure AD provider in JS-based embedding. 
+* Fixed the cancel button issue in the SSO token-based connection Iframe embedding. 
+* Show a valid error message when an invalid dashboard path and pinboard name are in JS-based embedding. 
+* Show a valid error message when the authorization URL is empty in JS-based embedding. 
+* The valid error prompt is displayed for unsupported module embedding with group-based authorization. 
+* The issue of more option widgets being hidden while full-screen mode is enabled in JS-based embedding has been resolved. 
+* Fixed the full-screen functionality not working for the public dashboard when embedded in an Iframe. 
+
+**New Feature**
+
+* In JavaScript-based embedding, FontFamily customization support is provided.
 
 ## License Information
 

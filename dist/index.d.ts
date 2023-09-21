@@ -67,6 +67,7 @@ export declare class BoldBI {
     wrapperDependentScriptFiles: Array<string>;
     isMultipleWidgetMode: boolean;
     invalidDetail: boolean;
+    fontFamilyCssFiles: Array<string>;
     static Mode: any;
     static EmbedType: any;
     static Environment: any;
@@ -428,7 +429,7 @@ export declare class BoldBI {
     _onBoldBIBeforeNavigateToDashboard(arg: object): any;
     _onBoldBIAuthorizionComplete(arg: object): any;
     _showLoader(): any;
-    _getAuthorizationToken(dashboardId?: string): any;
+    _getAuthorizationToken: any;
     _xhrRequestHelper(type: string, url: string, data: object, headers: object, callBackFn: Function): any;
     _emptyHtml(elementID: string): any;
     _removeElement(id: string): any;
