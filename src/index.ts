@@ -24,9 +24,9 @@ export class BoldBI {
     public scheduleEndpointUrl: string;
     public childContainer: any;
     public cdnLink: string;
-    public onSaveFilterFn: string;
-    public onSaveAsFilterFn: string;
-    public onViewSavedFiltersFn: string;
+    public saveFilterClickFn: string;
+    public saveAsFilterClickFn: string;
+    public viewSavedFiltersClickFn: string;
     public onBannerIconClickFn: string;
     public beforeWidgetIconRenderedFn: string;
     public onWidgetIconClickFn: string;
@@ -108,6 +108,18 @@ export class BoldBI {
 
     addWidgetToPinboard: any;
 
+    saveFilterView: any;
+
+    saveAsFilterView: any;
+
+    updateFilterView: any;
+
+    getViewsByDashboardId: any;
+
+    getViewByViewId: any;
+
+    deleteFilterView: any;
+
     constructor() {
         this.IsDependencyLoaded = false;
         this.rootUrl = '';
@@ -119,9 +131,9 @@ export class BoldBI {
         this.scheduleEndpointUrl = '';
         this.childContainer = '';
         this.cdnLink = '';
-        this.onSaveFilterFn = 'saveFilter';
-        this.onSaveAsFilterFn = 'saveAsFilter';
-        this.onViewSavedFiltersFn = 'openViewSection';
+        this.saveFilterClickFn = 'saveFilter';
+        this.saveAsFilterClickFn = 'saveAsFilter';
+        this.viewSavedFiltersClickFn = 'openViewSection';
         this.onBannerIconClickFn = 'onBannerIconClick';
         this.beforeWidgetIconRenderedFn = 'beforeWidgetIconRendered';
         this.onWidgetIconClickFn = 'onWidgetIconClick';
@@ -281,7 +293,17 @@ export class BoldBI {
                     application: '',
                     dashboard: '',
                     isLocalTheme: false
-                }
+                },
+                filterOverviewSettings: {
+                    showSaveAsIcon: false,
+                    showSaveIcon: false,
+                    showViewSavedFilterIcon: false,
+                    viewId: '',
+                    viewName: ''
+                },
+                saveFilterClick: '',
+                saveAsFilterClick: '',
+                viewSavedFiltersClick: ''
             },
             widgetSettings: {
                 showExport: true,
@@ -440,6 +462,10 @@ export class BoldBI {
 
         this.loadMultipleWidgets = this.Invoke(function(dashboardId?: string): any {
             if (!this.invalidDetail) {
+                if (this.embedOptions.widgetList == '')
+                {
+                    throw new Error ('Provide the Widget details with containerID in an array');
+                }
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
                     throw new Error ('Invalid embed mode');
                 }
@@ -570,6 +596,309 @@ export class BoldBI {
                 });
             } else {
                 throw new Error('Please provide the valid dashboard id and widget id');
+            }
+        });
+
+        this.saveFilterView = this.Invoke(function(viewParameters: any, callBackFunc: Function): any {
+            const regex: any = /^(?:\{{0,1}(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}\}{0,1})$/;
+            const isGuidDbrd: boolean = regex.exec(viewParameters.ItemId);
+            const isGuidChildDbrd: boolean = this.isMultiTab ? regex.exec(viewParameters.ChildItemId) : false;
+            if ((!this._isEmptyOrSpaces(viewParameters.ViewName)) && (!this._isEmptyOrSpaces(viewParameters.QueryString)) && ((this.isMultiTab && isGuidChildDbrd && isGuidDbrd) || (isGuidDbrd))) {
+                const that: BoldBI = this;
+                const data: any = {
+                    'ViewName': viewParameters.ViewName,
+                    'ItemId': viewParameters.ItemId,
+                    'QueryString': viewParameters.QueryString,
+                    'IsPublic': false,
+                    'ChildItemId': this.isMultiTab ? viewParameters.ChildItemId : null
+                };
+                bbEmbed.ajax({
+                    async: false,
+                    type: 'POST',
+                    url: this.dashboardServerApiUrl + '/v4.0/dashboards/views',
+                    headers: {
+                        'Authorization': 'bearer ' + this.accessToken
+                    },
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    success: function (result: {Status: boolean, Data: any, StatusMessage: string}): any {
+                        if (result.Status) {
+                            const view: any = {}; // Create a new object in each iteration
+                            view['ItemId'] = viewParameters.ItemId;
+                            view['ViewId'] = result.Data;
+                            view['ViewName'] = viewParameters.ViewName;
+                            that._updateInFilterOverviewUI(viewParameters.ViewName, result.Data);
+                            if (window[`${callBackFunc}`] instanceof Function) {
+                                window[`${callBackFunc}`].call(that, view, result.StatusMessage);
+                            }
+                            else {
+                                callBackFunc.call(that, view, result.StatusMessage);
+                            }
+                        } else {
+                            if (window[`${callBackFunc}`] instanceof Function) {
+                                window[`${callBackFunc}`].call(that, null, result.StatusMessage);
+                            }
+                            else {
+                                callBackFunc.call(that, null, result.StatusMessage);
+                            }
+                        }
+                    },
+                    error: function (jqXHR: {status: number, responseText: string}): any { that.ajaxErrorFnc(jqXHR); }
+                });
+            }
+            else {
+                if (!isGuidDbrd) {
+                    throw new Error('Please provide valid dashboard ID.');
+                }
+                if (this.isMultiTab && !isGuidChildDbrd) {
+                    throw new Error('Please provide valid child dashboard ID.');
+                }
+                if (this._isEmptyOrSpaces(viewParameters.ViewName)) {
+                    throw new Error('Please provide valid view name.');
+                }
+                if (this._isEmptyOrSpaces(viewParameters.QueryString)) {
+                    throw new Error('Please provide valid query string.');
+                }
+            }
+        });
+
+        this.saveAsFilterView = this.Invoke(function(viewParameters: any, callBackFunc: Function): any {
+            const regex: any = /^(?:\{{0,1}(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}\}{0,1})$/;
+            const isGuidDbrd: boolean = regex.exec(viewParameters.ItemId);
+            const isGuidChildDbrd: boolean = this.isMultiTab ? regex.exec(viewParameters.ChildItemId) : false;
+            if ((!this._isEmptyOrSpaces(viewParameters.ViewName)) && (!this._isEmptyOrSpaces(viewParameters.QueryString)) && ((this.isMultiTab && isGuidChildDbrd && isGuidDbrd) || (isGuidDbrd))) {
+                const that: BoldBI = this;
+                const data: any = {
+                    'ViewName': viewParameters.ViewName,
+                    'ItemId': viewParameters.ItemId,
+                    'QueryString': viewParameters.QueryString,
+                    'ChildItemId': this.isMultiTab ? viewParameters.ChildItemId : null
+                };
+                bbEmbed.ajax({
+                    async: false,
+                    type: 'POST',
+                    url: this.dashboardServerApiUrl + '/v4.0/dashboards/views',
+                    headers: {
+                        'Authorization': 'bearer ' + this.accessToken
+                    },
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    success: function (result: {Status: boolean, Data: any, StatusMessage: string}): any {
+                        if (result.Status) {
+                            const view: any = {}; // Create a new object in each iteration
+                            view['ItemId'] = viewParameters.ItemId;
+                            view['ViewId'] = result.Data;
+                            view['ViewName'] = viewParameters.ViewName;
+                            that._updateInFilterOverviewUI(viewParameters.ViewName, result.Data);
+                            if (window[`${callBackFunc}`] instanceof Function) {
+                                window[`${callBackFunc}`].call(that, view, result.StatusMessage);
+                            }
+                            else {
+                                callBackFunc.call(that, view, result.StatusMessage);
+                            }
+                        } else {
+                            if (window[`${callBackFunc}`] instanceof Function) {
+                                window[`${callBackFunc}`].call(that, null, result.StatusMessage);
+                            }
+                            else {
+                                callBackFunc.call(that, null, result.StatusMessage);
+                            }
+                        }
+                    },
+                    error: function (jqXHR: {status: number, responseText: string}): any { that.ajaxErrorFnc(jqXHR); }
+                });
+            }
+            else {
+                if (!isGuidDbrd) {
+                    throw new Error('Please provide valid dashboard ID.');
+                }
+                if (this.isMultiTab && !isGuidChildDbrd) {
+                    throw new Error('Please provide valid child dashboard ID.');
+                }
+                if (this._isEmptyOrSpaces(viewParameters.ViewName)) {
+                    throw new Error('Please provide valid view name.');
+                }
+                if (this._isEmptyOrSpaces(viewParameters.QueryString)) {
+                    throw new Error('Please provide valid query string.');
+                }
+            }
+        });
+
+        this.updateFilterView = this.Invoke(function(viewParameters: any, callBackFunc: Function): any {
+            const regex: any = /^(?:\{{0,1}(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}\}{0,1})$/;
+            const isGuidDbrd: boolean = regex.exec(viewParameters.DashboardId);
+            const isGuidView: boolean = regex.exec(viewParameters.ViewId);
+            if (isGuidDbrd && (!this._isEmptyOrSpaces(viewParameters.QueryString)) && isGuidView) {
+                const that: BoldBI = this;
+                const data: any = {
+                    'ViewId': viewParameters.ViewId,
+                    'DashboardId': viewParameters.DashboardId,
+                    'QueryString': viewParameters.QueryString
+                };
+                bbEmbed.ajax({
+                    async: false,
+                    type: 'PUT',
+                    url: this.dashboardServerApiUrl + '/v4.0/dashboards/views',
+                    headers: {
+                        'Authorization': 'bearer ' + this.accessToken
+                    },
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    success: function (result: any): any {
+                        if (result.Status) {
+                            const view: any = {}; // Create a new object in each iteration
+                            view['ViewId'] = viewParameters.ViewId;
+                            if (window[`${callBackFunc}`] instanceof Function) {
+                                window[`${callBackFunc}`].call(that, view, result.StatusMessage);
+                            }
+                            else {
+                                callBackFunc.call(that, view, result.StatusMessage);
+                            }
+                        }
+                    },
+                    error: function (jqXHR: {status: number, responseText: string}): any { that.ajaxErrorFnc(jqXHR); }
+                });
+            }
+            else {
+                if (!isGuidDbrd) {
+                    throw new Error('Please provide valid dashboard ID.');
+                }
+                if (!isGuidView) {
+                    throw new Error('Please provide valid view ID.');
+                }
+                if (this._isEmptyOrSpaces(viewParameters.QueryString)) {
+                    throw new Error('Please provide valid query string.');
+                }
+            }
+        });
+
+        this.getViewsByDashboardId = this.Invoke(function(dashboardId: string, callBackFunc: Function): any {
+            const regex: any = /^(?:\{{0,1}(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}\}{0,1})$/;
+            const isGuidDbrd: boolean = regex.exec(dashboardId);
+            if (isGuidDbrd) {
+                const that: BoldBI = this;
+                const data: any = {
+                    'DashboardId': dashboardId
+                };
+                bbEmbed.ajax({
+                    async: false,
+                    type: 'GET',
+                    url: this.dashboardServerApiUrl + '/v4.0/dashboards/' + dashboardId + '/views',
+                    headers: {
+                        'Authorization': 'bearer ' + this.accessToken
+                    },
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    success: function (result: any): any {
+                        if (result) {
+                            const viewItems: Array<object> = [];
+                            for (let x: any = 0; x < result.length; x++) {
+                                const view: any = {}; // Create a new object in each iteration
+                                view['ItemId'] = result[`${x}`].ItemId;
+                                view['ViewId'] = result[`${x}`].ViewId;
+                                view['ViewName'] = result[`${x}`].ViewName;
+                                view['QueryString'] = result[`${x}`].QueryString;
+                                viewItems.push(view); // Push the new object to the array
+                            }
+                            if (window[`${callBackFunc}`] instanceof Function) {
+                                window[`${callBackFunc}`].call(that, viewItems);
+                            }
+                            else {
+                                callBackFunc.call(that, viewItems);
+                            }
+                        }
+                        else {
+                            if (window[`${callBackFunc}`] instanceof Function) {
+                                window[`${callBackFunc}`].call(that);
+                            }
+                            else {
+                                callBackFunc.call(that);
+                            }
+                        }
+                    },
+                    error: function (jqXHR: {status: number, responseText: string}): any { that.ajaxErrorFnc(jqXHR); }
+                });
+            }
+            else {
+                if (!isGuidDbrd) {
+                    throw new Error('Please provide valid dashboard ID.');
+                }
+            }
+        });
+
+        this.getViewByViewId = this.Invoke (function (viewId?: string, callBackFunc?: Function): any {
+            const regex: any = /^(?:\{{0,1}(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}\}{0,1})$/;
+            const isGuidView: boolean = regex.exec(viewId);
+            if (isGuidView) {
+                const that: BoldBI = this;
+                const data: any = {
+                    'ViewId': viewId
+                };
+                bbEmbed.ajax({
+                    async: false,
+                    type: 'GET',
+                    url: this.dashboardServerApiUrl + '/v4.0/dashboards/views/' + viewId,
+                    headers: {
+                        'Authorization': 'bearer ' + this.accessToken
+                    },
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    success: function (result: any): any {
+                        const view: any = {}; // Create a new object in each iteration
+                        if (result) {
+                            view['ViewId'] = result.ViewId;
+                            view['ViewName'] = result.ViewName;
+                            view['QueryString'] = result.QueryString;
+                        }
+                        if (window[`${callBackFunc}`] instanceof Function) {
+                            window[`${callBackFunc}`].call(that, view);
+                        }
+                        else {
+                            callBackFunc.call(that, view);
+                        }
+                    },
+                    error: function (jqXHR: {status: number, responseText: string}): any { that.ajaxErrorFnc(jqXHR); }
+                });
+            }
+            else {
+                if (!isGuidView) {
+                    throw new Error('Please provide valid view ID.');
+                }
+            }
+        });
+
+        this.deleteFilterView = this.Invoke (function (viewId?: string, callBackFunc?: Function): any {
+            const regex: any = /^(?:\{{0,1}(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}\}{0,1})$/;
+            const isGuidView: boolean = regex.exec(viewId);
+            if (isGuidView) {
+                const that: BoldBI = this;
+                const data: any = {
+                    'ViewId': viewId
+                };
+                bbEmbed.ajax({
+                    async: false,
+                    type: 'DELETE',
+                    url: this.dashboardServerApiUrl + '/v4.0/dashboards/views/' + viewId,
+                    headers: {
+                        'Authorization': 'bearer ' + this.accessToken
+                    },
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    success: function (): any {
+                        if (window[`${callBackFunc}`] instanceof Function) {
+                            window[`${callBackFunc}`].call(that, viewId);
+                        }
+                        else {
+                            callBackFunc.call(that, viewId);
+                        }
+                    },
+                    error: function (jqXHR: {status: number, responseText: string}): any { that.ajaxErrorFnc(jqXHR); }
+                });
+            }
+            else {
+                if (!isGuidView) {
+                    throw new Error('Please provide valid view ID.');
+                }
             }
         });
     }
@@ -1774,6 +2103,13 @@ export class BoldBI {
                         appearance: !this._isNullOrUndefined(this.embedOptions.dashboardSettings.themeSettings) ? (!this._isNullOrUndefined(this.embedOptions.dashboardSettings.themeSettings.appearance) ? this.embedOptions.dashboardSettings.themeSettings.appearance : 'light') : 'light',
                         applicationTheme: !this._isNullOrUndefined(this.embedOptions.dashboardSettings.themeSettings) ? (!this._isNullOrUndefined(this.embedOptions.dashboardSettings.themeSettings.application) ? this.embedOptions.dashboardSettings.themeSettings.application : null) : null,
                         dashboardTheme: !this._isNullOrUndefined(this.embedOptions.dashboardSettings.themeSettings) ? (!this._isNullOrUndefined(this.embedOptions.dashboardSettings.themeSettings.dashboard) ? this.embedOptions.dashboardSettings.themeSettings.dashboard : (this.embedOptions.dashboardSettings.themeSettings.isLocalTheme ? 'boldBITheme' : null)) : null
+                    },
+                    filterOverviewSettings: {
+                        showSaveIcon: this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings) ? false : this.embedOptions.dashboardSettings.filterOverviewSettings.showSaveIcon,
+                        showSaveAsIcon: this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings) ? false : this.embedOptions.dashboardSettings.filterOverviewSettings.showSaveAsIcon,
+                        showViewSavedFilterIcon: this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings) ? false : this.embedOptions.dashboardSettings.filterOverviewSettings.showViewSavedFilterIcon,
+                        viewId: !this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings) ? this._isEmptyOrSpaces(this.embedOptions.dashboardSettings.filterOverviewSettings.viewId) ? null : this.embedOptions.dashboardSettings.filterOverviewSettings.viewId : null,
+                        viewName: !this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings) ? this._isEmptyOrSpaces(this.embedOptions.dashboardSettings.filterOverviewSettings.viewName) ? null : this.embedOptions.dashboardSettings.filterOverviewSettings.viewName : null
                     },
                     widgets: this._getWidgetFilterInfo(),
                     actionComplete: function (arg: {eventType: string, data?: any, source?: any, schema?: any }): any {
@@ -3136,7 +3472,7 @@ export class BoldBI {
         const themeGroup: any = arg.iconsinformation.shift();
         const filterOverviewOption: any = arg.iconsinformation.shift();
         const refreshGroup: any = arg.iconsinformation.shift();
-        if (this.embedOptions.dashboardSettings.showMoreOption == false || this.embedOptions.dashboardSettings.showExport == false || (this.embedOptions.exportSettings.showExcel == false && this.embedOptions.exportSettings.showImage == false && this.embedOptions.exportSettings.showPDF == false)) {
+        if (this.embedOptions.dashboardSettings.showMoreOption == false || this.embedOptions.dashboardSettings.showExport == false || (this.embedOptions.exportSettings.showExcel == false && this.embedOptions.exportSettings.showImage == false && this.embedOptions.exportSettings.showPDF == false && this.embedOptions.exportSettings.showCSV == false)) {
             arg.iconsinformation = this._arraySlice(arg.iconsinformation, 'groupName', 'Option');
         }
 
@@ -3250,48 +3586,233 @@ export class BoldBI {
         }
     }
 
-    _onBoldBIDashboardSaveFilter(arg: object): any {
-        const serverFnc: any = window[this.onSaveFilterFn];
+    _onBoldBIDashboardSaveFilter(arg: any): any {
+        const that: BoldBI = this;
+        const serverFnc: any = window[that.saveFilterClickFn];
         if (serverFnc instanceof Function) {
-            serverFnc.call(this, arg);
+            serverFnc.call(that, arg);
         }
-
-        const clientFnc: any = window[this.embedOptions.filterSettings.onSaveFilter];
+        const clientFnc: any = window[that.embedOptions.dashboardSettings.saveFilterClick];
         if (clientFnc instanceof Function) {
-            clientFnc.call(this, arg);
+            clientFnc.call(that, arg);
         }
-        if (this.embedOptions.filterSettings.onSaveFilter instanceof Function) {
-            this.embedOptions.filterSettings.onSaveFilter.call(this, arg);
+        if (that.embedOptions.dashboardSettings.saveFilterClick instanceof Function) {
+            that.embedOptions.dashboardSettings.saveFilterClick.call(that, arg);
+        }
+        if (arg.cancel === false) {
+            if (that.embedOptions.dashboardId == '') {
+                console.error('Please provide DashboardId in BoldBI.Create().');
+            }
+            else {
+                // If arg.viewId is defined, it will update the existing View; if undefined or null, it will create a new View.
+                bbEmbed('body').find('#save_view_dialog_wrapper').remove();
+                const dashboardId: string = that.isMultiTab ? that._getActiveChildDashboardId() : that.embedOptions.dashboardId;
+                if (arg.viewId) {
+                    const viewParameters: any = {
+                        ViewId: arg.viewId,
+                        DashboardId: dashboardId,
+                        QueryString: arg.data.encryptedData
+                    };
+                    that.updateFilterView(viewParameters, function (view: any, message: string): any {
+                        console.log(message + ' and you can add custom functionalities using viewId: ' + view.ViewId);
+                    });
+                }
+                else {
+                    that._createSaveViewDialog(arg);
+                }
+            }
         }
     }
-
-    _onBoldBIDashboardSaveAsFilter(arg: object): any {
-        const serverFnc: any = window[this.onSaveAsFilterFn];
-        if (serverFnc instanceof Function) {
-            serverFnc.call(this, arg);
-        }
-
-        const clientFnc: any = window[this.embedOptions.filterSettings.onSaveAsFilter];
-        if (clientFnc instanceof Function) {
-            clientFnc.call(this, arg);
-        }
-        if (this.embedOptions.filterSettings.onSaveAsFilter instanceof Function) {
-            this.embedOptions.filterSettings.onSaveAsFilter.call(this, arg);
+    _addSaveViewDialogStyles(): any {
+        bbEmbed('<style type="text/css"> \
+                    #save_view_dialog_header .su-view { float: left; padding-top: 5px; padding-right: 5px; font-size: 14px; color: var(--primary-text-normal-color); } \
+                    #save_view_dialog_content { font-size: 12px; line-height: 1.4; } \
+                    #save_view_dialog_header #save_view_dialog_header_title { color: var(--primary-text-normal-color); font-size: 14px; padding-top: 5px; line-height: 15px; } \
+                    #view_name_left_col { width: 25%; font-size: 13px; float: left; text-align: right; margin: 5px 0px; } \
+                    #view_name_right_col { width: 61%; float: left; margin-left: 50px; } \
+                    #view_name_textbox { width: 100%; border: 1px solid var(--secondary-border-color); padding: 6px 12px; color: var(--primary-text-normal-color); background: var(--primary-background-color); font-size: 12px; } \
+                    #view_name_textbox:focus { border-color: var(--primary-branding-border-color)!important; } \
+                    #cancel_button:hover { background: var(--secondary-btn-bg-hover-color); border: 1px solid var(--secondary-btn-border-normal-color); color: var(--secondary-btn-text-hover-color); } \
+                    #save_button:hover { background: var(--primary-btn-bg-hover-color); border: 1px solid var(--primary-btn-border-normal-color); color: var(--primary-btn-text-hover-color) !important; } \
+                    #save_view_dialog_footer { padding: 10px 15px; border-top: 1px solid var(--secondary-border-color); background: var(--secondary-background-color); } \
+                    #save_view_dialog .e-dlg-closeicon-btn { margin-right: 5px; padding: 5px 0px; width: 15px; height: 20px; } \
+                    #save_view_dialog .e-dlg-closeicon-btn .e-icon-dlg-close { font-size: 10px; color: var(--hyper-link-hover-color); } \
+                    #save_view_dialog .e-dlg-closeicon-btn:hover, #save_view_dialog .e-dlg-closeicon-btn { background: var(--primary-background-color); } \
+                    #save_view_dialog .e-dlg-content { background: var(--primary-background-color); color: var(--primary-text-normal-color); padding-bottom: 25px; } \
+                    #view_name_err_msg { display: none; color: #ff3b30; font-size: 12px; } \
+                    #cancel_button { background: var(--secondary-btn-bg-normal-color); border: 1px solid var(--secondary-btn-border-normal-color); color: var(--secondary-text-normal-color); } \
+                    #save_button { margin-right: 15px; background: var(--primary-btn-bg-normal-color); border: 1px solid var(--primary-btn-border-normal-color); color: var(--primary-btn-text-normal-color); } \
+                    #save_view_dialog .e-dlg-header-content { padding: 10px 15px; height: 40px; background: var(--primary-background-color); color: var(--primary-text-normal-color); } \
+                    #save_view_dialog { background: var(--primary-background-color); } \
+                    .footer-button-class { border-radius: 4px; display: inline-block; cursor: pointer; font-size: 12px; float: right; font-weight: 600; height: 32px; line-height: 18px; min-width: 90px; outline: 0; text-align: center; padding: 6px 20px; } \
+                    .e-dlg-overlay { position: fixed; } \
+                    .viewname-textbox-error { border: 1px solid #ff3b30 !important; } \
+                </style > ').appendTo('head');
+    }
+    _createSaveViewDialog(args: any): any {
+        const that: BoldBI = this;
+        that._addSaveViewDialogStyles();
+        const saveViewDialogWrapper: HTMLDivElement = bbEmbed('<div>')
+            .attr('id', 'save_view_dialog_wrapper')
+            .appendTo('body');
+        const saveViewDialog: HTMLDivElement = bbEmbed('<div>')
+            .attr('id', 'save_view_dialog')
+            .appendTo(saveViewDialogWrapper);
+        const saveViewHeader: any = '<div id="save_view_dialog_header">' +
+            '<span class="su su-view"></span>' +
+            '<div id="save_view_dialog_header_title">Save View</div>' +
+            '</div>';
+        const saveViewContent: any = `
+            <div id='save_view_dialog_content'>
+                <label id='view_name_left_col'>Name*</label>
+                <div id='view_name_right_col'>
+                    <input type='text' id='view_name_textbox' data-query='${args.data.encryptedData}' data-id='${args.viewId}'>
+                    <span id='view_name_err_msg'></span>
+                </div>
+            </div>
+        `;
+        const saveViewFooter: HTMLDivElement = bbEmbed('<div>')
+            .attr('id', 'save_view_dialog_footer');
+        const saveButton: HTMLButtonElement = bbEmbed('<button>')
+            .attr('id', 'save_button')
+            .addClass('footer-button-class')
+            .text('Save').on('click', () => that._saveFilterView(that));
+        const cancelButton: HTMLButtonElement = bbEmbed('<button>')
+            .attr('id', 'cancel_button')
+            .addClass('footer-button-class')
+            .text('Cancel')
+            .on('click', function(): any {
+                bbEmbed('body').find('#save_view_dialog_wrapper, #success_save_view_dialog_wrapper').remove();
+            });
+        saveViewFooter.append(cancelButton);
+        saveViewFooter.append(saveButton);
+        saveViewDialog.append(saveViewFooter);
+        const saveViewDialogObj: any = new window.ejdashboard.popups.Dialog({
+            header: saveViewHeader,
+            width: '600px',
+            isModal: true,
+            showCloseIcon: true,
+            target: saveViewDialogWrapper[0],
+            content: saveViewContent
+        });
+        saveViewDialogObj.appendTo('#save_view_dialog');
+        document.addEventListener('input', function (): any {
+            that._viewNameValidation();
+        });
+    }
+    _saveFilterView(dbrdInstance: BoldBI): any {
+        const that: BoldBI = dbrdInstance;
+        const inputElement: any = bbEmbed('#view_name_textbox')[0];
+        if (that._viewNameValidation()) {
+            const activeChildDashboardId: string = that.isMultiTab ? that._getActiveChildDashboardId() : '';
+            const viewName: string = inputElement.value;
+            const queryString: string = inputElement.getAttribute('data-query');
+            const viewId: string = inputElement.getAttribute('data-id');
+            const viewParameters: any = {
+                ViewName: viewName,
+                ItemId: that.embedOptions.dashboardId,
+                QueryString: queryString,
+                ChildItemId: activeChildDashboardId
+            };
+            const saveFilterViewCallback: any = (responseViewInfo: any): any => {
+                if (responseViewInfo) {
+                    bbEmbed('body').find('#save_view_dialog_wrapper').remove();
+                }
+                else {
+                    that._viewNameValidation(true);
+                }
+            };
+            if (viewId === 'null') {
+                that.saveFilterView(viewParameters, saveFilterViewCallback);
+            }
+            else {
+                that.saveAsFilterView(viewParameters, saveFilterViewCallback);
+            }
         }
     }
+    _updateInFilterOverviewUI(viewName: string, viewId: string): any {
+        let dashboardInstance: any = {};
+        if (this.isMultiTab) {
+            dashboardInstance = window.bbEmbed('.e-content .e-active').find('.bbembed-multitab-dbrd').data('BoldBIDashboardDesigner');
+        }
+        else {
+            dashboardInstance = this._getDashboardInstance();
+        }
+        if (dashboardInstance) {
+            dashboardInstance._updateFilterOverview(viewName, viewId);
+        }
+    }
+    _viewNameValidation(isExistingView?: boolean): any {
+        const textBox: any = bbEmbed('#view_name_textbox');
+        const errorMessage: any = bbEmbed('#view_name_err_msg');
+        const specialCharsRegex: any = /^[a-zA-Z0-9!@$^ ()_=\-}{.`~]*$/;
+        const containsSpecialChars: any = !(specialCharsRegex.test(textBox.val()));
+        const isEmptyString: boolean = this._isEmptyOrSpaces(textBox[0].value);
 
-    _onBoldBIDashboardOpenViewSection(arg: object): any {
-        const serverFnc: any = window[this.onViewSavedFiltersFn];
+        if (isExistingView || containsSpecialChars || isEmptyString) {
+            errorMessage.css('display', 'block')
+                .text(isExistingView ? 'View Name Already Exists' :
+                    containsSpecialChars ? 'Please avoid special characters' :
+                        isEmptyString ? 'Please enter the view name' : '');
+            textBox.addClass('viewname-textbox-error');
+            return false;
+        } else {
+            errorMessage.css('display', 'none').text();
+            textBox.removeClass('viewname-textbox-error');
+            return true;
+        }
+    }
+    _getActiveChildDashboardId(): any {
+        const regex: any = /^([\da-f]{8})([\da-f]{4})([\da-f]{4})([\da-f]{4})([\da-f]{12})$/;
+        const activeChildDashboardId: string = window.bbEmbed('.e-content .e-active').find('.bbembed-multitab-dbrd').data('BoldBIDashboardDesigner')._id.split('_')[1].replace(regex, '$1-$2-$3-$4-$5');
+        return activeChildDashboardId;
+    }
+    _getParametersFromQueryString(queryString: string): any {
+        const filterQuery: any = JSON.parse(decodeURIComponent(queryString).split('filterQuery=')[1]);
+        return filterQuery.map((query: any) => {
+            const columnName: string = query.dimfi && !query.dimfi.c.toLowerCase().includes('include') ? `${query.cn} (${query.dimfi.c})` : query.cn;
+            const columnValues: any = query.dimfi ? query.dimfi.t : query.idf.dfl;
+            return {
+                name: columnName,
+                values: columnValues
+            };
+        });
+    }
+    _onBoldBIDashboardSaveAsFilter(arg: any): any {
+        const that: BoldBI = this;
+        const serverFnc: any = window[this.saveAsFilterClickFn];
         if (serverFnc instanceof Function) {
             serverFnc.call(this, arg);
         }
-
-        const clientFnc: any = window[this.embedOptions.filterSettings.onViewSavedFilters];
+        const clientFnc: any = window[this.embedOptions.dashboardSettings.saveAsFilterClick];
         if (clientFnc instanceof Function) {
             clientFnc.call(this, arg);
         }
-        if (this.embedOptions.filterSettings.onViewSavedFilters instanceof Function) {
-            this.embedOptions.filterSettings.onViewSavedFilters.call(this, arg);
+        if (this.embedOptions.dashboardSettings.saveAsFilterClick instanceof Function) {
+            this.embedOptions.dashboardSettings.saveAsFilterClick.call(this, arg);
+        }
+        if (arg.cancel === false) {
+            if (that.embedOptions.dashboardId == '') {
+                console.error('Please provide DashboardId in BoldBI.create().');
+            }
+            else {
+                bbEmbed('body').find('#save_view_dialog_wrapper').remove();
+                that._createSaveViewDialog(arg);
+            }
+        }
+    }
+    _onBoldBIDashboardOpenViewSection(arg: any): any {
+        const that: BoldBI = this;
+        const serverFnc: any = window[that.viewSavedFiltersClickFn];
+        if (serverFnc instanceof Function) {
+            serverFnc.call(that, arg);
+        }
+        const clientFnc: any = window[that.embedOptions.dashboardSettings.viewSavedFiltersClick];
+        if (clientFnc instanceof Function) {
+            clientFnc.call(that, arg);
+        }
+        if (that.embedOptions.dashboardSettings.viewSavedFiltersClick instanceof Function) {
+            that.embedOptions.dashboardSettings.viewSavedFiltersClick.call(that, arg);
         }
     }
 
@@ -4082,7 +4603,10 @@ export class BoldBI {
         }
     }
 
-    _showLoader(): any {
+    _showLoader(container?: any): any {
+        if (this.isMultipleWidgetMode) {
+            this.embedOptions.embedContainerId = container;
+        }
         const loaderStyle: any = document.createElement('style');
         loaderStyle.innerHTML = '#' + this.embedOptions.embedContainerId + ' .viewer-blue-loader { display: block !important; }	' +
             ' #' + this.embedOptions.embedContainerId + ' .loader-icon { display: block; }' +
@@ -4224,12 +4748,12 @@ export class BoldBI {
         return value == undefined || value == null;
     }
 
-    _validateOptions: any = this.Invoke(function(options: {embedContainerId?: string , serverUrl?: string , pinboardName?: string , mode?: any , dashboardId?: string , dashboardPath?: string , environment?: any , datasourceId?: string , datasourceName?: string , onError?: any  }): any  {
+    _validateOptions: any = this.Invoke(function(options: {embedContainerId?: string , serverUrl?: string , pinboardName?: string , mode?: any , dashboardId?: string , dashboardPath?: string , environment?: any , datasourceId?: string , datasourceName?: string , onError?: any , widgetList?: any  }): any  {
         this.embedOptions.embedContainer = options.embedContainerId;
         if (!this._isNullOrUndefined(options.onError)) {
             this.embedOptions.onError = options.onError;
         }
-        if (this._isEmptyOrSpaces(options.embedContainerId)) {
+        if (this._isEmptyOrSpaces(options.embedContainerId) &&  this._isNullOrUndefined(options.widgetList)) {
             this.invalidDetail = true;
             throw new Error ('Please provide the valid Embed container Id');
         }

@@ -9,9 +9,9 @@ export declare class BoldBI {
     scheduleEndpointUrl: string;
     childContainer: any;
     cdnLink: string;
-    onSaveFilterFn: string;
-    onSaveAsFilterFn: string;
-    onViewSavedFiltersFn: string;
+    saveFilterClickFn: string;
+    saveAsFilterClickFn: string;
+    viewSavedFiltersClickFn: string;
     onBannerIconClickFn: string;
     beforeWidgetIconRenderedFn: string;
     onWidgetIconClickFn: string;
@@ -80,6 +80,12 @@ export declare class BoldBI {
     loadDesigner: any;
     refreshWidgetData: any;
     addWidgetToPinboard: any;
+    saveFilterView: any;
+    saveAsFilterView: any;
+    updateFilterView: any;
+    getViewsByDashboardId: any;
+    getViewByViewId: any;
+    deleteFilterView: any;
     constructor();
     static create(options: object): any;
     static getInstance(eleID: string): any;
@@ -291,9 +297,16 @@ export declare class BoldBI {
     _onBoldBIDashboardBeforeOtherOptionContextMenuRender(arg: {
         iconsinformation?: any;
     }): any;
-    _onBoldBIDashboardSaveFilter(arg: object): any;
-    _onBoldBIDashboardSaveAsFilter(arg: object): any;
-    _onBoldBIDashboardOpenViewSection(arg: object): any;
+    _onBoldBIDashboardSaveFilter(arg: any): any;
+    _addSaveViewDialogStyles(): any;
+    _createSaveViewDialog(args: any): any;
+    _saveFilterView(dbrdInstance: BoldBI): any;
+    _updateInFilterOverviewUI(viewName: string, viewId: string): any;
+    _viewNameValidation(isExistingView?: boolean): any;
+    _getActiveChildDashboardId(): any;
+    _getParametersFromQueryString(queryString: string): any;
+    _onBoldBIDashboardSaveAsFilter(arg: any): any;
+    _onBoldBIDashboardOpenViewSection(arg: any): any;
     _onBoldBIDashboardBannerIconClick(arg: {
         name: string;
         selectedTheme: string;
@@ -428,7 +441,7 @@ export declare class BoldBI {
     _onBoldBIBeforeNavigateUrlLinking(arg: object): any;
     _onBoldBIBeforeNavigateToDashboard(arg: object): any;
     _onBoldBIAuthorizionComplete(arg: object): any;
-    _showLoader(): any;
+    _showLoader(container?: any): any;
     _getAuthorizationToken: any;
     _xhrRequestHelper(type: string, url: string, data: object, headers: object, callBackFn: Function): any;
     _emptyHtml(elementID: string): any;

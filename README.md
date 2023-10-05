@@ -36,19 +36,16 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-**Bugs**
+**Improvements**
 
-* Resolved the issue of group-based authorization with Azure AD provider in JS-based embedding. 
-* Fixed the cancel button issue in the SSO token-based connection Iframe embedding. 
-* Show a valid error message when an invalid dashboard path and pinboard name are in JS-based embedding. 
-* Show a valid error message when the authorization URL is empty in JS-based embedding. 
-* The valid error prompt is displayed for unsupported module embedding with group-based authorization. 
-* The issue of more option widgets being hidden while full-screen mode is enabled in JS-based embedding has been resolved. 
-* Fixed the full-screen functionality not working for the public dashboard when embedded in an Iframe. 
+* Provided CSV export support for dashboards in JavaScript-based embedding.
+* By making embed_timestamp an optional parameter for token-based SSO embedding, the expiration date for the Iframe Signature URL is extended.
 
-**New Feature**
+**New Features**
 
-* In JavaScript-based embedding, FontFamily customization support is provided.
+* Provided support to import the user into Bold BI while doing group-based authorization with Azure AD and AWS in JavaScript-based embedding 
+* Provided support to embed multiple widgets in a single instance call in JavaScript-based embedding. 
+
 
 ## License Information
 
