@@ -36,15 +36,13 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-**Improvements**
+**Bugs**
 
-* Provided CSV export support for dashboards in JavaScript-based embedding.
-* By making embed_timestamp an optional parameter for token-based SSO embedding, the expiration date for the Iframe Signature URL is extended.
-
-**New Features**
-
-* Provided support to import the user into Bold BI while doing group-based authorization with Azure AD and AWS in JavaScript-based embedding 
-* Provided support to embed multiple widgets in a single instance call in JavaScript-based embedding. 
+* Show a valid error message if the dashboard path format is incorrect in JS-based embedding. 
+* Show the valid error message when expiration time is provided without a timestamp in token-based embedding. 
+* Show the valid error message if a group isn't imported to the BoldBI server during group-based authorization in JS-based embedding. 
+* Hided the save and save-as icons in FiltersOverview dialog for the public dashboards in JS based embedding.
+* Validated and shows prompt message, if we called deleteFilterView method with invalid viewId in JS based embedding.
 
 
 ## License Information
