@@ -2060,6 +2060,11 @@ export class BoldBI {
                     document.getElementById(embedContainerId).style.height = height;
                     document.getElementById(embedContainerId).style.width = (this.embedOptions.pinboardName != '' ? document.getElementById(embedContainerId).style.width : (!this.isMultiTab ? this.embedOptions.width : '100%'));
                 }
+                if ((this.embedOptions.mode == BoldBI.Mode.View) && (!this.embedOptions.authorizationServer.url) && (!this.embedOptions.authorizationServer.data))
+                {
+                    this.embedOptions.dashboardSettings.filterOverviewSettings.showSaveIcon = false;
+                    this.embedOptions.dashboardSettings.filterOverviewSettings.showSaveAsIcon = false;
+                }
                 let dashboardOptions: any;
                 // eslint-disable-next-line
                 dashboardOptions = {
@@ -4279,18 +4284,28 @@ export class BoldBI {
         }
     }
 
-    ajaxErrorFnc(jqXHR: {status: number, responseText: string}): any {
+    ajaxErrorFnc(jqXHR: {status: number, responseText: string, statusText?: string}): any {
         let msg: any = '';
         if (jqXHR.status == 0) {
             msg = 'Not connected. Please check the network.';
         } else if (jqXHR.status == 404) {
-            msg = 'The requested page was not found (404).';
+            if (jqXHR.statusText == 'Not Found')
+            {
+                msg = 'The view id is not found. Please provide valid view id';
+            } else {
+                msg = 'The requested page was not found (404).';
+            }
         } else if (jqXHR.status == 500) {
             msg = 'There is an Internal Server Error (500).';
         } else {
             msg = 'Uncaught Error occurred.' + jqXHR.responseText;
         }
-        console.error(msg);
+        if (!this._isNullOrUndefined(this.embedOptions.onError) && this.embedOptions.onError != '') {
+            this.onErrorClient(msg);
+        }
+        else {
+            console.error(msg);
+        }
     }
 
     setDefaultTheme(bgColor: string, textColor: string, iconColor: string): any {
@@ -4774,6 +4789,12 @@ export class BoldBI {
         }
         if (options.mode == BoldBI.Mode.Connection) {
             return true;
+        }
+        if (options.dashboardPath && options.mode != BoldBI.Mode.DataSource) {
+            const splitedPath: any =  options.dashboardPath.split('/');
+            if (splitedPath.length != 3 || splitedPath[0] != '' || splitedPath[1] == ''  || splitedPath[2] == '') {
+                throw new Error ('Invalid dashboard path');
+            }
         }
         if (this._isEmptyOrSpaces(options.dashboardId) && this._isEmptyOrSpaces(options.dashboardPath) && options.mode != BoldBI.Mode.Design && this._isEmptyOrSpaces(options.datasourceId) && this._isEmptyOrSpaces(options.datasourceName)) {
             if (options.mode != BoldBI.Mode.DataSource) {

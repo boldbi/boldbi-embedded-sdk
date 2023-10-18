@@ -405,6 +405,7 @@ export declare class BoldBI {
     ajaxErrorFnc(jqXHR: {
         status: number;
         responseText: string;
+        statusText?: string;
     }): any;
     setDefaultTheme(bgColor: string, textColor: string, iconColor: string): any;
     _switchFullscreenMode(arg: any): any;
