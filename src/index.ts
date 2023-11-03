@@ -3303,6 +3303,16 @@ export class BoldBI {
             }
         }
 
+        // Hiding the Refresh Setting button in connection embedding.
+        if (this.embedOptions.mode == BoldBI.Mode.Connection || this.embedOptions.mode == BoldBI.Mode.Design) {
+            const style : any = document.createElement('style');
+            style.type = 'text/css';
+            // Define the CSS rule to hide the refresh setting button in the webAPI connector.
+            const cssCode : any = '#' + this.embedOptions.embedContainerId + '_embeddedbi_newConnection_webDs_schedule_tr .bbi-dbrd-datasource-schedule { display: none }';
+            style.appendChild(document.createTextNode(cssCode));
+            document.head.appendChild(style);
+        }
+
         const serverFnc: any = window[this.actionBeginFn];
         if (serverFnc instanceof Function) {
             serverFnc.call(this, arg);
@@ -4473,13 +4483,12 @@ export class BoldBI {
 
     _onBoldBIbeforeDatasourceToolbarButtonsRendered(arg: {toolbarButtons: any}): any {
         for (let i: number = arg.toolbarButtons.length - 1; i >= 0; i--) {
+            if (arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_continue_dashboard_button' || arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_editScheduleButton' ) {
+                arg.toolbarButtons.splice(i, 1);
+            }
             // For Datasource Edit Mode.
             if (!this.isNewConnection && this.embedOptions.mode != BoldBI.Mode.Design) {
-                if (arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_continue_dashboard_button' || arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_cancelButton') {
-                    arg.toolbarButtons.splice(i, 1);
-                }
-            } else { // For Datasource Connection Mode.
-                if (arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_continue_dashboard_button') {
+                if (arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_cancelButton' ) {
                     arg.toolbarButtons.splice(i, 1);
                 }
             }
