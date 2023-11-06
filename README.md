@@ -38,11 +38,7 @@ Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](h
 
 **Bugs**
 
-* Show a valid error message if the dashboard path format is incorrect in JS-based embedding. 
-* Show the valid error message when expiration time is provided without a timestamp in token-based embedding. 
-* Show the valid error message if a group isn't imported to the BoldBI server during group-based authorization in JS-based embedding. 
-* Hided the save and save-as icons in FiltersOverview dialog for the public dashboards in JS based embedding.
-* Validated and shows prompt message, if we called deleteFilterView method with invalid viewId in JS based embedding.
+* Fixed the refresh icon hiding issue in iframe embedding.
 
 
 ## License Information
