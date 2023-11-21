@@ -38,8 +38,15 @@ Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](h
 
 **Bugs**
 
-* Fixed the refresh icon hiding issue in iframe embedding.
+	* Shown valid error message when an invalid item id used in JavaScript-based widget embedding.
 
+	* Shown valid error message if user email is not used in authorization server in JavaScript-based embedding.
+
+	* Fixed the save window popup issue in fullscreen in JavaScript-based embedding.
+
+**Improvements**
+
+	* Applied font customization support for exporting the dashboard in JavaScript-based embedding.
 
 ## License Information
 

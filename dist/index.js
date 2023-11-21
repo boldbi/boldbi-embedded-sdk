@@ -159,6 +159,14 @@ class BoldBI {
                 else {
                     embedResponse.ItemDetail = this.embedOptions.mode != BoldBI.Mode.Connection ? JSON.parse(responseInfo.Data.ItemDetail) : null;
                     let embedContainerId;
+                    if (this.embedOptions.mode == BoldBI.Mode.View && embedResponse.ItemDetail.IsEnableDefaultView) {
+                        this.isDefaultView = embedResponse.ItemDetail.IsEnableDefaultView;
+                        if (embedResponse.ItemDetail.ItemViews) {
+                            this.embedOptions.dashboardSettings.filterOverviewSettings.viewId = embedResponse.ItemDetail.ItemViews[0].ViewId;
+                            this.embedOptions.dashboardSettings.filterOverviewSettings.viewName = embedResponse.ItemDetail.ItemViews[0].ViewName;
+                            this.embedOptions.filterParameters = embedResponse.ItemDetail.ItemViews[0].QueryString;
+                        }
+                    }
                     if (this.embedOptions.mode == BoldBI.Mode.View) {
                         this.dashboardUrl = '/dashboard/' + embedResponse.ItemDetail.Id + '/' + embedResponse.ItemDetail.CategoryName + '/' + embedResponse.ItemDetail.Name + '?';
                     }
@@ -237,7 +245,9 @@ class BoldBI {
                         export: {
                             Image: this.embedOptions.exportSettings.showImage,
                             Excel: this.embedOptions.exportSettings.showExcel,
-                            Pdf: this.embedOptions.exportSettings.showPDF
+                            Pdf: this.embedOptions.exportSettings.showPDF,
+                            CustomFontFamilyUrl: `${this.baseUrl.replace(/\/bi.*/, '/ums/user-interface/fonts?family=')}${this.embedOptions.dashboardSettings.fontFamily}`,
+                            IsDefaultFont: false
                         },
                         filterParameters: parameter + (this._isEmptyOrSpaces(this.embedOptions.filterParameters) ? '' : '&') + ((this.isMultiTab && window['multiTabFilterParameter']) ? window['multiTabFilterParameter'] : this.embedOptions.filterParameters),
                         designCanvasSettings: this.embedOptions.designCanvasSettings,
@@ -594,7 +604,7 @@ class BoldBI {
                 embedContainer.append(multiTabContainer);
                 const tabHeader = bbEmbed('<div class="e-tab-header"></div>');
                 const tabContent = bbEmbed('<div class="e-content"></div>');
-                bbEmbed.map(embedResponse, function (value) {
+                bbEmbed.map(embedResponse, function (value, index) {
                     const dashboardItemDetail = JSON.parse(value.ItemDetail);
                     that.parentDbrdId = value.parentId;
                     const dashboardId = dashboardItemDetail.Id.replaceAll('-', '');
@@ -603,6 +613,9 @@ class BoldBI {
                         bbEmbed.map(that.embedOptions.dashboardSettings.dashboardName, function (val) {
                             dashboardItemDetail.Name = (dashboardId == val.dashboardId.replaceAll('-', '')) ? that._isEmptyOrSpaces(val.dashboardName) ? dashboardItemDetail.Name : val.dashboardName : dashboardItemDetail.Name;
                         });
+                    }
+                    if (index == 0) {
+                        that.multiDashContainerId = 'multi_' + dashboardId + '_embeddedbi';
                     }
                     tabHeader.append(bbEmbed('<div>' + dashboardItemDetail.Name + '</div>'));
                     const multitabDbrdEle = bbEmbed('<div style="height:100%;width:100%;overflow: hidden !important;" id="multi_' + dashboardId + '"></div>');
@@ -823,6 +836,8 @@ class BoldBI {
         this.embedGetDetailsEndPoint = '/embed/get-details';
         this.isMultipleWidgetMode = false;
         this.invalidDetail = false;
+        this.isDefaultView = false;
+        this.multiDashContainerId = '';
         this.wrapperDependentScriptFiles = [
             'jquery.easing.1.3.min.js',
             'jquery-ui.min.js',
@@ -1239,7 +1254,8 @@ class BoldBI {
                     'ItemId': viewParameters.ItemId,
                     'QueryString': viewParameters.QueryString,
                     'IsPublic': false,
-                    'ChildItemId': this.isMultiTab ? viewParameters.ChildItemId : null
+                    'ChildItemId': this.isMultiTab ? viewParameters.ChildItemId : null,
+                    'Isdefault': viewParameters.Isdefault ? viewParameters.Isdefault : false
                 };
                 bbEmbed.ajax({
                     async: false,
@@ -1301,7 +1317,8 @@ class BoldBI {
                     'ViewName': viewParameters.ViewName,
                     'ItemId': viewParameters.ItemId,
                     'QueryString': viewParameters.QueryString,
-                    'ChildItemId': this.isMultiTab ? viewParameters.ChildItemId : null
+                    'ChildItemId': this.isMultiTab ? viewParameters.ChildItemId : null,
+                    'Isdefault': viewParameters.Isdefault ? viewParameters.Isdefault : false
                 };
                 bbEmbed.ajax({
                     async: false,
@@ -3176,6 +3193,7 @@ class BoldBI {
                 window.bbEmbed(window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children()).css({ 'display': 'block', 'position': 'absolute', 'left': 0 });
                 const dbrdInstance = window.bbEmbed('#' + window.bbEmbed(window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children()).children().attr('id')).data('BoldBIDashboardDesigner');
                 if (dbrdInstance == null || dbrdInstance == undefined) {
+                    this.multiDashContainerId = window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children().attr('id') + '_embeddedbi';
                     const dashboardId = window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children().attr('id').split('_')[1];
                     const response = {
                         Apistatus: true,
@@ -3183,6 +3201,9 @@ class BoldBI {
                         Status: true
                     };
                     this._renderDashboard(response);
+                }
+                else {
+                    this.multiDashContainerId = dbrdInstance._id;
                 }
             }
             else {
@@ -3541,6 +3562,10 @@ class BoldBI {
                     #save_view_dialog_header #save_view_dialog_header_title { color: var(--primary-text-normal-color); font-size: 14px; padding-top: 5px; line-height: 15px; } \
                     #view_name_left_col { width: 25%; font-size: 13px; float: left; text-align: right; margin: 5px 0px; } \
                     #view_name_right_col { width: 61%; float: left; margin-left: 50px; } \
+                    #view_name_divison {height: 50px} \
+                    #default_view_divison {height: 50px} \
+                    #default_view_left {width: 25%; font-size: 13px; float: left; text-align: right; margin: 5px 0px;} \
+                    #default_view_right { width: 61%; float: left; margin-left: 50px; margin-top:5px; margin-bottom:5px} \
                     #view_name_textbox { width: 100%; border: 1px solid var(--secondary-border-color); padding: 6px 12px; color: var(--primary-text-normal-color); background: var(--primary-background-color); font-size: 12px; } \
                     #view_name_textbox:focus { border-color: var(--primary-branding-border-color)!important; } \
                     #cancel_button:hover { background: var(--secondary-btn-bg-hover-color); border: 1px solid var(--secondary-btn-border-normal-color); color: var(--secondary-btn-text-hover-color); } \
@@ -3558,14 +3583,22 @@ class BoldBI {
                     .footer-button-class { border-radius: 4px; display: inline-block; cursor: pointer; font-size: 12px; float: right; font-weight: 600; height: 32px; line-height: 18px; min-width: 90px; outline: 0; text-align: center; padding: 6px 20px; } \
                     .e-dlg-overlay { position: fixed; } \
                     .viewname-textbox-error { border: 1px solid #ff3b30 !important; } \
-                </style > ').appendTo('head');
+                    .default_view_switch {position: relative;display: inline-block;width: 28px; /* Width of the switch */height: 16px; /* Height of the switch margin-top: */}\
+                    .default_view_switch input {  display: none;}\
+                    .default_view_slider {position: absolute;cursor: pointer;top: 0;left: 0;right: 0;bottom: 0;background-color: #ccc;-webkit-transition: .4s;transition: .4s;border-radius: 16px; /* Half of the height for a round shape */}\
+                    .default_view_slider:before { position: absolute; content: ""; height: 9px; /* Height minus border width */width: 9px; /* Height minus border width */top: 4px; /* (Width - Height) / 2 to center it horizontally */ bottom: 4px; /* (Height - Height) / 2 to center it vertically */ background-color: white; -webkit-transition: .4s; transition: .4s; border-radius: 50%;  }\
+                    input:checked + .default_view_slider { background-color: #0565ff; border 1px solid #0451cc}\
+                    input:focus + .default_view_slider {  box-shadow: 0 0 0.5px #2196F3;}\
+                    input:checked + .default_view_slider:before {-webkit-transform: translateX(17.5px); /* Half of the width minus half of the height */-ms-transform: translateX(17.5px);transform: translateX(17.5px);}\
+                    </style > ').appendTo('head');
     }
     _createSaveViewDialog(args) {
         const that = this;
+        const dashboardContainerId = that.isMultiTab ? this.multiDashContainerId : that.embedOptions.embedContainerId + '_embeddedbi';
         that._addSaveViewDialogStyles();
         const saveViewDialogWrapper = bbEmbed('<div>')
             .attr('id', 'save_view_dialog_wrapper')
-            .appendTo('body');
+            .appendTo('#' + dashboardContainerId);
         const saveViewDialog = bbEmbed('<div>')
             .attr('id', 'save_view_dialog')
             .appendTo(saveViewDialogWrapper);
@@ -3575,10 +3608,21 @@ class BoldBI {
             '</div>';
         const saveViewContent = `
             <div id='save_view_dialog_content'>
-                <label id='view_name_left_col'>Name*</label>
-                <div id='view_name_right_col'>
-                    <input type='text' id='view_name_textbox' data-query='${args.data.encryptedData}' data-id='${args.viewId}'>
-                    <span id='view_name_err_msg'></span>
+                <div id = "view_name_divison">
+                    <label id='view_name_left_col'>Name*</label>
+                    <div id='view_name_right_col'>
+                        <input type='text' id='view_name_textbox' data-query='${args.data.encryptedData}' data-id='${args.viewId}'>
+                        <span id='view_name_err_msg'></span>
+                    </div>
+                </div>
+                <div id="default_view_divison">
+                <label class="text-label" id="default_view_left">Mark as Default</label>
+                    <div id='default_view_right'>
+                        <label class="default_view_switch">
+                            <input type="checkbox" id="default_view_checkbox">
+                            <span class="default_view_slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
         `;
@@ -3610,6 +3654,13 @@ class BoldBI {
         document.addEventListener('input', function () {
             that._viewNameValidation();
         });
+        if (!this.isDefaultView) {
+            document.getElementById('default_view_checkbox').checked = false;
+            document.getElementById('default_view_checkbox').disabled = true;
+        }
+        else {
+            document.getElementById('default_view_checkbox').checked = true;
+        }
     }
     _saveFilterView(dbrdInstance) {
         const that = dbrdInstance;
@@ -3623,7 +3674,8 @@ class BoldBI {
                 ViewName: viewName,
                 ItemId: that.embedOptions.dashboardId,
                 QueryString: queryString,
-                ChildItemId: activeChildDashboardId
+                ChildItemId: activeChildDashboardId,
+                Isdefault: document.getElementById('default_view_checkbox').checked ? true : false
             };
             const saveFilterViewCallback = (responseViewInfo) => {
                 if (responseViewInfo) {
@@ -4372,7 +4424,7 @@ class BoldBI {
             if (arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_continue_dashboard_button' || arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_editScheduleButton') {
                 arg.toolbarButtons.splice(i, 1);
             }
-            // For Datasource Edit Mode.
+            // For Datasource edit Mode.
             if (!this.isNewConnection && this.embedOptions.mode != BoldBI.Mode.Design) {
                 if (arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_cancelButton') {
                     arg.toolbarButtons.splice(i, 1);

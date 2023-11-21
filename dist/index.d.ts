@@ -68,6 +68,8 @@ export declare class BoldBI {
     isMultipleWidgetMode: boolean;
     invalidDetail: boolean;
     fontFamilyCssFiles: Array<string>;
+    isDefaultView: boolean;
+    multiDashContainerId: string;
     static Mode: any;
     static EmbedType: any;
     static Environment: any;
