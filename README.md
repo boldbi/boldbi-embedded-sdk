@@ -38,15 +38,10 @@ Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](h
 
 **Bugs**
 
-* Shown valid error message when an invalid item id used in JavaScript-based widget embedding.
-
-* Shown valid error message if user email is not used in authorization server in JavaScript-based embedding.
-
-* Fixed the save window popup issue in fullscreen in JavaScript-based embedding.
-
-**Improvements**
-
-* Applied font customization support for exporting the dashboard in JavaScript-based embedding.
+* Fixed the issue in the cloud environment where font customization support is not applied to the exporting in JS-based embedding.
+* Shown valid error message when a dashboardId is passed in the datasourceId parameter in JS-based DataSource embedding.
+* Shown valid error message when embedding the widget without detail in JS-based embedding.
+* Fixed an issue where the saved view name is not showing in the filterOverview panel in JS-based embedding.
 
 ## License Information
 

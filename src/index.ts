@@ -24,9 +24,9 @@ export class BoldBI {
     public scheduleEndpointUrl: string;
     public childContainer: any;
     public cdnLink: string;
-    public saveFilterClickFn: string;
-    public saveAsFilterClickFn: string;
-    public viewSavedFiltersClickFn: string;
+    public beforeSaveViewDialogOpenFn: string;
+    public beforeSaveAsViewDialogOpenFn: string;
+    public onViewSavedFiltersClickFn: string;
     public onBannerIconClickFn: string;
     public beforeWidgetIconRenderedFn: string;
     public onWidgetIconClickFn: string;
@@ -84,7 +84,6 @@ export class BoldBI {
     public invalidDetail: boolean;
     public fontFamilyCssFiles: Array<string>;
     public isDefaultView: boolean;
-    public multiDashContainerId: string;
 
     static Mode: any = Object.freeze({'View': 'view', 'Design': 'design', 'Connection': 'connection', 'DataSource': 'datasource'});
 
@@ -133,9 +132,9 @@ export class BoldBI {
         this.scheduleEndpointUrl = '';
         this.childContainer = '';
         this.cdnLink = '';
-        this.saveFilterClickFn = 'saveFilter';
-        this.saveAsFilterClickFn = 'saveAsFilter';
-        this.viewSavedFiltersClickFn = 'openViewSection';
+        this.beforeSaveViewDialogOpenFn = 'beforeSaveViewDialogRendered';
+        this.beforeSaveAsViewDialogOpenFn = 'beforeSaveAsViewDialogRendered';
+        this.onViewSavedFiltersClickFn = 'openViewSection';
         this.onBannerIconClickFn = 'onBannerIconClick';
         this.beforeWidgetIconRenderedFn = 'beforeWidgetIconRendered';
         this.onWidgetIconClickFn = 'onWidgetIconClick';
@@ -176,7 +175,6 @@ export class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail =  false;
         this.isDefaultView =  false;
-        this.multiDashContainerId = '';
 
         this.wrapperDependentScriptFiles = [
             'jquery.easing.1.3.min.js',
@@ -307,7 +305,10 @@ export class BoldBI {
                 },
                 saveFilterClick: '',
                 saveAsFilterClick: '',
-                viewSavedFiltersClick: ''
+                viewSavedFiltersClick: '',
+                beforeSaveViewDialogOpen: '',
+                beforeSaveAsViewDialogOpen: '',
+                onViewSavedFiltersClick: ''
             },
             widgetSettings: {
                 showExport: true,
@@ -435,7 +436,7 @@ export class BoldBI {
         this.loadDashboardWidget = this.Invoke(function(name: string, dashboardId?: string): any {
             if (!this.invalidDetail) {
                 if (this._isEmptyOrSpaces(name)) {
-                    throw new Error ('Widget name should not be empty');
+                    throw new Error ('Widget id or name cannot not be empty');
                 }
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
                     throw new Error ('Cant able to render the Widget in design mode');
@@ -2026,6 +2027,9 @@ export class BoldBI {
                 if (this.embedOptions.mode == BoldBI.Mode.View && embedResponse.ItemDetail.IsEnableDefaultView ) {
                     this.isDefaultView = embedResponse.ItemDetail.IsEnableDefaultView;
                     if ( embedResponse.ItemDetail.ItemViews) {
+                        if (this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings)) {
+                            this.embedOptions.dashboardSettings.filterOverviewSettings = {};
+                        }
                         this.embedOptions.dashboardSettings.filterOverviewSettings.viewId = embedResponse.ItemDetail.ItemViews[0].ViewId;
                         this.embedOptions.dashboardSettings.filterOverviewSettings.viewName = embedResponse.ItemDetail.ItemViews[0].ViewName;
                         this.embedOptions.filterParameters = embedResponse.ItemDetail.ItemViews[0].QueryString;
@@ -2074,12 +2078,13 @@ export class BoldBI {
                     document.getElementById(embedContainerId).style.height = height;
                     document.getElementById(embedContainerId).style.width = (this.embedOptions.pinboardName != '' ? document.getElementById(embedContainerId).style.width : (!this.isMultiTab ? this.embedOptions.width : '100%'));
                 }
-                if ((this.embedOptions.mode == BoldBI.Mode.View) && (!this.embedOptions.authorizationServer.url) && (!this.embedOptions.authorizationServer.data))
+                if ((this.embedOptions.mode == BoldBI.Mode.View) && (!this.embedOptions.authorizationServer.url) && (!this.embedOptions.authorizationServer.data) && !this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings))
                 {
                     this.embedOptions.dashboardSettings.filterOverviewSettings.showSaveIcon = false;
                     this.embedOptions.dashboardSettings.filterOverviewSettings.showSaveAsIcon = false;
                 }
                 let dashboardOptions: any;
+                const fontFamilyUrl : any = this.embedOptions.environment === BoldBI.Environment.Enterprise ? this.rootUrl.replace(/\/bi(?!.*\/bi)/, '/ums/user-interface/fonts') + '?family=' + this.embedOptions.dashboardSettings.fontFamily : `${this.rootUrl + '/user-interface/fonts?family=' + this.embedOptions.dashboardSettings.fontFamily}`;
                 // eslint-disable-next-line
                 dashboardOptions = {
                     siteUrl: this.baseUrl,
@@ -2111,7 +2116,7 @@ export class BoldBI {
                         Image: this.embedOptions.exportSettings.showImage,
                         Excel: this.embedOptions.exportSettings.showExcel,
                         Pdf: this.embedOptions.exportSettings.showPDF,
-                        CustomFontFamilyUrl: `${this.baseUrl.replace(/\/bi.*/, '/ums/user-interface/fonts?family=')}${this.embedOptions.dashboardSettings.fontFamily}`,
+                        CustomFontFamilyUrl: this.embedOptions.dashboardSettings.fontFamily ? fontFamilyUrl : '',
                         IsDefaultFont: false
                     },
                     filterParameters: parameter + (this._isEmptyOrSpaces(this.embedOptions.filterParameters) ? '' : '&') + ((this.isMultiTab && window['multiTabFilterParameter']) ? window['multiTabFilterParameter'] : this.embedOptions.filterParameters),
@@ -3194,7 +3199,7 @@ export class BoldBI {
             embedContainer.append(multiTabContainer);
             const tabHeader: any = bbEmbed('<div class="e-tab-header"></div>');
             const tabContent: any = bbEmbed('<div class="e-content"></div>');
-            bbEmbed.map(embedResponse, function (value: {ItemDetail?: any, parentId?: any} , index?: number): any {
+            bbEmbed.map(embedResponse, function (value: {ItemDetail?: any, parentId?: any}): any {
                 const dashboardItemDetail: any = JSON.parse(value.ItemDetail);
                 that.parentDbrdId = value.parentId;
                 const dashboardId: any = dashboardItemDetail.Id.replaceAll('-', '');
@@ -3203,9 +3208,6 @@ export class BoldBI {
                     bbEmbed.map(that.embedOptions.dashboardSettings.dashboardName, function (val: {dashboardId: string, dashboardName: string}): any {
                         dashboardItemDetail.Name = (dashboardId == val.dashboardId.replaceAll('-', '')) ? that._isEmptyOrSpaces(val.dashboardName) ? dashboardItemDetail.Name : val.dashboardName : dashboardItemDetail.Name;
                     });
-                }
-                if (index == 0) {
-                    that.multiDashContainerId = 'multi_' + dashboardId + '_embeddedbi';
                 }
                 tabHeader.append(bbEmbed('<div>' + dashboardItemDetail.Name + '</div>'));
                 const multitabDbrdEle: any = bbEmbed('<div style="height:100%;width:100%;overflow: hidden !important;" id="multi_' + dashboardId + '"></div>');
@@ -3267,7 +3269,6 @@ export class BoldBI {
                 window.bbEmbed(window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children()).css({ 'display': 'block', 'position': 'absolute', 'left': 0 });
                 const dbrdInstance: any = window.bbEmbed('#' + window.bbEmbed(window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children()).children().attr('id')).data('BoldBIDashboardDesigner');
                 if (dbrdInstance == null || dbrdInstance == undefined) {
-                    this.multiDashContainerId = window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children().attr('id') + '_embeddedbi';
                     const dashboardId: any = window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children().attr('id').split('_')[1];
                     const response: any = {
                         Apistatus: true,
@@ -3275,8 +3276,6 @@ export class BoldBI {
                         Status: true
                     };
                     this._renderDashboard(response);
-                } else {
-                    this.multiDashContainerId = dbrdInstance._id;
                 }
             } else {
                 window.bbEmbed(window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children()).css({ 'display': 'block', 'position': 'absolute', 'left': window.bbEmbed('.e-content.e-lib.e-touch').width() * (i + 1) });
@@ -3625,16 +3624,17 @@ export class BoldBI {
 
     _onBoldBIDashboardSaveFilter(arg: any): any {
         const that: BoldBI = this;
-        const serverFnc: any = window[that.saveFilterClickFn];
+        const SaveEvent : any = that.embedOptions.dashboardSettings.beforeSaveViewDialogOpen || that.embedOptions.dashboardSettings.saveFilterClick;
+        const serverFnc: any = window[that.beforeSaveViewDialogOpenFn];
         if (serverFnc instanceof Function) {
             serverFnc.call(that, arg);
         }
-        const clientFnc: any = window[that.embedOptions.dashboardSettings.saveFilterClick];
+        const clientFnc: any = window[`${SaveEvent}`];
         if (clientFnc instanceof Function) {
             clientFnc.call(that, arg);
         }
-        if (that.embedOptions.dashboardSettings.saveFilterClick instanceof Function) {
-            that.embedOptions.dashboardSettings.saveFilterClick.call(that, arg);
+        if (SaveEvent instanceof Function) {
+            SaveEvent.call(that, arg);
         }
         if (arg.cancel === false) {
             if (that.embedOptions.dashboardId == '') {
@@ -3699,11 +3699,10 @@ export class BoldBI {
     }
     _createSaveViewDialog(args: any): any {
         const that: BoldBI = this;
-        const dashboardContainerId : string = that.isMultiTab ? this.multiDashContainerId : that.embedOptions.embedContainerId + '_embeddedbi';
         that._addSaveViewDialogStyles();
         const saveViewDialogWrapper: HTMLDivElement = bbEmbed('<div>')
             .attr('id', 'save_view_dialog_wrapper')
-            .appendTo('#' + dashboardContainerId);
+            .appendTo('body');
         const saveViewDialog: HTMLDivElement = bbEmbed('<div>')
             .attr('id', 'save_view_dialog')
             .appendTo(saveViewDialogWrapper);
@@ -3849,16 +3848,17 @@ export class BoldBI {
     }
     _onBoldBIDashboardSaveAsFilter(arg: any): any {
         const that: BoldBI = this;
-        const serverFnc: any = window[this.saveAsFilterClickFn];
+        const saveAsEvent : any = this.embedOptions.dashboardSettings.beforeSaveAsViewDialogOpen || this.embedOptions.dashboardSettings.saveAsFilterClick;
+        const serverFnc: any = window[this.beforeSaveAsViewDialogOpenFn];
         if (serverFnc instanceof Function) {
             serverFnc.call(this, arg);
         }
-        const clientFnc: any = window[this.embedOptions.dashboardSettings.saveAsFilterClick];
+        const clientFnc: any = window[`${saveAsEvent}`];
         if (clientFnc instanceof Function) {
             clientFnc.call(this, arg);
         }
-        if (this.embedOptions.dashboardSettings.saveAsFilterClick instanceof Function) {
-            this.embedOptions.dashboardSettings.saveAsFilterClick.call(this, arg);
+        if (saveAsEvent instanceof Function) {
+            saveAsEvent.call(this, arg);
         }
         if (arg.cancel === false) {
             if (that.embedOptions.dashboardId == '') {
@@ -3872,16 +3872,17 @@ export class BoldBI {
     }
     _onBoldBIDashboardOpenViewSection(arg: any): any {
         const that: BoldBI = this;
-        const serverFnc: any = window[that.viewSavedFiltersClickFn];
+        const viewSavedEvent : any = that.embedOptions.dashboardSettings.onViewSavedFiltersClick || that.embedOptions.dashboardSettings.viewSavedFiltersClick;
+        const serverFnc: any = window[that.onViewSavedFiltersClickFn];
         if (serverFnc instanceof Function) {
             serverFnc.call(that, arg);
         }
-        const clientFnc: any = window[that.embedOptions.dashboardSettings.viewSavedFiltersClick];
+        const clientFnc: any = window[`${viewSavedEvent}`];
         if (clientFnc instanceof Function) {
             clientFnc.call(that, arg);
         }
-        if (that.embedOptions.dashboardSettings.viewSavedFiltersClick instanceof Function) {
-            that.embedOptions.dashboardSettings.viewSavedFiltersClick.call(that, arg);
+        if (viewSavedEvent instanceof Function) {
+            viewSavedEvent.call(that, arg);
         }
     }
 
@@ -4540,7 +4541,7 @@ export class BoldBI {
             if (arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_continue_dashboard_button' || arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_editScheduleButton' ) {
                 arg.toolbarButtons.splice(i, 1);
             }
-            // For Datasource edit Mode.
+            // For Datasource Edit Mode.
             if (!this.isNewConnection && this.embedOptions.mode != BoldBI.Mode.Design) {
                 if (arg.toolbarButtons[`${i}`].elementId == this.embedOptions.embedContainerId + '_embeddedbi_cancelButton' ) {
                     arg.toolbarButtons.splice(i, 1);

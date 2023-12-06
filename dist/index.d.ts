@@ -9,9 +9,9 @@ export declare class BoldBI {
     scheduleEndpointUrl: string;
     childContainer: any;
     cdnLink: string;
-    saveFilterClickFn: string;
-    saveAsFilterClickFn: string;
-    viewSavedFiltersClickFn: string;
+    beforeSaveViewDialogOpenFn: string;
+    beforeSaveAsViewDialogOpenFn: string;
+    onViewSavedFiltersClickFn: string;
     onBannerIconClickFn: string;
     beforeWidgetIconRenderedFn: string;
     onWidgetIconClickFn: string;
@@ -69,7 +69,6 @@ export declare class BoldBI {
     invalidDetail: boolean;
     fontFamilyCssFiles: Array<string>;
     isDefaultView: boolean;
-    multiDashContainerId: string;
     static Mode: any;
     static EmbedType: any;
     static Environment: any;
