@@ -436,10 +436,6 @@ export declare class BoldBI {
     _onBoldBIDashboardWidgetIconClick(arg: object): any;
     _onBoldBIonControlMenuClick(arg: object): any;
     _onBoldBIDashboardUpdatefavorite(arg: object): any;
-    _onBoldBIWidgetExportRender(arg: {
-        iconsinformation?: any;
-        exportOptionCollection?: any;
-    }): any;
     _onBoldBIBeforeNavigateUrlLinking(arg: object): any;
     _onBoldBIBeforeNavigateToDashboard(arg: object): any;
     _onBoldBIAuthorizionComplete(arg: object): any;
