@@ -577,6 +577,10 @@ export class BoldBI {
 
         this.addWidgetToPinboard = this.Invoke(function(dashboardId: string, widgetId: string, widgetName: string): any {
             if (!this._isEmptyOrSpaces(dashboardId) && !this._isEmptyOrSpaces(widgetId) && !this._isEmptyOrSpaces(widgetName)) {
+                const specialCharsRegex: any = /^[a-zA-Z0-9!@$^ ()_=\-}{.`~]*$/;
+                if (!(specialCharsRegex.test(widgetName))) {
+                    throw new Error('Please avoid special characters in widget name');
+                }
                 const homepageItemId: any = bbEmbed('#widget-container').attr('data-homepage-id');
                 const that: BoldBI = this;
                 const embedQuerString: any = 'embed_nonce=' + this._uuidv4Generartor() +
@@ -598,11 +602,14 @@ export class BoldBI {
                         that._addWidgetInPinboard(result.Data);
                     }
                     else if (!result.Status) {
-                        throw new Error('Cant able to add the widget due to ' + result.Message);
+                        that._throwError('Cant able to add the widget due to ' + result.Message);
                     }
                 });
-            } else {
+            } else if (this._isEmptyOrSpaces(dashboardId) || this._isEmptyOrSpaces(widgetId)) {
                 throw new Error('Please provide the valid dashboard id and widget id');
+            } else
+            {
+                throw new Error('Please provide the valid widget name');
             }
         });
 
@@ -3761,7 +3768,7 @@ export class BoldBI {
             content: saveViewContent
         });
         saveViewDialogObj.appendTo('#save_view_dialog');
-        document.addEventListener('input', function (): any {
+        document.getElementById('view_name_textbox').addEventListener('input', function (): any {
             that._viewNameValidation();
         });
         const tooltipIcon: any = document.getElementById('info-icon');

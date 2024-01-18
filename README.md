@@ -36,15 +36,11 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-**Improvements**
-
-* Provided support to save the view as default view in JS-based embedding like in Bold BI server.
-* Provided API to show/hide the export option and select column button in the ViewUnderlying data popup in JS-based embedding.
-
 **Bugs**
 
-* Fixed the error prompt which shows multiple times when try to embed multi-tab dashboard in design mode.
-* Fixed the console error shown while updating the views in iframe based embedding.
+* Fixed the console issue while clicking the export of dashboard in JS-based embedding.
+* Shown a valid error message if invalid itemId or widget name is provided with special character in the pinboard JS-based embedding.
+
 
 ## License Information
 
