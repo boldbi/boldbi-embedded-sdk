@@ -13,35 +13,7 @@ class BoldBI {
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
                     throw new Error('Cant able to render the Pinboard in design mode');
                 }
-                if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
-                    this.isWidgetMode = false;
-                    this.widgetName = '';
-                    this.isDashboardViewMode = false;
-                    this.dashboardViewName = '';
-                    this._showLoader();
-                    this._isDependencyLoaded(this);
-                }
-                else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                    const iframe = document.createElement('iframe');
-                    iframe.frameBorder = 0;
-                    iframe.width = this.embedOptions.width;
-                    iframe.height = this.embedOptions.height;
-                    iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.dashboardId;
-                    iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
-                    iframe.setAttribute('src', this.embedOptions.serverUrl + '/dashboards/' + this.embedOptions.dashboardId + '?isembed=true');
-                    document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
-                }
-            }
-        });
-        this.loadDatasource = this.Invoke(function () {
-            if (!this.invalidDetail) {
-                if (this.embedOptions.dashboardId || this.embedOptions.dashboardPath) {
-                    this.embedOptions.dashboardId = this.embedOptions.dashboardPath = '';
-                }
-                if (this.embedOptions.pinboardName != '') {
-                    this.embedOptions.pinboardName = '';
-                }
-                if (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) {
+                if (!this._checkWidgetList()) {
                     if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
                         this.isWidgetMode = false;
                         this.widgetName = '';
@@ -55,14 +27,46 @@ class BoldBI {
                         iframe.frameBorder = 0;
                         iframe.width = this.embedOptions.width;
                         iframe.height = this.embedOptions.height;
-                        iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.datasourceId;
+                        iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.dashboardId;
                         iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
-                        iframe.setAttribute('src', this.embedOptions.serverUrl + '/datasource-designer/' + this.embedOptions.datasourceId + '?isembed=true');
+                        iframe.setAttribute('src', this.embedOptions.serverUrl + '/dashboards/' + this.embedOptions.dashboardId + '?isembed=true');
                         document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
                     }
                 }
-                else {
-                    throw new Error('Invalid embed Mode');
+            }
+        });
+        this.loadDatasource = this.Invoke(function () {
+            if (!this.invalidDetail) {
+                if (this.embedOptions.dashboardId || this.embedOptions.dashboardPath) {
+                    this.embedOptions.dashboardId = this.embedOptions.dashboardPath = '';
+                }
+                if (this.embedOptions.pinboardName != '') {
+                    this.embedOptions.pinboardName = '';
+                }
+                if (!this._checkWidgetList()) {
+                    if (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) {
+                        if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+                            this.isWidgetMode = false;
+                            this.widgetName = '';
+                            this.isDashboardViewMode = false;
+                            this.dashboardViewName = '';
+                            this._showLoader();
+                            this._isDependencyLoaded(this);
+                        }
+                        else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
+                            const iframe = document.createElement('iframe');
+                            iframe.frameBorder = 0;
+                            iframe.width = this.embedOptions.width;
+                            iframe.height = this.embedOptions.height;
+                            iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.datasourceId;
+                            iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
+                            iframe.setAttribute('src', this.embedOptions.serverUrl + '/datasource-designer/' + this.embedOptions.datasourceId + '?isembed=true');
+                            document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                        }
+                    }
+                    else {
+                        throw new Error('Invalid embed Mode');
+                    }
                 }
             }
         });
@@ -235,6 +239,11 @@ class BoldBI {
                     if ((this.embedOptions.mode == BoldBI.Mode.View) && (!this.embedOptions.authorizationServer.url) && (!this.embedOptions.authorizationServer.data) && !this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings)) {
                         this.embedOptions.dashboardSettings.filterOverviewSettings.showSaveIcon = false;
                         this.embedOptions.dashboardSettings.filterOverviewSettings.showSaveAsIcon = false;
+                    }
+                    if (this.embedOptions.mode == BoldBI.Mode.Design && !this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings)) {
+                        this.embedOptions.dashboardSettings.filterOverviewSettings.showSaveIcon = false;
+                        this.embedOptions.dashboardSettings.filterOverviewSettings.showSaveAsIcon = false;
+                        this.embedOptions.dashboardSettings.filterOverviewSettings.showViewSavedFilterIcon = false;
                     }
                     const fontFamilyUrl = this.embedOptions.environment === BoldBI.Environment.Enterprise ? this.rootUrl.replace(/\/bi(?!.*\/bi)/, '/ums/user-interface/fonts') + '?family=' + this.embedOptions.dashboardSettings.fontFamily : `${this.rootUrl + '/user-interface/fonts?family=' + this.embedOptions.dashboardSettings.fontFamily}`;
                     let dashboardOptions;
@@ -562,6 +571,9 @@ class BoldBI {
                     }
                     if (this.embedOptions.widgetList == '') {
                         this._removeElementsClass(embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
+                    }
+                    if (this.isMultiTab && embedResponse.ItemDetail.ItemViews) {
+                        this.embedOptions.dashboardSettings.filterOverviewSettings.viewId = this.embedOptions.dashboardSettings.filterOverviewSettings.viewName = this.embedOptions.filterParameters = null;
                     }
                 }
             }
@@ -1070,23 +1082,25 @@ class BoldBI {
                 if (dashboardId != undefined) {
                     this.embedOptions.dashboardId = dashboardId;
                 }
-                if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
-                    this.isWidgetMode = false;
-                    this.widgetName = '';
-                    this.isDashboardViewMode = false;
-                    this.dashboardViewName = '';
-                    this._showLoader();
-                    this._isDependencyLoaded(this);
-                }
-                else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                    const iframe = document.createElement('iframe');
-                    iframe.frameBorder = 0;
-                    iframe.width = this.embedOptions.width;
-                    iframe.height = this.embedOptions.height;
-                    iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.dashboardId;
-                    iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
-                    iframe.setAttribute('src', this.embedOptions.serverUrl + '/dashboards/' + this.embedOptions.dashboardId + '?isembed=true');
-                    document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                if (!this._checkWidgetList()) {
+                    if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+                        this.isWidgetMode = false;
+                        this.widgetName = '';
+                        this.isDashboardViewMode = false;
+                        this.dashboardViewName = '';
+                        this._showLoader();
+                        this._isDependencyLoaded(this);
+                    }
+                    else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
+                        const iframe = document.createElement('iframe');
+                        iframe.frameBorder = 0;
+                        iframe.width = this.embedOptions.width;
+                        iframe.height = this.embedOptions.height;
+                        iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.dashboardId;
+                        iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
+                        iframe.setAttribute('src', this.embedOptions.serverUrl + '/dashboards/' + this.embedOptions.dashboardId + '?isembed=true');
+                        document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                    }
                 }
             }
         });
@@ -1101,23 +1115,25 @@ class BoldBI {
                 if (this.embedOptions.pinboardName != '' && this.pinBoardRendered) {
                     this.embedOptions.pinboardName = '';
                 }
-                if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
-                    this.isWidgetMode = true;
-                    this.widgetName = name;
-                    this.isDashboardViewMode = false;
-                    this.dashboardViewName = '';
-                    this._showLoader();
-                    this._isDependencyLoaded(this, dashboardId);
-                }
-                else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                    const iframe = document.createElement('iframe');
-                    iframe.frameBorder = 0;
-                    iframe.width = this.embedOptions.width;
-                    iframe.height = this.embedOptions.height;
-                    iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.dashboardId;
-                    iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
-                    iframe.setAttribute('src', this.embedOptions.serverUrl + '/dashboards/' + this.embedOptions.dashboardId + '?isembed=true');
-                    document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                if (!this._checkWidgetList()) {
+                    if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+                        this.isWidgetMode = true;
+                        this.widgetName = name;
+                        this.isDashboardViewMode = false;
+                        this.dashboardViewName = '';
+                        this._showLoader();
+                        this._isDependencyLoaded(this, dashboardId);
+                    }
+                    else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
+                        const iframe = document.createElement('iframe');
+                        iframe.frameBorder = 0;
+                        iframe.width = this.embedOptions.width;
+                        iframe.height = this.embedOptions.height;
+                        iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.dashboardId;
+                        iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
+                        iframe.setAttribute('src', this.embedOptions.serverUrl + '/dashboards/' + this.embedOptions.dashboardId + '?isembed=true');
+                        document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                    }
                 }
             }
         });
@@ -1175,23 +1191,25 @@ class BoldBI {
                 if (dashboardId != undefined) {
                     this.embedOptions.dashboardId = dashboardId;
                 }
-                if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
-                    this.isWidgetMode = false;
-                    this.widgetName = '';
-                    this.isDashboardViewMode = false;
-                    this.dashboardViewName = '';
-                    this._showLoader();
-                    this._isDependencyLoaded(this);
-                }
-                else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                    const iframe = document.createElement('iframe');
-                    iframe.frameBorder = 0;
-                    iframe.width = this.embedOptions.width;
-                    iframe.height = this.embedOptions.height;
-                    iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.dashboardId;
-                    iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
-                    iframe.setAttribute('src', this.embedOptions.serverUrl + '/dashboard-designer/' + this.embedOptions.dashboardId + '?isembed=true');
-                    document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                if (!this._checkWidgetList()) {
+                    if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+                        this.isWidgetMode = false;
+                        this.widgetName = '';
+                        this.isDashboardViewMode = false;
+                        this.dashboardViewName = '';
+                        this._showLoader();
+                        this._isDependencyLoaded(this);
+                    }
+                    else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
+                        const iframe = document.createElement('iframe');
+                        iframe.frameBorder = 0;
+                        iframe.width = this.embedOptions.width;
+                        iframe.height = this.embedOptions.height;
+                        iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.dashboardId;
+                        iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
+                        iframe.setAttribute('src', this.embedOptions.serverUrl + '/dashboard-designer/' + this.embedOptions.dashboardId + '?isembed=true');
+                        document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                    }
                 }
             }
         });
@@ -1592,7 +1610,7 @@ class BoldBI {
             boldBIObj._initializeEmbedOptions(options);
             if (boldBIObj.embedOptions.embedType == BoldBI.EmbedType.Component) {
                 try {
-                    if (boldBIObj.embedOptions.widgetList == '') {
+                    if (boldBIObj.embedOptions.widgetList == '' || boldBIObj.embedOptions.embedContainerId) {
                         boldBIObj.childContainer = document.createElement('div');
                         boldBIObj.childContainer.id = boldBIObj.embedOptions.embedContainerId + '_embeddedbi';
                         const _biInstance = BoldBI._gettinstance(document.getElementById(boldBIObj.embedOptions.embedContainerId), 'embeddedBoldBI');
@@ -3251,6 +3269,21 @@ class BoldBI {
             return window.bbEmbed.data.call(this, ele, 'BoldBIDashboardDesigner');
         }
     }
+    _checkWidgetList() {
+        if (this.embedOptions.widgetList.length > 0 && !this.embedOptions.embedContainerId) {
+            const error = 'Error: For rendering multiple widgets, please use the method loadMultipleWidget()';
+            this.embedOptions.widgetList.forEach((widget) => {
+                const containerId = widget.containerId;
+                const errorMessage = '<div id="embedded-bi-error" style="display:table;height:100%;width:100%;"><div style="display: table-cell;vertical-align: middle;text-align: center;"><div style="display: inline-block;"><img src=' + this.errorImage + ' style="float: left"/><div style="float: left;margin-left: 10px;line-height: 20px;">BoldBI Embedded: ' + error + '</div></div>';
+                document.getElementById(containerId).innerHTML = errorMessage;
+            });
+            return true;
+        }
+        else {
+            this.embedOptions.widgetList = '';
+            return false;
+        }
+    }
     _onBoldBIDashboardInstaceActionBegin(arg, embedContainerId) {
         if (this.isMultiTab && parseInt(bbEmbed('.e-content .e-active').attr('id').split('_')[bbEmbed('.e-content .e-active').attr('id').split('_').length - 1], 10) == 0) {
             const dashboadInstance = bbEmbed('.e-content .e-active').find('.bbembed-multitab-dbrd').data('BoldBIDashboardDesigner');
@@ -3588,11 +3621,12 @@ class BoldBI {
                     .viewname-textbox-error { border: 1px solid #ff3b30 !important; } \
                     .default_view_switch {position: relative;display: inline-block;width: 28px; /* Width of the switch */height: 16px; /* Height of the switch margin-top: */}\
                     .default_view_switch input {  display: none;}\
-                    .default_view_slider {position: absolute;cursor: pointer;top: 0;left: 0;right: 0;bottom: 0;background-color: #ccc;-webkit-transition: .4s;transition: .4s;border-radius: 16px; /* Half of the height for a round shape */}\
-                    .default_view_slider:before { position: absolute; content: ""; height: 9px; /* Height minus border width */width: 9px; /* Height minus border width */top: 4px; /* (Width - Height) / 2 to center it horizontally */ bottom: 4px; /* (Height - Height) / 2 to center it vertically */ background-color: white; -webkit-transition: .4s; transition: .4s; border-radius: 50%;  }\
-                    input:checked + .default_view_slider { background-color: #0565ff; border 1px solid #0451cc}\
+                    .default_view_slider {position: absolute;cursor: pointer;top: 0;left: 0;right: 0;bottom: 0;background-color: var(--material-switch-background-bg-normal-color); border: 1px solid var(--secondary-btn-border-normal-color); -webkit-transition: .4s;transition: .4s;border-radius: 16px; /* Half of the height for a round shape */}\
+                    .default_view_slider:before { position: absolute; content: ""; height: 9px; /* Height minus border width */width: 9px; /* Height minus border width */top: 3px; /* (Width - Height) / 2 to center it horizontally */ bottom: 3px; /* (Height - Height) / 2 to center it vertically  */left:2px; background-color: var(--material-switch-foreground-bg-normal-color); -webkit-transition: .4s; transition: .4s; border-radius: 50%; }\
+                    .default_view_slider:hover {border: 1px solid var(--hover-icon-color);}\
+                    input:checked + .default_view_slider { background-color: var(--primary-branding-color); border-color:var(--primary-branding-border-color);}\
                     input:focus + .default_view_slider {  box-shadow: 0 0 0.5px #2196F3;}\
-                    input:checked + .default_view_slider:before {-webkit-transform: translateX(17.5px); /* Half of the width minus half of the height */-ms-transform: translateX(17.5px);transform: translateX(17.5px);}\
+                    input:checked + .default_view_slider:before {-webkit-transform: translateX(17.5px); /* Half of the width minus half of the height */-ms-transform: translateX(17.5px);transform: translateX(13.5px);background-color: white;}\
                     #info-icon {padding-left: 15px; cursor: pointer; font-size: 12px;} \
                     .su-info:before {content: \u24D8;}\
                     .tooltip {position: relative;display: inline-block;}\
