@@ -38,8 +38,13 @@ Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](h
 
 **Bugs**
 
-* Fixed the console issue while clicking the export of dashboard in JS-based embedding.
-* Shown a valid error message if invalid itemId or widget name is provided with special character in the pinboard JS-based embedding.
+* Resolved an issue where the previous filter name of one of the dashboards was erroneously displayed in the filter overview in multitab dashboards during JS embedding.
+* Addressed a problem where the dashboard theme wasn’t being applied to the default view toggle button in JS embedding.
+* Eliminated the display of save, saveAs, and viewSavedFilter icons while in preview mode in design mode during JS embedding.
+* Shown error message for the use of the widgetList member with invalid methods.
+* Fixed an issue where the moreOptions were not appearing in widget Iframe embedding.
+* Shown clear access denied error message for invalid multitab dashboards during JS embedding.
+* Eliminated the CSS element relates to dashboard DOM while invoking destroy method.
 
 
 ## License Information
