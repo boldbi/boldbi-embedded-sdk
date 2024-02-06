@@ -280,6 +280,7 @@ export declare class BoldBI {
     _tabSelected(): any;
     _isDependencyLoaded(that: BoldBI, dashboardId?: string): any;
     _getDashboardInstance(embedChildId?: string): any;
+    _checkWidgetList(): any;
     _onBoldBIDashboardInstaceActionBegin(arg: {
         eventType: string;
     }, embedContainerId: string): any;
