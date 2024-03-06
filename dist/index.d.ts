@@ -242,6 +242,7 @@ export declare class BoldBI {
             DesignerServerUrl: string;
         };
     }): any;
+    _handleEnvironmentError(arg: any): void;
     _addJquerydependentFiles: any;
     _getCloudLinks(): any;
     _loadDepedentFiles(): any;
