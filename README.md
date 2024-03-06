@@ -40,7 +40,6 @@ Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](h
 
 * For JavaScript-based embedding, default the Environment API to OnPremise. For Cloud sites, set the Environment to Cloud.
 
-
 ## License Information
 
 For licensing information about `Bold BI Embedding`, Take a look at the Bold BI License Agreements from [here](https://www.boldbi.com/terms-of-use).
