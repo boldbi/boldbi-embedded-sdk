@@ -116,6 +116,7 @@ class BoldBI {
                         this.invalidDetail = true;
                     }
                 };
+                script.onerror = (arg) => this._handleEnvironmentError(arg);
             }
             else {
                 // Wait for jQuery to finish loading
@@ -771,10 +772,6 @@ class BoldBI {
             if (!this._isUrl(options.serverUrl)) {
                 this.invalidDetail = true;
                 throw new Error('Please provide a valid Server URL');
-            }
-            if (options.environment != BoldBI.Environment.Enterprise && options.environment != BoldBI.Environment.Cloud) {
-                this.invalidDetail = true;
-                throw new Error(options.environment += ' is not valid environment. Please provide valid environment value.');
             }
             if (!this._isEmptyOrSpaces(options.pinboardName)) {
                 return true;
@@ -2320,6 +2317,12 @@ class BoldBI {
         this.designerRootUrl = responseData.DesignerServerUrl;
         this._addJquerydependentFiles();
     }
+    _handleEnvironmentError(arg) {
+        if (arg.type == 'error') {
+            this._throwError('Server not found. If you are using Cloud BI Server, please ensure that the Environment member is set on the client side.');
+            this.invalidDetail = true;
+        }
+    }
     _getCloudLinks() {
         this._xhrRequestHelper('Get', this.dashboardServerApiUrl + '/system-settings/get-url', {}, {}, this._loadCloudDepedentFiles);
     }
@@ -2390,6 +2393,7 @@ class BoldBI {
                     scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
                 }
                 document.head.appendChild(scriptTag);
+                scriptTag.onerror = (arg) => this._handleEnvironmentError(arg);
             }
         }.bind(that));
     }
@@ -2507,6 +2511,7 @@ class BoldBI {
                     if (bbEmbed('script[src= "' + fileUri + '"]').length < 1) {
                         document.head.appendChild(scriptTag);
                     }
+                    scriptTag.onerror = (arg) => this._handleEnvironmentError(arg);
                 }
             }
         }.bind(that));
@@ -3902,7 +3907,7 @@ class BoldBI {
             'DashboardItemId': commentType == 'dashboard' ? ((this.isMultiTab ? args.multitabDashboardId : args.dashboardId)) : (args.dashboardId),
             'ItemType': commentType,
             'ParentItemId': this.isMultiTab ? args.multitabDashboardId : null,
-            'CommentAction': 3,
+            'CommentAction': 3, //To get dashboard comment or widget comment from server.
             'OrderBy': 1 //To get the comment in decending order (newly added first).
         };
         bbEmbed.ajax({
@@ -3981,8 +3986,8 @@ class BoldBI {
                 'ItemId': arg.dashboardId,
                 'ParentId': arg.parentCommentId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 0,
-                'CurrentDate': isoStr,
+                'CommentAction': 0, //To add comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({
@@ -4039,8 +4044,8 @@ class BoldBI {
                 'DashboardItemId': arg.dashboardId,
                 'ParentId': arg.parentCommentId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 0,
-                'CurrentDate': isoStr,
+                'CommentAction': 0, // To add comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({
@@ -4091,8 +4096,8 @@ class BoldBI {
                 'CommentId': arg.commentId,
                 'ItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 2,
-                'CurrentDate': isoStr,
+                'CommentAction': 2, // To delete comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({
@@ -4143,8 +4148,8 @@ class BoldBI {
                 'ItemId': arg.widgetId,
                 'DashboardItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 2,
-                'CurrentDate': isoStr,
+                'CommentAction': 2, // To delete comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({
@@ -4194,8 +4199,8 @@ class BoldBI {
                 'CommentId': arg.commentId,
                 'ItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 1,
-                'CurrentDate': isoStr,
+                'CommentAction': 1, // To edit comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({
@@ -4251,8 +4256,8 @@ class BoldBI {
                 'ItemId': arg.widgetId,
                 'DashboardItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 1,
-                'CurrentDate': isoStr,
+                'CommentAction': 1, // To edit comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({

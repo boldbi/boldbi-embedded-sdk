@@ -36,16 +36,9 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-**Bugs**
+**Improvement**
 
-* Resolved an issue where the previous filter name of one of the dashboards was erroneously displayed in the filter overview in multitab dashboards during JS embedding.
-* Addressed a problem where the dashboard theme wasn’t being applied to the default view toggle button in JS embedding.
-* Eliminated the display of save, saveAs, and viewSavedFilter icons while in preview mode in design mode during JS embedding.
-* Shown error message for the use of the widgetList member with invalid methods.
-* Fixed an issue where the moreOptions were not appearing in widget Iframe embedding.
-* Shown clear access denied error message for invalid multitab dashboards during JS embedding.
-* Eliminated the CSS element relates to dashboard DOM while invoking destroy method.
-
+* For JavaScript-based embedding, default the Environment API to OnPremise. For Cloud sites, set the Environment to Cloud.
 
 ## License Information
 

@@ -1746,6 +1746,13 @@ export class BoldBI {
         this._addJquerydependentFiles();
     }
 
+    _handleEnvironmentError(arg: any): void {
+        if (arg.type == 'error') {
+            this._throwError('Server not found. If you are using Cloud BI Server, please ensure that the Environment member is set on the client side.');
+            this.invalidDetail = true;
+        }
+    }
+
     _addJquerydependentFiles: any = this.Invoke(function(): any {
         if (!this._checkDepedentFileExists(this.jQueryDepedentFile, false) && !(window.jQuery != undefined && window.jQuery().jquery == '1.10.2')) {
             const script: any = document.createElement('script');
@@ -1770,6 +1777,7 @@ export class BoldBI {
                     this.invalidDetail = true;
                 }
             };
+            script.onerror = (arg: any) => this._handleEnvironmentError(arg);
         }
         else {
             // Wait for jQuery to finish loading
@@ -1866,6 +1874,7 @@ export class BoldBI {
                     scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
                 }
                 document.head.appendChild(scriptTag);
+                scriptTag.onerror = (arg: any) => this._handleEnvironmentError(arg);
             }
         }.bind(that));
     }
@@ -1986,6 +1995,7 @@ export class BoldBI {
                     if (bbEmbed('script[src= "' + fileUri + '"]').length < 1) {
                         document.head.appendChild(scriptTag);
                     }
+                    scriptTag.onerror = (arg: any) => this._handleEnvironmentError(arg);
                 }
             }
         }.bind(that));
@@ -4884,10 +4894,6 @@ export class BoldBI {
         if (!this._isUrl(options.serverUrl)) {
             this.invalidDetail = true;
             throw new Error('Please provide a valid Server URL');
-        }
-        if (options.environment != BoldBI.Environment.Enterprise && options.environment != BoldBI.Environment.Cloud) {
-            this.invalidDetail = true;
-            throw new Error(options.environment += ' is not valid environment. Please provide valid environment value.');
         }
         if (!this._isEmptyOrSpaces(options.pinboardName)) {
             return true;
