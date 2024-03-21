@@ -76,6 +76,7 @@ export declare class BoldBI {
     static _storage: any;
     static _widgetsCollection: any;
     loadDashboard: any;
+    loadMultitabDashboard: any;
     loadDashboardWidget: any;
     loadMultipleWidgets: any;
     loadDesigner: any;

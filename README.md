@@ -37,8 +37,12 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
 **Improvement**
-
-* For JavaScript-based embedding, default the Environment API to OnPremise. For Cloud sites, set the Environment to Cloud.
+ 
+* The method loadMultiTabDashboard() enables the rendering of multiple dashboards programmatically in JS-based embedding, eliminating the need to create a multi-tab dashboard on the Bold BI server.
+ 
+**Bug**
+ 
+* Fixed the custom font style issue in the saveview popup window in JS-based embedding.
 
 ## License Information
 
