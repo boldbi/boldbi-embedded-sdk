@@ -38,11 +38,8 @@ Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](h
 
 **Improvement**
  
-* The method loadMultiTabDashboard() enables the rendering of multiple dashboards programmatically in JS-based embedding, eliminating the need to create a multi-tab dashboard on the Bold BI server.
- 
-**Bug**
- 
-* Fixed the custom font style issue in the saveview popup window in JS-based embedding.
+* In JavaScript-based embedding, includes nonce API to bypass content security policy restrictions only for fetching Bold BI dependencies.
+* In JavaScript-based embedding, includes loadView() to render dashboards with filters by view ID or name.
 
 ## License Information
 
