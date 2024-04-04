@@ -102,12 +102,18 @@ class BoldBI {
                 else {
                     script.setAttribute('src', this.cdnLink + '/scripts/designer/' + this.jQueryDepedentFile);
                 }
+                if (this.embedOptions.nonce) {
+                    script.nonce = this.embedOptions.nonce;
+                }
                 document.head.appendChild(script);
                 // now wait for it to load...
                 script.onload = () => {
                     try {
                         const scriptTag = document.createElement('script');
                         scriptTag.append(this.jqConflictFile);
+                        if (this.embedOptions.nonce) {
+                            scriptTag.nonce = this.embedOptions.nonce;
+                        }
                         document.head.appendChild(scriptTag);
                         bbEmbed = window.bbEmbed = window.bb$;
                         this._addWrapperDependentFiles(this, this.wrapperDependentScriptFiles);
@@ -203,7 +209,7 @@ class BoldBI {
                 else {
                     embedResponse.ItemDetail = this.embedOptions.mode != BoldBI.Mode.Connection ? JSON.parse(responseInfo.Data.ItemDetail) : null;
                     let embedContainerId;
-                    if (this.embedOptions.mode == BoldBI.Mode.View && embedResponse.ItemDetail.IsEnableDefaultView) {
+                    if (this.embedOptions.mode == BoldBI.Mode.View || (embedResponse.ItemDetail && embedResponse.ItemDetail.IsEnableDefaultView)) {
                         this.isDefaultView = embedResponse.ItemDetail.IsEnableDefaultView;
                         if (this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings)) {
                             this.embedOptions.dashboardSettings.filterOverviewSettings = {};
@@ -213,6 +219,9 @@ class BoldBI {
                             this.embedOptions.dashboardSettings.filterOverviewSettings.viewName = embedResponse.ItemDetail.ItemViews[0].ViewName;
                             this.embedOptions.filterParameters = embedResponse.ItemDetail.ItemViews[0].QueryString;
                         }
+                    }
+                    if (this.embedOptions.mode == BoldBI.Mode.View && this.embedOptions.viewId) {
+                        this.embedOptions.dashboardId = embedResponse.ItemDetail.Id;
                     }
                     if (this.embedOptions.mode == BoldBI.Mode.View) {
                         this.dashboardUrl = '/dashboard/' + embedResponse.ItemDetail.Id + '/' + embedResponse.ItemDetail.CategoryName + '/' + embedResponse.ItemDetail.Name + '?';
@@ -277,6 +286,7 @@ class BoldBI {
                         viewerSettings: {
                             serviceUrl: this.designerRootUrl + '/v1.0/design'
                         },
+                        nonce: this.embedOptions.nonce,
                         localeSettings: {
                             culture: this.embedOptions.localeSettings.culture,
                             dateFormat: this._isEmptyOrSpaces(this.embedOptions.localeSettings.dateFormat) ? 'M/d/yyyy' : this.embedOptions.localeSettings.dateFormat,
@@ -295,6 +305,7 @@ class BoldBI {
                         enableTheme: this.embedOptions.dashboardSettings.enableTheme === undefined ? false : this.embedOptions.dashboardSettings.enableTheme,
                         enableFilterOverview: this.embedOptions.dashboardSettings.enableFilterOverview,
                         isPinWidget: this.pinboardIds.length > 0,
+                        layoutSetting: this.embedOptions.layoutSettings,
                         export: {
                             Image: this.embedOptions.exportSettings.showImage,
                             Excel: this.embedOptions.exportSettings.showExcel,
@@ -727,6 +738,13 @@ class BoldBI {
                 '&embed_mode=' + this.embedOptions.mode +
                 '&embed_timestamp=' + Math.round((new Date()).getTime() / 1000) +
                 '&embed_expirationtime=' + this.embedOptions.expirationTime;
+            if (this.embedOptions.viewId) {
+                embedQuerString = embedQuerString +
+                    '&embed_dashboardview_id=' + this.embedOptions.viewId;
+            }
+            else if (this.embedOptions.viewName) {
+                embedQuerString = embedQuerString + '&embed_dashboardview_name=' + this.embedOptions.viewName;
+            }
             if (this.isWidgetMode) {
                 if (this.isMultipleWidgetMode == false) {
                     embedQuerString = embedQuerString +
@@ -825,9 +843,9 @@ class BoldBI {
                         this.invalidDetail = true;
                         throw new Error('Pinboard name cannot be empty');
                     }
-                    else {
+                    else if (this._isEmptyOrSpaces(options.viewId)) {
                         this.invalidDetail = true;
-                        throw new Error('Dashboard id or path cannot be empty');
+                        throw new Error('Dashboard id or path or view id cannot be empty');
                     }
                 }
                 else {
@@ -951,6 +969,12 @@ class BoldBI {
             embedType: BoldBI.EmbedType.Component,
             environment: BoldBI.Environment.Enterprise,
             mode: BoldBI.Mode.View,
+            viewId: '',
+            viewName: '',
+            nonce: '',
+            layoutSettings: {
+                hideDesignerScroller: false
+            },
             dashboardSettings: {
                 showHeader: true,
                 showExport: true,
@@ -1149,6 +1173,21 @@ class BoldBI {
                 }
                 if (dashboardIds !== undefined && dashboardIds !== null) {
                     this.embedOptions.dashboardIds = dashboardIds;
+                }
+                if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+                    this.isWidgetMode = false;
+                    this.widgetName = '';
+                    this.isDashboardViewMode = false;
+                    this.dashboardViewName = '';
+                    this._showLoader();
+                    this._isDependencyLoaded(this);
+                }
+            }
+        });
+        this.loadView = this.Invoke(function () {
+            if (!this.invalidDetail) {
+                if (this.embedOptions.mode != BoldBI.Mode.View) {
+                    throw new Error('Invalid embeded Mode');
                 }
                 if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
                     this.isWidgetMode = false;
@@ -2443,9 +2482,11 @@ class BoldBI {
         fileUriArray.forEach(function (file) {
             if (!((file == 'jquery-ui.min.js' && window.jQuery.ui != undefined && window.jQuery.ui.version == '1.12.1') || (file == 'jsrender.min.js' && window.jQuery.views != undefined && window.jQuery.views.jsviews == 'v1.0.0-beta'))) {
                 const scriptTag = document.createElement('script');
+                if (this.embedOptions.nonce) {
+                    scriptTag.nonce = this.embedOptions.nonce;
+                }
                 if (file == 'jquery.easing.1.3.min.js') {
-                    const fileUri = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
-                    scriptTag.append('bbEmbed(document).ready(function () { bbEmbed.getScript("' + fileUri + '");});');
+                    scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
                 }
                 if (file == 'jquery-ui.min.js') {
                     scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.rootUrl + '/cdn/scripts/' + file : that.cdnLink + '/scripts/' + file;
@@ -2569,6 +2610,9 @@ class BoldBI {
                     const scriptTag = document.createElement('script');
                     scriptTag.type = 'text/javascript';
                     scriptTag.src = fileUri;
+                    if (this.embedOptions.nonce) {
+                        scriptTag.nonce = this.embedOptions.nonce;
+                    }
                     if (bbEmbed('script[src= "' + fileUri + '"]').length < 1) {
                         document.head.appendChild(scriptTag);
                     }
@@ -3900,6 +3944,10 @@ class BoldBI {
         const that = this;
         const viewSavedEvent = that.embedOptions.dashboardSettings.onViewSavedFiltersClick || that.embedOptions.dashboardSettings.viewSavedFiltersClick;
         const serverFnc = window[that.onViewSavedFiltersClickFn];
+        const itemId = this.isMultiTab ? this._getActiveChildDashboardId() : this.embedOptions.dashboardId;
+        this.getViewsByDashboardId(itemId, function (viewInfos) {
+            arg.viewInfos = viewInfos;
+        });
         if (serverFnc instanceof Function) {
             serverFnc.call(that, arg);
         }
