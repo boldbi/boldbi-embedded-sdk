@@ -19,4 +19,4 @@ resources:
       endpoint: github.com_kumarkanagasabai
 
 steps:
-  - template: Public-Repository/boldbi-embedded-sdk.yml@templates
+  - template: Public-Repository/boldbi-embedded-sdk.yml@templates 
