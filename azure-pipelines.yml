@@ -20,3 +20,4 @@ resources:
 
 steps:
   - template: Public-Repository/boldbi-embedded-sdk.yml@templates
+  
