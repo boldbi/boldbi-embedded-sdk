@@ -10,12 +10,13 @@ pr:
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: bold-bi/boldbi-ci-utility
+      ref: gitleaks-Update
+      endpoint: github.com_kumarkanagasabai
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
-  
+steps:
+  - template: Public-Repository/boldbi-embedded-sdk.yml@templates
