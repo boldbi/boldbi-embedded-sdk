@@ -1141,6 +1141,8 @@ class BoldBI {
                 }
                 this.embedOptions.dashboardIds = [];
                 this.embedOptions.dashboardPaths = [];
+                this.embedOptions.viewId = '';
+                this.embedOptions.viewName = '';
                 if (!this._checkWidgetList()) {
                     if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
                         this.isWidgetMode = false;
@@ -1174,6 +1176,8 @@ class BoldBI {
                 if (dashboardIds !== undefined && dashboardIds !== null) {
                     this.embedOptions.dashboardIds = dashboardIds;
                 }
+                this.embedOptions.viewId = '';
+                this.embedOptions.viewName = '';
                 if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
                     this.isWidgetMode = false;
                     this.widgetName = '';
@@ -1189,6 +1193,14 @@ class BoldBI {
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
                     throw new Error('Invalid embeded Mode');
                 }
+                if (this.embedOptions.pinboardName != '') {
+                    this.embedOptions.pinboardName = '';
+                }
+                if (this.embedOptions.viewId == '' && this.embedOptions.viewName == '') {
+                    throw new Error('View details cannot be empty');
+                }
+                this.embedOptions.dashboardIds = [];
+                this.embedOptions.dashboardPaths = [];
                 if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
                     this.isWidgetMode = false;
                     this.widgetName = '';
