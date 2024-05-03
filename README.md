@@ -36,10 +36,11 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
 
-**Improvement**
+**Bug**
  
-* In JavaScript-based embedding, includes nonce API to bypass content security policy restrictions only for fetching Bold BI dependencies.
-* In JavaScript-based embedding, includes loadView() to render dashboards with filters by view ID or name.
+* Fixed the issue of the multi-tab dashboard not rendering properly when the dashboard path was provided.
+* Fixed the issue of the dashboard rendering with views for the non loadView method.
+* Displayed a proper error message if the loadView method initializes without view details.
 
 ## License Information
 
