@@ -144,6 +144,7 @@ class BoldBI {
         this._renderDashboard = this.Invoke(function (responseInfo) {
             const that = this;
             const parameter = '';
+            const responseMessage = responseInfo.Data;
             if (!responseInfo.Status) {
                 if (responseInfo.errorMessage == 'The page you are looking for was unavailable.') {
                     responseInfo.Status = false;
@@ -176,6 +177,10 @@ class BoldBI {
                             responseInfo.Data = responseInfo.Data.filter((dataItem) => dataItem !== item);
                         }
                     }
+                    const accessDeniedCount = responseMessage.filter((itemValue) => 'ErrorMessage' in itemValue && itemValue.ErrorMessage.includes('Access denied for the item')).length;
+                    if (accessDeniedCount === responseMessage.length) {
+                        throw new Error('Access denied for the item.');
+                    }
                     if (!responseInfo.Data.length) {
                         throw new Error('Provided dashboard details are invalid.');
                     }
@@ -186,7 +191,7 @@ class BoldBI {
                         this._renderPinboard(embedResponse);
                     }
                     else {
-                        throw new Error('Pinboard Details not found');
+                        throw new Error('Invalid pinboard name.');
                     }
                 }
                 else if (embedResponse.length) {
@@ -497,7 +502,7 @@ class BoldBI {
                     if (this.isMultiTab) {
                         dashboardOptions.dashboardSettings = {
                             parentId: this.parentDbrdId,
-                            isMultiTab: this.parentId == null || this.parentId === '' ? false : true
+                            isMultiTab: this.parentDbrdId == null || this.parentDbrdId === '' ? false : true
                         };
                     }
                     if (this.embedOptions.dynamicConnection.isEnabled) {
@@ -908,6 +913,7 @@ class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail = false;
         this.isDefaultView = false;
+        this.embedSDKWrapperVersion = '7.9';
         this.wrapperDependentScriptFiles = [
             'jquery.easing.1.3.min.js',
             'jquery-ui.min.js',
@@ -3385,6 +3391,23 @@ class BoldBI {
             setTimeout(that._isDependencyLoaded, 500, that);
         }
     }
+    validateServerAndWrapperVersion() {
+        const that = this;
+        if (that.embedOptions.environment == BoldBI.Environment.Enterprise) {
+            bbEmbed.ajax({
+                async: true,
+                type: 'POST',
+                url: that.dashboardServerApiUrl + '/server-version/get',
+                contentType: 'application/json',
+                success: function (result) {
+                    console.log(that.embedSDKWrapperVersion === result.Data.split('.').slice(0, 2).join('.') ? 'Embedded SDK version matches with Bold BI Server version' : 'Embedded SDK version does not match with Bold BI Server version');
+                }
+            });
+        }
+        else {
+            console.log('Unable to ensure the server version and SDK version for cloud environment');
+        }
+    }
     _getDashboardInstance(embedChildId) {
         const ele = window.bbEmbed.call(this, '#' + (embedChildId ? embedChildId : this.childContainer.id))[0];
         if (ele) {
@@ -3422,12 +3445,18 @@ class BoldBI {
         }
         // Hiding the Refresh Setting button in connection embedding.
         if (this.embedOptions.mode == BoldBI.Mode.Connection || this.embedOptions.mode == BoldBI.Mode.Design) {
-            const style = document.createElement('style');
-            style.type = 'text/css';
-            // Define the CSS rule to hide the refresh setting button in the webAPI connector.
-            const cssCode = '#' + this.embedOptions.embedContainerId + '_embeddedbi_newConnection_webDs_schedule_tr .bbi-dbrd-datasource-schedule { display: none }';
-            style.appendChild(document.createTextNode(cssCode));
-            document.head.appendChild(style);
+            // Check if the style element already exists in the head
+            const existingRefreshSettingsStyle = document.querySelector('style[data-id="hideRefreshSettingsButton"]');
+            if (!existingRefreshSettingsStyle) {
+                // If the style element doesn't exist, create a new one
+                const style = document.createElement('style');
+                style.type = 'text/css';
+                style.setAttribute('data-id', 'hideRefreshSettingsButton');
+                // Define the CSS rule to hide the refresh settings button
+                const cssCode = '.bbi-dbrd-datasource-schedule { display: none !important }';
+                style.appendChild(document.createTextNode(cssCode));
+                document.head.appendChild(style);
+            }
         }
         const serverFnc = window[this.actionBeginFn];
         if (serverFnc instanceof Function) {
@@ -3851,7 +3880,7 @@ class BoldBI {
         const inputElement = bbEmbed('#view_name_textbox')[0];
         if (that._viewNameValidation()) {
             let activeChildDashboardId;
-            if (!this.embedOptions.dashboardIds) {
+            if (!(this.embedOptions.dashboardIds.length > 0)) {
                 activeChildDashboardId = that.isMultiTab ? that._getActiveChildDashboardId() : '';
             }
             const viewName = inputElement.value;

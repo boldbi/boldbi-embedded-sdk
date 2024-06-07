@@ -38,9 +38,11 @@ Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](h
 
 **Bug**
  
-* Fixed the issue of the multi-tab dashboard not rendering properly when the dashboard path was provided.
-* Fixed the issue of the dashboard rendering with views for the non loadView method.
-* Displayed a proper error message if the loadView method initializes without view details.
+* Hide RefreshSettings button in JS based data source embedding.
+* Fixed issue where deleted views were still appearing in embedded dashboards.
+* Fixed a bug that prevented users from using the 'Mark as default' button on embedded dashboards loaded using the loadView() method.
+* Fixed the issue where the multi-tab dashboard was not rendering properly when the child dashboard is private without the authorized API in JS Embedding.
+* Fixed issue in JS based embedding where saved view was not updated on BoldBI server.
 
 ## License Information
 

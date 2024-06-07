@@ -84,6 +84,7 @@ export class BoldBI {
     public invalidDetail: boolean;
     public fontFamilyCssFiles: Array<string>;
     public isDefaultView: boolean;
+    public embedSDKWrapperVersion: string;
 
     static Mode: any = Object.freeze({'View': 'view', 'Design': 'design', 'Connection': 'connection', 'DataSource': 'datasource'});
 
@@ -179,6 +180,7 @@ export class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail =  false;
         this.isDefaultView =  false;
+        this.embedSDKWrapperVersion = '7.9';
 
         this.wrapperDependentScriptFiles = [
             'jquery.easing.1.3.min.js',
@@ -2103,6 +2105,7 @@ export class BoldBI {
     _renderDashboard: any = this.Invoke(function(responseInfo: {Status?: boolean, Message?: string, Data?: any, errorMessage: any }): any {
         const that: BoldBI = this;
         const parameter: any = '';
+        const responseMessage: any = responseInfo.Data;
         if (!responseInfo.Status) {
             if (responseInfo.errorMessage == 'The page you are looking for was unavailable.') {
                 responseInfo.Status = false;
@@ -2133,8 +2136,11 @@ export class BoldBI {
                         responseInfo.Data = responseInfo.Data.filter((dataItem: any) => dataItem !== item);
                     }
                 }
-                if (!responseInfo.Data.length)
-                {
+                const accessDeniedCount: number = responseMessage.filter((itemValue: { ErrorMessage: string }) => 'ErrorMessage' in itemValue && itemValue.ErrorMessage.includes('Access denied for the item')).length;
+                if (accessDeniedCount === responseMessage.length) {
+                    throw new Error('Access denied for the item.');
+                }
+                if (!responseInfo.Data.length) {
                     throw new Error('Provided dashboard details are invalid.');
                 }
             }
@@ -2145,7 +2151,7 @@ export class BoldBI {
                     this._renderPinboard(embedResponse);
                 }
                 else {
-                    throw new Error('Pinboard Details not found');
+                    throw new Error('Invalid pinboard name.');
                 }
             } else if (embedResponse.length) {
                 if (this.isWidgetMode) {
@@ -2458,7 +2464,7 @@ export class BoldBI {
                 if (this.isMultiTab) {
                     dashboardOptions.dashboardSettings = {
                         parentId: this.parentDbrdId,
-                        isMultiTab: this.parentId == null || this.parentId === '' ? false : true
+                        isMultiTab: this.parentDbrdId == null || this.parentDbrdId === '' ? false : true
                     };
                 }
 
@@ -3449,6 +3455,24 @@ export class BoldBI {
         }
     }
 
+    validateServerAndWrapperVersion(): any {
+        const that: BoldBI = this;
+        if (that.embedOptions.environment == BoldBI.Environment.Enterprise) {
+            bbEmbed.ajax({
+                async: true,
+                type: 'POST',
+                url: that.dashboardServerApiUrl + '/server-version/get',
+                contentType: 'application/json',
+                success: function (result: any): any {
+                    console.log(that.embedSDKWrapperVersion === result.Data.split('.').slice(0, 2).join('.') ? 'Embedded SDK version matches with Bold BI Server version' : 'Embedded SDK version does not match with Bold BI Server version');
+                }
+            });
+        }
+        else {
+            console.log('Unable to ensure the server version and SDK version for cloud environment');
+        }
+    }
+
     _getDashboardInstance(embedChildId?: string): any {
         const ele: any = window.bbEmbed.call(this, '#' + (embedChildId ? embedChildId : this.childContainer.id))[0];
         if (ele) {
@@ -3490,12 +3514,18 @@ export class BoldBI {
 
         // Hiding the Refresh Setting button in connection embedding.
         if (this.embedOptions.mode == BoldBI.Mode.Connection || this.embedOptions.mode == BoldBI.Mode.Design) {
-            const style : any = document.createElement('style');
-            style.type = 'text/css';
-            // Define the CSS rule to hide the refresh setting button in the webAPI connector.
-            const cssCode : any = '#' + this.embedOptions.embedContainerId + '_embeddedbi_newConnection_webDs_schedule_tr .bbi-dbrd-datasource-schedule { display: none }';
-            style.appendChild(document.createTextNode(cssCode));
-            document.head.appendChild(style);
+            // Check if the style element already exists in the head
+            const existingRefreshSettingsStyle: HTMLElement | null = document.querySelector('style[data-id="hideRefreshSettingsButton"]');
+            if (!existingRefreshSettingsStyle) {
+                // If the style element doesn't exist, create a new one
+                const style: any = document.createElement('style');
+                style.type = 'text/css';
+                style.setAttribute('data-id', 'hideRefreshSettingsButton');
+                // Define the CSS rule to hide the refresh settings button
+                const cssCode: any = '.bbi-dbrd-datasource-schedule { display: none !important }';
+                style.appendChild(document.createTextNode(cssCode));
+                document.head.appendChild(style);
+            }
         }
 
         const serverFnc: any = window[this.actionBeginFn];
@@ -3948,7 +3978,7 @@ export class BoldBI {
         const inputElement: any = bbEmbed('#view_name_textbox')[0];
         if (that._viewNameValidation()) {
             let activeChildDashboardId: string;
-            if (!this.embedOptions.dashboardIds) {
+            if (!(this.embedOptions.dashboardIds.length > 0)) {
                 activeChildDashboardId = that.isMultiTab ? that._getActiveChildDashboardId() : '';
             }
             const viewName: string = inputElement.value;
