@@ -69,6 +69,7 @@ export declare class BoldBI {
     invalidDetail: boolean;
     fontFamilyCssFiles: Array<string>;
     isDefaultView: boolean;
+    embedSDKWrapperVersion: string;
     static Mode: any;
     static EmbedType: any;
     static Environment: any;
@@ -282,6 +283,7 @@ export declare class BoldBI {
     _renderMultiTabDashboard: any;
     _tabSelected(): any;
     _isDependencyLoaded(that: BoldBI, dashboardId?: string): any;
+    validateServerAndWrapperVersion(): any;
     _getDashboardInstance(embedChildId?: string): any;
     _checkWidgetList(): any;
     _onBoldBIDashboardInstaceActionBegin(arg: {
