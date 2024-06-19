@@ -26,7 +26,7 @@ For complete `Bold BI SDK Embedding with NPM` documentation, please visit [https
 
 ### Offline Demos
 
-Download our Bold BI Platform installer from [here](https://www.boldbi.com/pricing/).
+Download our Bold BI Platform installer from [here](https://www.boldbi.com/account).
 
 ## Support
 
