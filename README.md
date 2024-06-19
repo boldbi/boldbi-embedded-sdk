@@ -12,7 +12,7 @@ npm install -save @boldbi/boldbi-embedded-sdk
 ```
 import {BoldBI} from '@boldbi/boldbi-embedded-sdk';
 ```
-3. Then, you could use that `BoldBI` instance for creating object with respective values. For more details please go through the `getting started with npm` section from [here](https://help.boldbi.com/embedded-bi/javascript-based/getting-started-with-npm/#create-bold-bi-instance).
+3. Then, you could use that `BoldBI` instance for creating object with respective values. For more details please go through the `getting started with npm` section from [here](https://help.boldbi.com/embedding-options/embedding-using-npm-package/#create-bold-bi-instance).
 
 ## Demos
 
@@ -22,11 +22,11 @@ Take a look at the `Bold BI Embedded samples` live demo [here](https://samples.b
 
 ## Documentation
 
-For complete `Bold BI SDK Embedding with NPM` documentation, please visit [https://help.boldbi.com/embedded-bi/javascript-based/getting-started-with-npm](https://help.boldbi.com/embedded-bi/javascript-based/getting-started-with-npm)
+For complete `Bold BI SDK Embedding with NPM` documentation, please visit this [link](https://help.boldbi.com/embedding-options/embedding-using-npm-package/).
 
 ### Offline Demos
 
-Download our Bold BI Platform installer from [here](https://www.boldbi.com/pricing/).
+Download our Bold BI Platform installer from [here](https://www.boldbi.com/account).
 
 ## Support
 
@@ -34,7 +34,7 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 ## Release Notes
 
-Refer the `Bold BI` Product Release Notes in [online Release Notes at Bold BI](https://www.boldbi.com/release-history/).
+Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/) page.
 
 **Bug**
  
