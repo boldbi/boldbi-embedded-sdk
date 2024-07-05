@@ -36,13 +36,15 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/) page.
 
+**Feature**
+
+* Provided Token member support in JS based embedding
+
 **Bug**
  
-* Hide RefreshSettings button in JS based data source embedding.
-* Fixed issue where deleted views were still appearing in embedded dashboards.
-* Fixed a bug that prevented users from using the 'Mark as default' button on embedded dashboards loaded using the loadView() method.
-* Fixed the issue where the multi-tab dashboard was not rendering properly when the child dashboard is private without the authorized API in JS Embedding.
-* Fixed issue in JS based embedding where saved view was not updated on BoldBI server.
+* Fixed the issue where the default view was not being applied to the dashboard in token based SSO embedding.
+* Fixed issue where public dashboard was not rendered in the loadMultitabDashboard() method in JS embedding.
+* Hide RefreshSettings button in Iframe embedding.
 
 ## License Information
 
