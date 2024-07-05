@@ -70,6 +70,10 @@ export declare class BoldBI {
     fontFamilyCssFiles: Array<string>;
     isDefaultView: boolean;
     embedSDKWrapperVersion: string;
+    isDashboardRendering: boolean;
+    isPinboardRendering: boolean;
+    isDashboardViewRendering: boolean;
+    tokenResponse: any;
     static Mode: any;
     static EmbedType: any;
     static Environment: any;
@@ -254,6 +258,7 @@ export declare class BoldBI {
     _addWrapperDependentFiles(obj: BoldBI, fileUriArray: Array<string>): any;
     _addedDependentFiles(that: BoldBI, fileUriArray: Array<string>, isCSS: boolean): any;
     _checkDepedentFileExists(file: string, isCSS: boolean): any;
+    getDashboardData(): any;
     _renderDashboard: any;
     _renderPinboard(itemDetail: object): any;
     createEmptyList(from: number, to: number): any;
@@ -310,7 +315,7 @@ export declare class BoldBI {
     _saveFilterView(dbrdInstance: BoldBI): any;
     _updateInFilterOverviewUI(viewName: string, viewId: string): any;
     _viewNameValidation(isExistingView?: boolean): any;
-    _getActiveChildDashboardId(): any;
+    getActiveChildDashboardId(): any;
     _getParametersFromQueryString(queryString: string): any;
     _onBoldBIDashboardSaveAsFilter(arg: any): any;
     _onBoldBIDashboardOpenViewSection(arg: any): any;
