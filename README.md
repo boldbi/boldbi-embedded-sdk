@@ -7,14 +7,14 @@
 1. Install the BoldBI-Embedded-SDK package in your application using below command.
    >
    > ```json
-   >   npm install -save @boldbi/boldbi-embedded-sdk
+   > npm install -save @boldbi/boldbi-embedded-sdk
    > ```
 
 2. You could import the boldbi-embedded-sdk package into your application as below.
    >
    > ```json
-   >   import {BoldBI} from '@boldbi/boldbi-embedded-sdk';
-   > ``
+   > import {BoldBI} from '@boldbi/boldbi-embedded-sdk';
+   > ```
 
 3. Then, you could use that `BoldBI` instance for creating object with respective values. For more details please go through the `getting started with npm` section from [here](https://help.boldbi.com/embedding-options/embedding-using-npm-package/#create-bold-bi-instance).
 
