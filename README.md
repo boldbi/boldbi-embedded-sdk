@@ -11,10 +11,10 @@
    > ```
 
 2. You could import the boldbi-embedded-sdk package into your application as below.
-   >
+   <!-- >
    > ```json
    > import {BoldBI} from '@boldbi/boldbi-embedded-sdk';
-   > ```
+   > ``` -->
 
 3. Then, you could use that `BoldBI` instance for creating object with respective values. For more details please go through the `getting started with npm` section from [here](https://help.boldbi.com/embedding-options/embedding-using-npm-package/#create-bold-bi-instance).
 
