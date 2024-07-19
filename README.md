@@ -4,19 +4,19 @@
 
 ## Getting Started
 
-1. Install the BoldBI-Embedded-SDK package in your application using below command.
-   >
-   > ```json
-   > npm install -save @boldbi/boldbi-embedded-sdk
-   > ```
+* Install the BoldBI-Embedded-SDK package in your application using below command.
 
-2. You could import the boldbi-embedded-sdk package into your application as below.
-   <!-- >
-   > ```json
-   > import {BoldBI} from '@boldbi/boldbi-embedded-sdk';
-   > ``` -->
+```bash
+npm install -save @boldbi/boldbi-embedded-sdk
+```
 
-3. Then, you could use that `BoldBI` instance for creating object with respective values. For more details please go through the `getting started with npm` section from [here](https://help.boldbi.com/embedding-options/embedding-using-npm-package/#create-bold-bi-instance).
+* You could import the boldbi-embedded-sdk package into your application as below.
+
+```bash
+import {BoldBI} from '@boldbi/boldbi-embedded-sdk';
+```
+
+* Then, you could use that `BoldBI` instance for creating object with respective values. For more details please go through the `getting started with npm` section from [here](https://help.boldbi.com/embedding-options/embedding-using-npm-package/#create-bold-bi-instance).
 
 ## Demos
 
