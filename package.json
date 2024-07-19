@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "es-lint": "eslint -c .eslintrc.json --ext .ts ./src/** -f html -o ./cireports/eslint/eslint.html"
+    "es-lint": "eslint -c .eslintrc.json --ext .ts ./src/** -f html -o ./cireports/eslint/eslint.html",
+    "azure-es-lint": "eslint -c .eslintrc.json --ext .ts ./src/** -f unix -o ./cireports/eslint/eslint.txt"
   },
   "prepublish": "tsc",
   "repository": {
