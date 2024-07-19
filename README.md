@@ -1,17 +1,21 @@
-## Bold BI
+# Bold BI
 
 `Embedded BI` is the integration of customized dashboards into an application, making data visualization more powerful and easier to manage. It allows you to interact with data visualizations and gain business insights from a single application. Bold BI is a powerful tool for creating embedded dashboards.
 
 ## Getting Started
+
 1. Install the BoldBI-Embedded-SDK package in your application using below command.
-```
-npm install -save @boldbi/boldbi-embedded-sdk
-```
+   >
+   > ```json
+   >   npm install -save @boldbi/boldbi-embedded-sdk
+   > ```
 
 2. You could import the boldbi-embedded-sdk package into your application as below.
-```
-import {BoldBI} from '@boldbi/boldbi-embedded-sdk';
-```
+   >
+   > ```json
+   >   import {BoldBI} from '@boldbi/boldbi-embedded-sdk';
+   > ``
+
 3. Then, you could use that `BoldBI` instance for creating object with respective values. For more details please go through the `getting started with npm` section from [here](https://help.boldbi.com/embedding-options/embedding-using-npm-package/#create-bold-bi-instance).
 
 ## Demos
@@ -36,12 +40,12 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/) page.
 
-**Feature**
+### Feature
 
 * Provided Token member support in JS based embedding
 
-**Bug**
- 
+### Bug
+
 * Fixed the issue where the default view was not being applied to the dashboard in token based SSO embedding.
 * Fixed issue where public dashboard was not rendered in the loadMultitabDashboard() method in JS embedding.
 * Hide RefreshSettings button in Iframe embedding.
