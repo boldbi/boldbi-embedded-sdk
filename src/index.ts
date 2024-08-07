@@ -187,7 +187,7 @@ export class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail =  false;
         this.isDefaultView =  false;
-        this.embedSDKWrapperVersion = '7.10';
+        this.embedSDKWrapperVersion = '7.11';
         this.tokenResponse = {
             DatasourceId : '',
             ConnectionList : '',
@@ -319,7 +319,8 @@ export class BoldBI {
                     }
                 },
                 dataSourceConfig: {
-                    hideDataSourceConfig: false
+                    hideDataSourceConfig: false,
+                    hideSampleDataSources: false
                 },
                 viewDataSettings: {
                     showAllColumns: false,
@@ -1525,6 +1526,54 @@ export class BoldBI {
         }
     }
 
+    updateDashboardTheme(dashboardTheme: string): any {
+        if (dashboardTheme && dashboardTheme.trim() !== '') {
+            const that: BoldBI = this;
+            this.embedOptions.dashboardSettings.themeSettings.dashboard = dashboardTheme;
+            document.querySelectorAll('link').forEach(function (node: any): any {
+                if (node.href.includes('/dashboard?theme=')) {
+                    node.parentNode.removeChild(node);
+                }
+            });
+            const cssTag: any = document.createElement('link');
+            cssTag.rel = 'stylesheet';
+            if (this.embedOptions.environment == BoldBI.Environment.Enterprise) {
+                cssTag.href = this.customThemeUrl + '/dashboard?theme=' + dashboardTheme;
+            }
+            else {
+                cssTag.href = this.rootUrl + '/theme/styles/dashboard?theme=' + dashboardTheme;
+            }
+            if (bbEmbed('link[href="' + cssTag.href + '"]').length < 1) {
+                document.head.appendChild(cssTag);
+            }
+            if (this.isMultiTab) {
+                const dashboardContainer: any = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+                for (let i: any = 0; i < dashboardContainer.length; i++) {
+                    const embedId: string = bbEmbed(dashboardContainer[`${i}`]).attr('id');
+                    const existingDashboardInstance: any = this._getDashboardInstance(embedId);
+                    if (existingDashboardInstance != undefined) {
+                        existingDashboardInstance.option('dashboardThemeSettings.dashboardTheme', dashboardTheme);
+                    }
+                }
+            } else if (bbEmbed('.pinBoardDbrd').length > 0) {
+                bbEmbed('.pinBoardDbrd').each(function (): any {
+                    const existingDashboardInstance: any = that._getDashboardInstance(this.id);
+                    if (existingDashboardInstance != undefined) {
+                        existingDashboardInstance.option('dashboardThemeSettings.dashboardTheme', dashboardTheme);
+                    }
+                });
+            } else {
+                const existingDashboardInstance: any = this._getDashboardInstance();
+                if (existingDashboardInstance != undefined) {
+                    existingDashboardInstance.option('dashboardThemeSettings.dashboardTheme', dashboardTheme);
+                }
+            }
+        }
+        else {
+            this._throwError('Please provide a valid dashboard theme name');
+        }
+    }
+
     resizeDashboard(filterParameters?: string): any {
         const that: BoldBI = this;
         if (this.isMultiTab) {
@@ -2478,7 +2527,8 @@ export class BoldBI {
                             }
                         },
                         dataSourceConfig: {
-                            hideDataSourceConfig: this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceConfig
+                            hideDataSourceConfig: this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceConfig,
+                            hideSampleDataSources : this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideSampleDataSources
                         }
                     };
                     dashboardOptions.userSettings = {
@@ -5128,7 +5178,7 @@ export class BoldBI {
             });
         }
         else {
-            throw new Error('Access has been denied due to the AuthorizationServer is missing in the BoldBI.Create().');
+            throw new Error('Access has been denied because the authorizationserver URL is missing in the BoldBI.Create() method.');
         }
         this.pinBoardRendered = true;
     });
