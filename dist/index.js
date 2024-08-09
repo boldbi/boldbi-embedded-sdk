@@ -487,7 +487,8 @@ class BoldBI {
                                 }
                             },
                             dataSourceConfig: {
-                                hideDataSourceConfig: this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceConfig
+                                hideDataSourceConfig: this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceConfig,
+                                hideSampleDataSources: this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideSampleDataSources
                             }
                         };
                         dashboardOptions.userSettings = {
@@ -820,7 +821,7 @@ class BoldBI {
                 });
             }
             else {
-                throw new Error('Access has been denied due to the AuthorizationServer is missing in the BoldBI.Create().');
+                throw new Error('Access has been denied because the authorizationserver URL is missing in the BoldBI.Create() method.');
             }
             this.pinBoardRendered = true;
         });
@@ -937,7 +938,7 @@ class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail = false;
         this.isDefaultView = false;
-        this.embedSDKWrapperVersion = '7.10';
+        this.embedSDKWrapperVersion = '7.11';
         this.tokenResponse = {
             DatasourceId: '',
             ConnectionList: '',
@@ -1056,7 +1057,8 @@ class BoldBI {
                     }
                 },
                 dataSourceConfig: {
-                    hideDataSourceConfig: false
+                    hideDataSourceConfig: false,
+                    hideSampleDataSources: false
                 },
                 viewDataSettings: {
                     showAllColumns: false,
@@ -2174,6 +2176,55 @@ class BoldBI {
             if (existingDashboardInstance != undefined) {
                 existingDashboardInstance.option('filterParameters', filterParameters);
             }
+        }
+    }
+    updateDashboardTheme(dashboardTheme) {
+        if (dashboardTheme && dashboardTheme.trim() !== '') {
+            const that = this;
+            this.embedOptions.dashboardSettings.themeSettings.dashboard = dashboardTheme;
+            document.querySelectorAll('link').forEach(function (node) {
+                if (node.href.includes('/dashboard?theme=')) {
+                    node.parentNode.removeChild(node);
+                }
+            });
+            const cssTag = document.createElement('link');
+            cssTag.rel = 'stylesheet';
+            if (this.embedOptions.environment == BoldBI.Environment.Enterprise) {
+                cssTag.href = this.customThemeUrl + '/dashboard?theme=' + dashboardTheme;
+            }
+            else {
+                cssTag.href = this.rootUrl + '/theme/styles/dashboard?theme=' + dashboardTheme;
+            }
+            if (bbEmbed('link[href="' + cssTag.href + '"]').length < 1) {
+                document.head.appendChild(cssTag);
+            }
+            if (this.isMultiTab) {
+                const dashboardContainer = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+                for (let i = 0; i < dashboardContainer.length; i++) {
+                    const embedId = bbEmbed(dashboardContainer[`${i}`]).attr('id');
+                    const existingDashboardInstance = this._getDashboardInstance(embedId);
+                    if (existingDashboardInstance != undefined) {
+                        existingDashboardInstance.option('dashboardThemeSettings.dashboardTheme', dashboardTheme);
+                    }
+                }
+            }
+            else if (bbEmbed('.pinBoardDbrd').length > 0) {
+                bbEmbed('.pinBoardDbrd').each(function () {
+                    const existingDashboardInstance = that._getDashboardInstance(this.id);
+                    if (existingDashboardInstance != undefined) {
+                        existingDashboardInstance.option('dashboardThemeSettings.dashboardTheme', dashboardTheme);
+                    }
+                });
+            }
+            else {
+                const existingDashboardInstance = this._getDashboardInstance();
+                if (existingDashboardInstance != undefined) {
+                    existingDashboardInstance.option('dashboardThemeSettings.dashboardTheme', dashboardTheme);
+                }
+            }
+        }
+        else {
+            this._throwError('Please provide a valid dashboard theme name');
         }
     }
     resizeDashboard(filterParameters) {
@@ -4209,7 +4260,7 @@ class BoldBI {
             'DashboardItemId': commentType == 'dashboard' ? ((this.isMultiTab ? args.multitabDashboardId : args.dashboardId)) : (args.dashboardId),
             'ItemType': commentType,
             'ParentItemId': this.isMultiTab ? args.multitabDashboardId : null,
-            'CommentAction': 3,
+            'CommentAction': 3, //To get dashboard comment or widget comment from server.
             'OrderBy': 1 //To get the comment in decending order (newly added first).
         };
         bbEmbed.ajax({
@@ -4288,8 +4339,8 @@ class BoldBI {
                 'ItemId': arg.dashboardId,
                 'ParentId': arg.parentCommentId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 0,
-                'CurrentDate': isoStr,
+                'CommentAction': 0, //To add comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({
@@ -4346,8 +4397,8 @@ class BoldBI {
                 'DashboardItemId': arg.dashboardId,
                 'ParentId': arg.parentCommentId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 0,
-                'CurrentDate': isoStr,
+                'CommentAction': 0, // To add comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({
@@ -4398,8 +4449,8 @@ class BoldBI {
                 'CommentId': arg.commentId,
                 'ItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 2,
-                'CurrentDate': isoStr,
+                'CommentAction': 2, // To delete comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({
@@ -4450,8 +4501,8 @@ class BoldBI {
                 'ItemId': arg.widgetId,
                 'DashboardItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 2,
-                'CurrentDate': isoStr,
+                'CommentAction': 2, // To delete comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({
@@ -4501,8 +4552,8 @@ class BoldBI {
                 'CommentId': arg.commentId,
                 'ItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 1,
-                'CurrentDate': isoStr,
+                'CommentAction': 1, // To edit comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({
@@ -4558,8 +4609,8 @@ class BoldBI {
                 'ItemId': arg.widgetId,
                 'DashboardItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 1,
-                'CurrentDate': isoStr,
+                'CommentAction': 1, // To edit comment in server
+                'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
             bbEmbed.ajax({

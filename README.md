@@ -40,15 +40,14 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/) page.
 
-### Feature
+### Improvement
 
-* Provided Token member support in JS based embedding
+* Added an API member to Show or Hide the Explore Sample DataSource option in the designer embedding for SDK based embedding.
+* Introduced the updateDashboardTheme method for updating the dashboard theme without requiring a reload dashboard in SDK based embedding.
 
 ### Bug
 
-* Fixed the issue where the default view was not being applied to the dashboard in token based SSO embedding.
-* Fixed issue where public dashboard was not rendered in the loadMultitabDashboard() method in JS embedding.
-* Hide RefreshSettings button in Iframe embedding.
+* Displayed an appropriate error message when a user lacks permission to view the dashboard in iframe embedding.
 
 ## License Information
 

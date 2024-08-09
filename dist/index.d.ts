@@ -203,6 +203,7 @@ export declare class BoldBI {
     }): any;
     updateDatasource(): any;
     updateFilters(filterParameters: string): any;
+    updateDashboardTheme(dashboardTheme: string): any;
     resizeDashboard(filterParameters?: string): any;
     refreshDashboard(): any;
     hidePopup(): any;
