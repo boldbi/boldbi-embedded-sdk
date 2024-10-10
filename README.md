@@ -40,10 +40,16 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/?utm_source=github&utm_medium=backlinks) page.
 
+### Feature
+
+* JavaScript Embedding - Provided an API to enable the AI assistant feature in both the viewer and designer.
+
 ### Improvement
 
-* Added an API member to Show or Hide the Explore Sample DataSource option in the designer embedding for SDK based embedding.
-* Introduced the updateDashboardTheme method for updating the dashboard theme without requiring a reload dashboard in SDK based embedding.
+* Made the height and width as optional in the JS based embedding and make to obtain height and width from the element or its parent element.
+* Added types support for dashboard options in typescript.
+* Improved the performance of rendering multiple widgets in JavaScript embedding.
+* Provide navigation support in the Iframe embedding from dashboard viewer to designer and vice versa.
 
 ### Bug
 
