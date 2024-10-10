@@ -1,3 +1,218 @@
+export interface IWidgetList {
+    widgetName: string;
+    containerId: string;
+}
+export interface IDatasources {
+    id: string;
+    canEdit?: boolean;
+    canDelete?: boolean;
+}
+export interface IDashboardOptions {
+    serverUrl?: string;
+    dashboardId?: string;
+    dashboardPath?: string;
+    datasourceId?: string;
+    datasourceName?: string;
+    embedContainerId?: string;
+    viewId?: string;
+    viewName?: string;
+    nonce?: string;
+    filterParameters?: string;
+    height?: string;
+    width?: string;
+    token?: string;
+    pinboardName?: string;
+    dashboardIds?: string[];
+    dashboardPaths?: string[];
+    datasources?: IDatasources[];
+    widgetList?: IWidgetList[];
+    expirationTime?: number;
+    scalingFactor?: number;
+    isRemoveStyle?: boolean;
+    isBingMapRequired?: boolean;
+    disableAutoRecover?: boolean;
+    enableAiAssistant?: boolean;
+    embedType?: typeof BoldBI.EmbedType;
+    environment?: typeof BoldBI.Environment;
+    mode?: typeof BoldBI.Mode;
+    theme?: typeof BoldBI.Theme;
+    localData?: ILocalData;
+    layoutSettings?: ILayoutSettings;
+    dashboardSettings?: IDashboardSettings;
+    widgetSettings?: IWidgetSettings;
+    dynamicConnection?: IDynamicConnection;
+    exportSettings?: IExportSettings;
+    authorizationServer?: IAuthorizationServer;
+    autoRefreshSettings?: IAutoRefreshSettings;
+    localeSettings?: ILocaleSettings;
+    toolbarSettings?: IToolbarSettings;
+    pinboardSettings?: IPinboardSettings;
+    designCanvasSettings?: IDesignCanvasSettings;
+    widgetContainerSettings?: IWidgetContainerSettings;
+    preConfiguredWidgets?: IPreConfiguredWidgets;
+    actionBegin?: (_event: Event) => void;
+    actionComplete?: (_event: Event) => void;
+    beforeContextMenuRender?: (_event: Event) => void;
+    beforeDashboardMobileMenuOpen?: (_event: Event) => void;
+    beforeNavigateUrlLinking?: (_event: Event) => void;
+    beforeNavigateToDashboard?: (_event: Event) => void;
+    beforeFilterApply?: (_event: Event) => void;
+    afterFilterApply?: (_event: Event) => void;
+    onError?: (_event: Event) => void;
+    onUnpin?: (_event: Event) => void;
+    onDrag?: (_event: Event) => void;
+    onDrop?: (_event: Event) => void;
+    onLayoutChange?: (_event: Event) => void;
+    onResize?: (_event: Event) => void;
+    beforeDatasourceSave?: (_event: Event) => void;
+    afterDatasourceSave?: (_event: Event) => void;
+    ajaxBeforeLoad?: (_event: Event) => void;
+}
+export interface ILocalData {
+    layoutData?: string;
+    widgetData?: string;
+    loadFromData?: boolean;
+}
+export interface ILayoutSettings {
+    hideDesignerScroller?: boolean;
+}
+export interface IDashboardList {
+    dashboardId: string;
+    dashboardName: string;
+}
+export interface IDashboardSettings {
+    dashboardName?: string | IDashboardList[];
+    fontFamily?: string;
+    showHeader?: boolean;
+    showExport?: boolean;
+    showRefresh?: boolean;
+    showMoreOption?: boolean;
+    enableTheme?: boolean;
+    enableFilterOverview?: boolean;
+    enableFullScreen?: boolean;
+    showDashboardParameter?: boolean;
+    enableComment?: boolean;
+    showPreviewAs?: boolean;
+    widgetsPanel?: IWidgetsPanel;
+    dataSourceConfig?: IDatasourceConfig;
+    viewDataSettings?: IViewDataSettings;
+    themeSettings?: IThemeSettings;
+    filterOverviewSettings?: IFilterOverviewSettings;
+    onFavoriteIconClick?: (_event: Event) => void;
+    beforeIconRender?: (_event: Event) => void;
+    onIconClick?: (_event: Event) => void;
+    onInteraction?: (_event: Event) => void;
+    beforePublishAs?: (_event: Event) => void;
+    beforeDesignerToolbarButtons?: (_event: Event) => void;
+    beforeDesignerToolbarIconsRendered?: (_event: Event) => void;
+    beforeDatasourceToolbarButtonsRendered?: (_event: Event) => void;
+    beforeDatasourceToolbarIconsRendered?: (_event: Event) => void;
+    toolbarClick?: (_event: Event) => void;
+    saveFilterClick?: (_event: Event) => void;
+    saveAsFilterClick?: (_event: Event) => void;
+    viewSavedFiltersClick?: (_event: Event) => void;
+    beforeSaveViewDialogOpen?: (_event: Event) => void;
+    beforeSaveAsViewDialogOpen?: (_event: Event) => void;
+    onViewSavedFiltersClick?: (_event: Event) => void;
+}
+export interface IWidgetsPanel {
+    defaultPanelDisplayText?: string;
+    existingPanelDisplayText?: string;
+    defaultPanelSearchPlaceholder?: string;
+    existingPanelSearchPlaceholder?: string;
+    existingDashboards?: string[];
+    hideDefaultWidgets?: boolean;
+    hideExistingWidgets?: boolean;
+    dragAndDropSettings?: IDragAndDropSettings;
+}
+export interface IDragAndDropSettings {
+    rowSpan?: number | null;
+    columnSpan?: number | null;
+    isWidgetMode?: boolean;
+}
+export interface IDatasourceConfig {
+    hideDataSourceConfig?: boolean;
+    hideSampleDataSources?: boolean;
+}
+export interface IViewDataSettings {
+    showAllColumns?: boolean;
+    enableExporting?: boolean;
+    enableColumnSelection?: boolean;
+}
+export interface IThemeSettings {
+    appearance?: string;
+    application?: string;
+    dashboard?: string;
+    isLocalTheme?: boolean;
+}
+export interface IFilterOverviewSettings {
+    viewId?: string;
+    viewName?: string;
+    showSaveAsIcon?: boolean;
+    showSaveIcon?: boolean;
+    showViewSavedFilterIcon?: boolean;
+}
+export interface IWidgetSettings {
+    showExport?: boolean;
+    showMaximize?: boolean;
+    showMoreOption?: boolean;
+    showFilter?: boolean;
+    enableComment?: boolean;
+    beforeIconRender?: (_event: Event) => void;
+    onIconClick?: (_event: Event) => void;
+    beforeWidgetControlMenuOpen?: (_event: Event) => void;
+    onWidgetControlMenuClick?: (_event: Event) => void;
+    beforeWidgetItemsListed?: (_event: Event) => void;
+}
+export interface IDynamicConnection {
+    identity?: string;
+    isEnabled?: boolean;
+}
+export interface IExportSettings {
+    showExcel?: boolean;
+    showPDF?: boolean;
+    showImage?: boolean;
+    showCSV?: boolean;
+}
+export interface IAuthorizationServer {
+    url?: string;
+    data?: string;
+    headers?: Record<string, any>;
+    authorizionComplete?: (_event: Event) => void;
+}
+export interface IAutoRefreshSettings {
+    enabled?: boolean;
+    hourlySchedule?: IHourlySchedule;
+}
+export interface IHourlySchedule {
+    hours?: number;
+    minutes?: number;
+    seconds?: number;
+}
+export interface ILocaleSettings {
+    culture?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    appLocale?: string;
+}
+export interface IToolbarSettings {
+    showToolbar?: boolean;
+}
+export interface IPinboardSettings {
+    enablePinboardHeader?: boolean;
+    enableUnpinWidget?: boolean;
+}
+export interface IDesignCanvasSettings {
+    margin?: number | null;
+}
+export interface IWidgetContainerSettings {
+    margin?: number | null;
+    boxShadow?: string;
+}
+export interface IPreConfiguredWidgets {
+    dashboardId?: string;
+    categoryName?: string;
+}
 export declare class BoldBI {
     IsDependencyLoaded: boolean;
     rootUrl: string;
@@ -95,7 +310,7 @@ export declare class BoldBI {
     getViewByViewId: any;
     deleteFilterView: any;
     constructor();
-    static create(options: object): any;
+    static create(options: IDashboardOptions): any;
     static getInstance(eleID: string): any;
     Invoke<T extends (...args: any[]) => any>(originalMethod: T): T;
     destroy(): any;
@@ -243,6 +458,8 @@ export declare class BoldBI {
         datasourceId?: string;
         datasourceName?: string;
     }): any;
+    _setDimensions(): void;
+    _onBrowserWindowResize(): void;
     _initializeUrls: any;
     _loadCloudDepedentFiles(responseInfo: {
         Data: {
