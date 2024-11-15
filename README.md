@@ -40,20 +40,15 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/?utm_source=github&utm_medium=backlinks) page.
 
-### Feature
-
-* JavaScript Embedding - Provided an API to enable the AI assistant feature in both the viewer and designer.
-
 ### Improvement
 
-* Made the height and width as optional in the JS based embedding and make to obtain height and width from the element or its parent element.
-* Added types support for dashboard options in typescript.
-* Improved the performance of rendering multiple widgets in JavaScript embedding.
-* Provide navigation support in the Iframe embedding from dashboard viewer to designer and vice versa.
+* Iframe Embedding - Provided an API to enable the AI Assistant feature for both the dashboard viewer and designer.
+* Added API member support for multi-localization in the SDK-based embedding.
+* Added a mobile view property that allows users to disable mobile view when the browser width reaches a specified pixel threshold for both SDK-based and Iframe embedding.
 
 ### Bug
 
-* Displayed an appropriate error message when a user lacks permission to view the dashboard in iframe embedding.
+* Fixed an issue where an invalid error message was displayed when the Group-based Authorization settings were incorrect in the server settings for SDK-based embedding.
 
 ## License Information
 

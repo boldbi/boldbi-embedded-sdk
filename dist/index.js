@@ -450,6 +450,13 @@ class BoldBI {
                         dashboardOptions.embedAiAssistant = {
                             enableAiAssistant: this._isNullOrUndefined(this.embedOptions.enableAiAssistant) ? false : this.embedOptions.enableAiAssistant
                         };
+                        dashboardOptions.languageSettings = {
+                            hideLanguageDropdown: this._isNullOrUndefined(this.embedOptions.languageSettings.hideLanguageDropdown) ? false : this.embedOptions.languageSettings.hideLanguageDropdown,
+                            languageCode: this.embedOptions.languageSettings.languageCode
+                        };
+                    }
+                    if ((this.embedOptions.mode == BoldBI.Mode.View && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design) {
+                        dashboardOptions.enableMobileView = this._isNullOrUndefined(this.embedOptions.enableMobileView) ? false : this.embedOptions.enableMobileView;
                     }
                     if (this.embedOptions.mode == BoldBI.Mode.Design) {
                         if ((this.embedOptions.token && !this.embedOptions.dashboardId) || (!this.embedOptions.token && embedResponse.ItemDetail.IsDraft)) {
@@ -893,7 +900,7 @@ class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail = false;
         this.isDefaultView = false;
-        this.embedSDKWrapperVersion = '8.1';
+        this.embedSDKWrapperVersion = '8.2';
         this.tokenResponse = {
             DatasourceId: '',
             ConnectionList: '',
@@ -965,6 +972,7 @@ class BoldBI {
             environment: BoldBI.Environment.Enterprise,
             mode: BoldBI.Mode.View,
             enableAiAssistant: false,
+            enableMobileView: false,
             localData: {
                 loadFromData: false,
                 layoutData: null,
@@ -1053,6 +1061,10 @@ class BoldBI {
                 onWidgetControlMenuClick: '',
                 enableComment: false,
                 beforeWidgetItemsListed: ''
+            },
+            languageSettings: {
+                hideLanguageDropdown: false,
+                languageCode: ''
             },
             filterParameters: '',
             dynamicConnection: {

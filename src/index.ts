@@ -49,6 +49,7 @@ export interface IDashboardOptions {
     isBingMapRequired?: boolean;
     disableAutoRecover?: boolean;
     enableAiAssistant?: boolean;
+    enableMobileView?: boolean;
     embedType?: typeof BoldBI.EmbedType;
     environment?: typeof BoldBI.Environment;
     mode?: typeof BoldBI.Mode;
@@ -62,6 +63,7 @@ export interface IDashboardOptions {
     authorizationServer?: IAuthorizationServer;
     autoRefreshSettings?: IAutoRefreshSettings;
     localeSettings?: ILocaleSettings;
+    languageSettings?: ILanguageSettings;
     toolbarSettings?: IToolbarSettings;
     pinboardSettings?: IPinboardSettings;
     designCanvasSettings?: IDesignCanvasSettings;
@@ -135,6 +137,11 @@ export interface IDashboardSettings {
     beforeSaveViewDialogOpen?: (_event: Event) => void;
     beforeSaveAsViewDialogOpen?: (_event: Event) => void;
     onViewSavedFiltersClick?: (_event: Event) => void;
+}
+
+export interface ILanguageSettings {
+    hideLanguageDropdown?: boolean;
+    languageCode?: string;
 }
 
 export interface IWidgetsPanel {
@@ -427,7 +434,7 @@ export class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail =  false;
         this.isDefaultView =  false;
-        this.embedSDKWrapperVersion = '8.1';
+        this.embedSDKWrapperVersion = '8.2';
         this.tokenResponse = {
             DatasourceId : '',
             ConnectionList : '',
@@ -512,6 +519,7 @@ export class BoldBI {
             environment: BoldBI.Environment.Enterprise,
             mode: BoldBI.Mode.View,
             enableAiAssistant: false,
+            enableMobileView: false,
             localData: {
                 loadFromData: false,
                 layoutData: null,
@@ -600,6 +608,10 @@ export class BoldBI {
                 onWidgetControlMenuClick: '',
                 enableComment: false,
                 beforeWidgetItemsListed: ''
+            },
+            languageSettings: {
+                hideLanguageDropdown: false,
+                languageCode: ''
             },
             filterParameters: '',
             dynamicConnection: {
@@ -2762,6 +2774,13 @@ export class BoldBI {
                     dashboardOptions.embedAiAssistant = {
                         enableAiAssistant: this._isNullOrUndefined(this.embedOptions.enableAiAssistant) ? false : this.embedOptions.enableAiAssistant
                     };
+                    dashboardOptions.languageSettings = {
+                        hideLanguageDropdown: this._isNullOrUndefined(this.embedOptions.languageSettings.hideLanguageDropdown) ? false : this.embedOptions.languageSettings.hideLanguageDropdown,
+                        languageCode: this.embedOptions.languageSettings.languageCode
+                    };
+                }
+                if ((this.embedOptions.mode == BoldBI.Mode.View && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design) {   
+                    dashboardOptions.enableMobileView = this._isNullOrUndefined(this.embedOptions.enableMobileView) ? false : this.embedOptions.enableMobileView
                 }
                 if (this.embedOptions.mode == BoldBI.Mode.Design) {
                     if ((this.embedOptions.token && !this.embedOptions.dashboardId) || (!this.embedOptions.token && embedResponse.ItemDetail.IsDraft)) {

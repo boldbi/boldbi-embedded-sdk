@@ -32,6 +32,7 @@ export interface IDashboardOptions {
     isBingMapRequired?: boolean;
     disableAutoRecover?: boolean;
     enableAiAssistant?: boolean;
+    enableMobileView?: boolean;
     embedType?: typeof BoldBI.EmbedType;
     environment?: typeof BoldBI.Environment;
     mode?: typeof BoldBI.Mode;
@@ -45,6 +46,7 @@ export interface IDashboardOptions {
     authorizationServer?: IAuthorizationServer;
     autoRefreshSettings?: IAutoRefreshSettings;
     localeSettings?: ILocaleSettings;
+    languageSettings?: ILanguageSettings;
     toolbarSettings?: IToolbarSettings;
     pinboardSettings?: IPinboardSettings;
     designCanvasSettings?: IDesignCanvasSettings;
@@ -114,6 +116,10 @@ export interface IDashboardSettings {
     beforeSaveViewDialogOpen?: (_event: Event) => void;
     beforeSaveAsViewDialogOpen?: (_event: Event) => void;
     onViewSavedFiltersClick?: (_event: Event) => void;
+}
+export interface ILanguageSettings {
+    hideLanguageDropdown?: boolean;
+    languageCode?: string;
 }
 export interface IWidgetsPanel {
     defaultPanelDisplayText?: string;
