@@ -32,7 +32,7 @@ export interface IDashboardOptions {
     isBingMapRequired?: boolean;
     disableAutoRecover?: boolean;
     enableAiAssistant?: boolean;
-    enableMobileView?: boolean;
+    restrictMobileView?: boolean;
     embedType?: typeof BoldBI.EmbedType;
     environment?: typeof BoldBI.Environment;
     mode?: typeof BoldBI.Mode;
@@ -169,6 +169,7 @@ export interface IWidgetSettings {
     beforeWidgetControlMenuOpen?: (_event: Event) => void;
     onWidgetControlMenuClick?: (_event: Event) => void;
     beforeWidgetItemsListed?: (_event: Event) => void;
+    beforeWidgetLayoutRender?: (_event: Event) => void;
 }
 export interface IDynamicConnection {
     identity?: string;
@@ -427,6 +428,7 @@ export declare class BoldBI {
     updateDashboardTheme(dashboardTheme: string): any;
     resizeDashboard(filterParameters?: string): any;
     refreshDashboard(): any;
+    clearAllFilter(): void;
     hidePopup(): any;
     hideWaitingIndicator(): any;
     getWidgetData(widgetName: string, clientFnc: Function, dashboardId: string): any;
@@ -668,6 +670,7 @@ export declare class BoldBI {
     _onBoldBIbeforeDesignerToolbarIconsRendered(arg: object): any;
     _onBoldBItoolbarClick(arg: object): any;
     _onBoldBIbeforeWidgetItemsListed(arg: object): any;
+    _onBoldBIbeforeWidgetLayoutRender(arg: object): any;
     _onBoldBIDashboardWidgetIconClick(arg: object): any;
     _onBoldBIonControlMenuClick(arg: object): any;
     _onBoldBIDashboardUpdatefavorite(arg: object): any;

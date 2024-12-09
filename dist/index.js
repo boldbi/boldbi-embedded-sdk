@@ -1,6 +1,7 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.widgetBI = exports.BoldBI = void 0;
+const embeddingLocalization_1 = require("./embeddingLocalization");
 let bbEmbed;
 let tabInstance;
 class BoldBI {
@@ -8,10 +9,10 @@ class BoldBI {
         this.loadPinboard = this.Invoke(function () {
             if (!this.invalidDetail) {
                 if (this.embedOptions.pinboardName == '') {
-                    throw new Error('Pinboard name should not be empty');
+                    throw new Error(embeddingLocalization_1.errorMessages['PinboardNameEmpty']);
                 }
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
-                    throw new Error('Cant able to render the Pinboard in design mode');
+                    throw new Error(embeddingLocalization_1.errorMessages['UnablePinboardRender']);
                 }
                 this.embedOptions.dashboardIds = [];
                 this.embedOptions.dashboardPaths = [];
@@ -68,14 +69,14 @@ class BoldBI {
                         }
                     }
                     else {
-                        throw new Error('Invalid embed Mode');
+                        throw new Error(embeddingLocalization_1.errorMessages['EmbedModeInvalid']);
                     }
                 }
             }
         });
         this._initializeUrls = this.Invoke(function () {
             if (this.embedOptions.serverUrl.indexOf('/bi') <= 0) {
-                throw new Error('Invalid Bold BI serverUrl.');
+                throw new Error(embeddingLocalization_1.errorMessages['InvalidBoldBIURL']);
             }
             if (this.embedOptions.environment == BoldBI.Environment.Enterprise) {
                 this.rootUrl = this.embedOptions.serverUrl.substr(0, (this.embedOptions.serverUrl.indexOf('/bi/') >= 0 ? (this.embedOptions.serverUrl.indexOf('/bi/') + 3) : (this.embedOptions.serverUrl.indexOf('/bi') + 3)));
@@ -121,7 +122,7 @@ class BoldBI {
                         this._loadDepedentFiles();
                     }
                     catch (e) {
-                        this._throwError('server Not Found');
+                        this._throwError(embeddingLocalization_1.errorMessages['ServerNotFound']);
                         this.invalidDetail = true;
                     }
                 };
@@ -147,17 +148,17 @@ class BoldBI {
             const parameter = '';
             const responseMessage = responseInfo.Data;
             if (!responseInfo.Status) {
-                if (responseInfo.errorMessage == 'The page you are looking for was unavailable.') {
+                if (responseInfo.errorMessage == embeddingLocalization_1.errorMessages['PageUnavailable']) {
                     responseInfo.Status = false;
                     responseInfo.Message = responseInfo.errorMessage;
                 }
-                if (responseInfo.Message === 'Object reference not set to an instance of an object.') {
+                if (responseInfo.Message === embeddingLocalization_1.errorMessages['ObjectRefNotSet']) {
                     if (this.embedOptions.mode === 'view' || this.embedOptions.mode === 'design') {
                         if (!this._isEmptyOrSpaces(this.embedOptions.dashboardId) || !this._isEmptyOrSpaces(this.embedOptions.dashboardPath)) {
-                            responseInfo.Message = 'Invalid dashboard details.';
+                            responseInfo.Message = embeddingLocalization_1.errorMessages['InvalidDbrdDetails'];
                         }
                         if (!this._isEmptyOrSpaces(this.embedOptions.pinboardName)) {
-                            responseInfo.Message = 'Invalid pinboard name.';
+                            responseInfo.Message = embeddingLocalization_1.errorMessages['InvalidPinboardName'];
                         }
                     }
                 }
@@ -180,10 +181,10 @@ class BoldBI {
                     }
                     const accessDeniedCount = responseMessage.filter((itemValue) => 'ErrorMessage' in itemValue && itemValue.ErrorMessage.includes('Access denied for the item')).length;
                     if (accessDeniedCount === responseMessage.length) {
-                        throw new Error('Access denied for the item.');
+                        throw new Error(embeddingLocalization_1.errorMessages['AccessDeniedItem']);
                     }
                     if (!responseInfo.Data.length) {
-                        throw new Error('Provided dashboard details are invalid.');
+                        throw new Error(embeddingLocalization_1.errorMessages['InvalidDbrdDetails']);
                     }
                 }
                 const embedResponse = responseInfo.Data;
@@ -192,7 +193,7 @@ class BoldBI {
                         this._renderPinboard(embedResponse);
                     }
                     else {
-                        throw new Error('Invalid pinboard name.');
+                        throw new Error(embeddingLocalization_1.errorMessages['InvalidPinboardName']);
                     }
                 }
                 else if (embedResponse.length) {
@@ -201,14 +202,14 @@ class BoldBI {
                         if (BoldBI._hasinstance(ele, 'embeddedBoldBI')) {
                             BoldBI._removeinstance(ele, 'embeddedBoldBI');
                         }
-                        throw new Error('Cant able to render the widget from Multitab dashboard');
+                        throw new Error(embeddingLocalization_1.errorMessages['MultitabDbrdWidgetRender']);
                     }
                     else if (this.embedOptions.mode != BoldBI.Mode.View) {
                         const ele = document.getElementById(this.embedOptions.embedContainerId);
                         if (BoldBI._hasinstance(ele, 'embeddedBoldBI')) {
                             BoldBI._removeinstance(ele, 'embeddedBoldBI');
                         }
-                        throw new Error('Cant able to render the Multitab dashboard in design mode');
+                        throw new Error(embeddingLocalization_1.errorMessages['NotRenderMultitabDashboard']);
                     }
                     this._renderMultiTabDashboard(embedResponse);
                 }
@@ -427,6 +428,9 @@ class BoldBI {
                         },
                         beforeWidgetItemsListed: function (arg) {
                             that._onBoldBIbeforeWidgetItemsListed(arg);
+                        },
+                        beforeWidgetLayoutRender: function (args) {
+                            that._onBoldBIbeforeWidgetLayoutRender(args);
                         }
                     };
                     if (this.loadMultipleWidget) {
@@ -456,7 +460,7 @@ class BoldBI {
                         };
                     }
                     if ((this.embedOptions.mode == BoldBI.Mode.View && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design) {
-                        dashboardOptions.enableMobileView = this._isNullOrUndefined(this.embedOptions.enableMobileView) ? false : this.embedOptions.enableMobileView;
+                        dashboardOptions.enableMobileView = this._isNullOrUndefined(this.embedOptions.restrictMobileView) ? false : this.embedOptions.restrictMobileView;
                     }
                     if (this.embedOptions.mode == BoldBI.Mode.Design) {
                         if ((this.embedOptions.token && !this.embedOptions.dashboardId) || (!this.embedOptions.token && embedResponse.ItemDetail.IsDraft)) {
@@ -577,11 +581,11 @@ class BoldBI {
                             }
                         }
                         else {
-                            this._throwError('BoldBIDashboardDesigner is not defined');
+                            this._throwError(embeddingLocalization_1.errorMessages['ErrorInBoldBIDesigner']);
                         }
                     }
                     else {
-                        throw new Error('bbEmbed is not defined');
+                        throw new Error(embeddingLocalization_1.errorMessages['bbEmbedNotDefined']);
                     }
                     if (this.embedOptions.widgetList == '') {
                         this._removeElementsClass(embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
@@ -597,7 +601,7 @@ class BoldBI {
                 this.afterVirtualHomepageSave(this.homepageItemId);
             }
             else if (!result.Status) {
-                throw new Error('Change layout failure due to' + result.Message);
+                throw new Error(embeddingLocalization_1.errorMessages['LayoutFailure'] + result.Message);
             }
         });
         this._createPinboardDom = this.Invoke(function (itemDetail) {
@@ -647,7 +651,7 @@ class BoldBI {
         });
         this._dragAndDropSuccess = this.Invoke(function (result) {
             if (!result.Status) {
-                throw new Error('Drag and drop failure due to' + result.Message);
+                throw new Error(embeddingLocalization_1.errorMessages['DragAndDropError'] + result.Message);
             }
         });
         this._renderMultiTabDashboard = this.Invoke(function (embedResponse) {
@@ -783,7 +787,7 @@ class BoldBI {
                 });
             }
             else {
-                throw new Error('Access has been denied because the authorizationserver URL is missing in the BoldBI.Create() method.');
+                throw new Error(embeddingLocalization_1.errorMessages['AuthorizationServerMissing']);
             }
             this.pinBoardRendered = true;
         });
@@ -794,15 +798,15 @@ class BoldBI {
             }
             if (this._isEmptyOrSpaces(options.embedContainerId) && this._isNullOrUndefined(options.widgetList)) {
                 this.invalidDetail = true;
-                throw new Error('Please provide the valid Embed container Id');
+                throw new Error(embeddingLocalization_1.errorMessages['InvalidEmbedContainerID']);
             }
             if (this._isEmptyOrSpaces(options.serverUrl)) {
                 this.invalidDetail = true;
-                throw new Error('Server URL cannot be empty');
+                throw new Error(embeddingLocalization_1.errorMessages['EmptyServerURL']);
             }
             if (!this._isUrl(options.serverUrl)) {
                 this.invalidDetail = true;
-                throw new Error('Please provide a valid Server URL');
+                throw new Error(embeddingLocalization_1.errorMessages['InvalidServerURL']);
             }
             if (!this._isEmptyOrSpaces(options.pinboardName)) {
                 return true;
@@ -816,7 +820,7 @@ class BoldBI {
                     pathsToValidate[Number(index)] = `${path.startsWith('/') ? '' : '/'}${path}`.replace(/\/+$/, '');
                     const splitedPath = pathsToValidate[Number(index)].split('/');
                     if (splitedPath.length !== 3 || splitedPath[0] !== '' || splitedPath[1] === '' || splitedPath[2] === '') {
-                        throw new Error('Invalid dashboard path: ' + path);
+                        throw new Error(embeddingLocalization_1.errorMessages['InvalidDashboardPath'] + path);
                     }
                 });
                 if (options.dashboardPath) {
@@ -830,16 +834,16 @@ class BoldBI {
                 if (options.mode != BoldBI.Mode.DataSource) {
                     if (this._isEmptyOrSpaces(options.pinboardName) && !this._isNullOrUndefined(options.pinboardName)) {
                         this.invalidDetail = true;
-                        throw new Error('Pinboard name cannot be empty');
+                        throw new Error(embeddingLocalization_1.errorMessages['PinboardNameEmpty']);
                     }
                     else if (this._isEmptyOrSpaces(options.viewId)) {
                         this.invalidDetail = true;
-                        throw new Error('Dashboard id or path or view id cannot be empty');
+                        throw new Error(embeddingLocalization_1.errorMessages['EmptyDbrdOrViewID']);
                     }
                 }
                 else {
                     this.invalidDetail = true;
-                    throw new Error('Datasource id or name cannot be empty');
+                    throw new Error(embeddingLocalization_1.errorMessages['EmptyDatasourceDetails']);
                 }
             }
             return true;
@@ -900,7 +904,7 @@ class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail = false;
         this.isDefaultView = false;
-        this.embedSDKWrapperVersion = '8.2';
+        this.embedSDKWrapperVersion = '8.3';
         this.tokenResponse = {
             DatasourceId: '',
             ConnectionList: '',
@@ -972,7 +976,7 @@ class BoldBI {
             environment: BoldBI.Environment.Enterprise,
             mode: BoldBI.Mode.View,
             enableAiAssistant: false,
-            enableMobileView: false,
+            restrictMobileView: false,
             localData: {
                 loadFromData: false,
                 layoutData: null,
@@ -1060,7 +1064,8 @@ class BoldBI {
                 beforeWidgetControlMenuOpen: '',
                 onWidgetControlMenuClick: '',
                 enableComment: false,
-                beforeWidgetItemsListed: ''
+                beforeWidgetItemsListed: '',
+                beforeWidgetLayoutRender: ''
             },
             languageSettings: {
                 hideLanguageDropdown: false,
@@ -1146,7 +1151,7 @@ class BoldBI {
         this.loadDashboard = this.Invoke(function (dashboardId) {
             if (!this.invalidDetail) {
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
-                    throw new Error('Invalid embeded Mode');
+                    throw new Error(embeddingLocalization_1.errorMessages['EmbedModeInvalid']);
                 }
                 if (this.embedOptions.pinboardName != '') {
                     this.embedOptions.pinboardName = '';
@@ -1184,7 +1189,7 @@ class BoldBI {
         this.loadMultitabDashboard = this.Invoke(function (dashboardIds) {
             if (!this.invalidDetail) {
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
-                    throw new Error('Invalid embeded Mode');
+                    throw new Error(embeddingLocalization_1.errorMessages['EmbedModeInvalid']);
                 }
                 if (this.embedOptions.pinboardName != '') {
                     this.embedOptions.pinboardName = '';
@@ -1207,13 +1212,13 @@ class BoldBI {
         this.loadView = this.Invoke(function () {
             if (!this.invalidDetail) {
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
-                    throw new Error('Invalid embeded Mode');
+                    throw new Error(embeddingLocalization_1.errorMessages['EmbedModeInvalid']);
                 }
                 if (this.embedOptions.pinboardName != '') {
                     this.embedOptions.pinboardName = '';
                 }
                 if (this.embedOptions.viewId == '' && this.embedOptions.viewName == '') {
-                    throw new Error('View details cannot be empty');
+                    throw new Error(embeddingLocalization_1.errorMessages['EmptyViewDetails']);
                 }
                 this.embedOptions.dashboardIds = [];
                 this.embedOptions.dashboardPaths = [];
@@ -1231,10 +1236,10 @@ class BoldBI {
         this.loadDashboardWidget = this.Invoke(function (name, dashboardId) {
             if (!this.invalidDetail) {
                 if (this._isEmptyOrSpaces(name)) {
-                    throw new Error('Widget id or name cannot not be empty');
+                    throw new Error(embeddingLocalization_1.errorMessages['EmptyWidgetID']);
                 }
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
-                    throw new Error('Cant able to render the Widget in design mode');
+                    throw new Error(embeddingLocalization_1.errorMessages['UnableWidgetRender']);
                 }
                 if (this.embedOptions.pinboardName != '' && this.pinBoardRendered) {
                     this.embedOptions.pinboardName = '';
@@ -1266,10 +1271,10 @@ class BoldBI {
         this.loadMultipleWidgets = this.Invoke(function (dashboardId) {
             if (!this.invalidDetail) {
                 if (this.embedOptions.widgetList == '') {
-                    throw new Error('Provide the Widget details with containerID in an array');
+                    throw new Error(embeddingLocalization_1.errorMessages['EmptyWidgetList']);
                 }
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
-                    throw new Error('Invalid embed mode');
+                    throw new Error(embeddingLocalization_1.errorMessages['EmbedModeInvalid']);
                 }
                 if (this.embedOptions.pinboardName != '') {
                     this.embedOptions.pinboardName = '';
@@ -1296,7 +1301,7 @@ class BoldBI {
         this.loadDesigner = this.Invoke(function (dashboardId) {
             if (!this.invalidDetail) {
                 if (this.embedOptions.mode != BoldBI.Mode.Design) {
-                    throw new Error('Invalid embed Mode');
+                    throw new Error(embeddingLocalization_1.errorMessages['EmbedModeInvalid']);
                 }
                 if (this.embedOptions.pinboardName != '') {
                     this.embedOptions.pinboardName = '';
@@ -1355,14 +1360,14 @@ class BoldBI {
                 }
             }
             else {
-                throw new Error('Cannot able to refresh the widget the WigetName should be in array');
+                throw new Error(embeddingLocalization_1.errorMessages['ArrayWidgetNames']);
             }
         });
         this.addWidgetToPinboard = this.Invoke(function (dashboardId, widgetId, widgetName) {
             if (!this._isEmptyOrSpaces(dashboardId) && !this._isEmptyOrSpaces(widgetId) && !this._isEmptyOrSpaces(widgetName)) {
                 const specialCharsRegex = /^[a-zA-Z0-9!@$^ ()_=\-}{.`~]*$/;
                 if (!(specialCharsRegex.test(widgetName))) {
-                    throw new Error('Please avoid special characters in widget name');
+                    throw new Error(embeddingLocalization_1.errorMessages['WidgetNameSpecialChar']);
                 }
                 const homepageItemId = bbEmbed('#widget-container').attr('data-homepage-id');
                 const that = this;
@@ -1385,15 +1390,15 @@ class BoldBI {
                         that._addWidgetInPinboard(result.Data);
                     }
                     else if (!result.Status) {
-                        that._throwError('Cant able to add the widget due to ' + result.Message);
+                        that._throwError(embeddingLocalization_1.errorMessages['UnableAddWidget'] + result.Message);
                     }
                 });
             }
             else if (this._isEmptyOrSpaces(dashboardId) || this._isEmptyOrSpaces(widgetId)) {
-                throw new Error('Please provide the valid dashboard id and widget id');
+                throw new Error(embeddingLocalization_1.errorMessages['InvalidDbrdAndWidget']);
             }
             else {
-                throw new Error('Please provide the valid widget name');
+                throw new Error(embeddingLocalization_1.errorMessages['InvalidWidgetName']);
             }
         });
         this.saveFilterView = this.Invoke(function (viewParameters, callBackFunc) {
@@ -1447,16 +1452,16 @@ class BoldBI {
             }
             else {
                 if (!isGuidDbrd) {
-                    throw new Error('Please provide valid dashboard ID.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidDashboardID']);
                 }
                 if (this.isMultiTab && !isGuidChildDbrd) {
-                    throw new Error('Please provide valid child dashboard ID.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidChildDbrdID']);
                 }
                 if (this._isEmptyOrSpaces(viewParameters.ViewName)) {
-                    throw new Error('Please provide valid view name.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidViewName']);
                 }
                 if (this._isEmptyOrSpaces(viewParameters.QueryString)) {
-                    throw new Error('Please provide valid query string.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidQueryString']);
                 }
             }
         });
@@ -1510,16 +1515,16 @@ class BoldBI {
             }
             else {
                 if (!isGuidDbrd) {
-                    throw new Error('Please provide valid dashboard ID.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidDashboardID']);
                 }
                 if (this.isMultiTab && !isGuidChildDbrd) {
-                    throw new Error('Please provide valid child dashboard ID.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidChildDbrdID']);
                 }
                 if (this._isEmptyOrSpaces(viewParameters.ViewName)) {
-                    throw new Error('Please provide valid view name.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidViewName']);
                 }
                 if (this._isEmptyOrSpaces(viewParameters.QueryString)) {
-                    throw new Error('Please provide valid query string.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidQueryString']);
                 }
             }
         });
@@ -1561,13 +1566,13 @@ class BoldBI {
             }
             else {
                 if (!isGuidDbrd) {
-                    throw new Error('Please provide valid dashboard ID.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidDashboardID']);
                 }
                 if (!isGuidView) {
-                    throw new Error('Please provide valid view ID.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidViewID']);
                 }
                 if (this._isEmptyOrSpaces(viewParameters.QueryString)) {
-                    throw new Error('Please provide valid query string.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidQueryString']);
                 }
             }
         });
@@ -1620,7 +1625,7 @@ class BoldBI {
             }
             else {
                 if (!isGuidDbrd) {
-                    throw new Error('Please provide valid dashboard ID.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidDashboardID']);
                 }
             }
         });
@@ -1660,7 +1665,7 @@ class BoldBI {
             }
             else {
                 if (!isGuidView) {
-                    throw new Error('Please provide valid view ID.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidViewID']);
                 }
             }
         });
@@ -1694,7 +1699,7 @@ class BoldBI {
             }
             else {
                 if (!isGuidView) {
-                    throw new Error('Please provide valid view ID.');
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidViewID']);
                 }
             }
         });
@@ -1756,8 +1761,8 @@ class BoldBI {
                     }
                 }
                 catch (ex) {
-                    if (ex.message == 'Cannot read property append of null') {
-                        alert('Invalid Embed Container Id');
+                    if (ex.message == embeddingLocalization_1.errorMessages['CantReadNull']) {
+                        alert(embeddingLocalization_1.errorMessages['InvalidEmbedContainerID']);
                         return false;
                     }
                     else {
@@ -1769,7 +1774,7 @@ class BoldBI {
                 }
             }
             else {
-                boldBIObj._throwError('Invalid EmbedType', boldBIObj.embedOptions.embedContainerId);
+                boldBIObj._throwError(embeddingLocalization_1.errorMessages['InvalidEmbedType'], boldBIObj.embedOptions.embedContainerId);
                 boldBIObj.invalidDetail = true;
                 const retObj = Object.assign(boldBIObj);
                 return retObj;
@@ -1855,7 +1860,7 @@ class BoldBI {
         }
     }
     loadDashboardView() {
-        throw new Error('loadDashboardView not implemented');
+        throw new Error(embeddingLocalization_1.errorMessages['NotImplementedMethod']);
     }
     /**
      * @param {object} exportInformation - It is an object that holds "dashboardId" - Define the unique id of the dashboard if it is present within the multitab dashboard, "fileName" - Define the name of the file to be exported, "pageSize" - Define the size of the page('A3','A4','A5','Letter'), "pageOrientation" - Define the page orientation('Landscape','Portrait'), "showAppliedFilters" - Define whether we need to export the dashboard with or without a filter.
@@ -2184,7 +2189,7 @@ class BoldBI {
             }
         }
         else {
-            this._throwError('Please provide a valid dashboard theme name');
+            this._throwError(embeddingLocalization_1.errorMessages['InvalidThemeName']);
         }
     }
     resizeDashboard(filterParameters) {
@@ -2272,6 +2277,24 @@ class BoldBI {
             }
         }
     }
+    clearAllFilter() {
+        if (this.isMultiTab) {
+            const dashboardContainer = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+            for (let i = 0; i < dashboardContainer.length; i++) {
+                const embedId = bbEmbed(dashboardContainer[`${i}`]).attr('id');
+                const existingDashboardInstance = this._getDashboardInstance(embedId);
+                if (existingDashboardInstance != undefined) {
+                    existingDashboardInstance.clearAllFilters();
+                }
+            }
+        }
+        else {
+            const existingDashboardInstance = this._getDashboardInstance();
+            if (existingDashboardInstance != undefined) {
+                existingDashboardInstance.clearAllFilters();
+            }
+        }
+    }
     hidePopup() {
         if (this.isMultiTab) {
             const dashboardContainer = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
@@ -2353,13 +2376,13 @@ class BoldBI {
         });
         if (this._isEmptyOrSpaces(dashboardId)) {
             responseData = {
-                'status': false, 'message': 'dashboardId is invalid', 'request': data
+                'status': false, 'message': embeddingLocalization_1.errorMessages['InvalidDashboardID'], 'request': data
             };
             return responseData;
         }
         if (this._isEmptyOrSpaces(widgetName)) {
             responseData = {
-                'status': false, 'message': 'widgetName is invalid', 'request': data
+                'status': false, 'message': embeddingLocalization_1.errorMessages['InvalidWidgetName'], 'request': data
             };
             return responseData;
         }
@@ -2394,7 +2417,7 @@ class BoldBI {
             }
         });
         responseData = {
-            'status': true, 'message': 'Data fetching initiated.', 'request': data
+            'status': true, 'message': embeddingLocalization_1.errorMessages['InitFetch'], 'request': data
         };
         return responseData;
     }
@@ -2521,7 +2544,7 @@ class BoldBI {
     }
     _handleEnvironmentError(arg) {
         if (arg.type == 'error') {
-            this._throwError('Server not found. If you are using Cloud BI Server, please ensure that the Environment member is set on the client side.');
+            this._throwError(embeddingLocalization_1.errorMessages['EnvironmentMemberError']);
             this.invalidDetail = true;
         }
     }
@@ -3476,13 +3499,13 @@ class BoldBI {
             }
             if (that.embedOptions.token) {
                 if (that.embedOptions.dashboardPath && !that.embedOptions.dashboardId) {
-                    that._throwError('Token API does not support rendering dashboard with dashboardPath');
+                    that._throwError(embeddingLocalization_1.errorMessages['DbrdPathTokenAPIError']);
                 }
                 else if (that.embedOptions.datasourceName && !that.embedOptions.datasourceId) {
-                    that._throwError('Token API does not support rendering dashboard with datasourceName');
+                    that._throwError(embeddingLocalization_1.errorMessages['DataSourceTokenAPIError']);
                 }
                 else if (that.embedOptions.viewName && !that.embedOptions.viewId) {
-                    that._throwError('Token API does not support rendering dashboard with viewName');
+                    that._throwError(embeddingLocalization_1.errorMessages['ViewNameTokenAPIError']);
                 }
                 else if ((that.isDashboardRendering && that.embedOptions.dashboardId) || (that.isPinboardRendering && that.embedOptions.pinboardName)) {
                     const apiUrl = that.isDashboardRendering ? that.dashboardServerApiUrl + '/v5.0/dashboards/' + that.embedOptions.dashboardId : that.dashboardServerApiUrl + '/pinboard/' + that.embedOptions.pinboardName;
@@ -3500,18 +3523,18 @@ class BoldBI {
                                 that._renderDashboard({ Apistatus: true, Data: resultData, Status: true });
                             }
                             else {
-                                that._throwError('Cannot render Multitab dashboard in designer mode');
+                                that._throwError(embeddingLocalization_1.errorMessages['NotRenderMultitabDashboard']);
                             }
                         },
                         error: function (jqXHR) {
                             if (jqXHR.status == 401) {
-                                that._throwError('Please provide valid access token');
+                                that._throwError(embeddingLocalization_1.errorMessages['InvalidAccessToken']);
                             }
                             else if (jqXHR.status == 404 && that.isDashboardRendering) {
-                                that._throwError('Please provide valid dashboard ID');
+                                that._throwError(embeddingLocalization_1.errorMessages['InvalidDashboardID']);
                             }
                             else {
-                                that._throwError('Please provide valid pinboard name');
+                                that._throwError(embeddingLocalization_1.errorMessages['InvalidPinboardName']);
                             }
                         }
                     });
@@ -3536,13 +3559,13 @@ class BoldBI {
                         },
                         error: function (jqXHR) {
                             if (jqXHR.status == 401) {
-                                that._throwError('Please provide valid access token');
+                                that._throwError(embeddingLocalization_1.errorMessages['InvalidAccessToken']);
                             }
                             else if (jqXHR.status == 400) {
-                                that._throwError('Please provide valid view ID');
+                                that._throwError(embeddingLocalization_1.errorMessages['InvalidViewID']);
                             }
                             else if (jqXHR.status == 404) {
-                                that._throwError('View details not found');
+                                that._throwError(embeddingLocalization_1.errorMessages['ViewDetailsNotFound']);
                             }
                         }
                     });
@@ -3551,7 +3574,7 @@ class BoldBI {
                     const regex = /^(?:\{{0,1}(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}\}{0,1})$/;
                     const isGuidDbrd = regex.exec(that.widgetName);
                     if (!isGuidDbrd) {
-                        that._throwError('Token API does not support rendering widget with widgetName');
+                        that._throwError(embeddingLocalization_1.errorMessages['WidgetNameTokenAPIError']);
                     }
                     else {
                         that._renderDashboard({ Apistatus: true, Data: that.tokenResponse, Status: true });
@@ -3578,12 +3601,12 @@ class BoldBI {
                 url: that.dashboardServerApiUrl + '/server-version/get',
                 contentType: 'application/json',
                 success: function (result) {
-                    console.log(that.embedSDKWrapperVersion === result.Data.split('.').slice(0, 2).join('.') ? 'Embedded SDK version matches with Bold BI Server version' : 'Embedded SDK version does not match with Bold BI Server version');
+                    console.log(that.embedSDKWrapperVersion === result.Data.split('.').slice(0, 2).join('.') ? embeddingLocalization_1.successMessages['MatchVersion'] : embeddingLocalization_1.errorMessages['NotMatchVersion']);
                 }
             });
         }
         else {
-            console.log('Unable to ensure the server version and SDK version for cloud environment');
+            console.log(embeddingLocalization_1.errorMessages['EnsureServerOrSDKVersion']);
         }
     }
     _getDashboardInstance(embedChildId) {
@@ -3594,7 +3617,7 @@ class BoldBI {
     }
     _checkWidgetList() {
         if (this.embedOptions.widgetList.length > 0 && !this.embedOptions.embedContainerId) {
-            const error = 'Error: For rendering multiple widgets, please use the method loadMultipleWidget()';
+            const error = embeddingLocalization_1.errorMessages['ErrorLoadMultipleWidget'];
             this.embedOptions.widgetList.forEach((widget) => {
                 const containerId = widget.containerId;
                 const errorMessage = '<div id="embedded-bi-error" style="display:table;height:100%;width:100%;"><div style="display: table-cell;vertical-align: middle;text-align: center;"><div style="display: inline-block;"><img src=' + this.errorImage + ' style="float: left"/><div style="float: left;margin-left: 10px;line-height: 20px;">BoldBI Embedded: ' + error + '</div></div>';
@@ -3904,7 +3927,7 @@ class BoldBI {
         }
         if (arg.cancel === false) {
             if (that.embedOptions.dashboardId == '' && that.embedOptions.dashboardIds == '') {
-                console.error('Please provide DashboardId in BoldBI.Create().');
+                console.error(embeddingLocalization_1.errorMessages['EmptyDbrdCreate']);
             }
             else {
                 // If arg.viewId is defined, it will update the existing View; if undefined or null, it will create a new View.
@@ -3923,7 +3946,7 @@ class BoldBI {
                         QueryString: arg.data.encryptedData
                     };
                     that.updateFilterView(viewParameters, function (view, message) {
-                        console.log(message + ' and you can add custom functionalities using viewId: ' + view.ViewId);
+                        console.log(message + embeddingLocalization_1.successMessages['UpdateFilterViewMsg'] + view.ViewId);
                     });
                 }
                 else {
@@ -4052,11 +4075,11 @@ class BoldBI {
         if (!this.isDefaultView) {
             document.getElementById('default_view_checkbox').checked = false;
             document.getElementById('default_view_checkbox').disabled = true;
-            infoMessage = 'Based on your Dashboard Settings in Bold BI, these filters will be applied by default when next time render the Dashboard.';
+            infoMessage = embeddingLocalization_1.successMessages['DefaultViewInfoMsg'];
         }
         else {
             document.getElementById('default_view_checkbox').checked = true;
-            infoMessage = 'If enabled, the current view will be set as your default view for this dashboard.';
+            infoMessage = embeddingLocalization_1.successMessages['NonDefaultViewInfoMsg'];
         }
     }
     _saveFilterView(dbrdInstance) {
@@ -4113,9 +4136,9 @@ class BoldBI {
         const isEmptyString = this._isEmptyOrSpaces(textBox[0].value);
         if (isExistingView || containsSpecialChars || isEmptyString) {
             errorMessage.css({ 'display': 'block', 'font-family': 'var(--font-family)' })
-                .text(isExistingView ? 'View Name Already Exists' :
-                containsSpecialChars ? 'Please avoid special characters' :
-                    isEmptyString ? 'Please enter the view name' : '');
+                .text(isExistingView ? embeddingLocalization_1.errorMessages['ExistedViewName'] :
+                containsSpecialChars ? embeddingLocalization_1.errorMessages['AvoidSplChar'] :
+                    isEmptyString ? embeddingLocalization_1.errorMessages['EmptyViewName'] : '');
             textBox.addClass('viewname-textbox-error');
             return false;
         }
@@ -4157,7 +4180,7 @@ class BoldBI {
         }
         if (arg.cancel === false) {
             if (that.embedOptions.dashboardId == '') {
-                console.error('Please provide DashboardId in BoldBI.create().');
+                console.error(embeddingLocalization_1.errorMessages['EmptyDbrdCreate']);
             }
             else {
                 bbEmbed('body').find('#save_view_dialog_wrapper').remove();
@@ -4352,13 +4375,13 @@ class BoldBI {
         }
         else {
             if (!isGuidDbrd || !isGuidMultiDbrd) {
-                console.error('Please provide valid dashboard ID.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidDashboardID']);
             }
             else if (!isReplyCmtId) {
-                console.error('Please provide a valid reply comment Id.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidReplyCommentID']);
             }
             else if (this._isEmptyOrSpaces(arg.content)) {
-                console.error('Please provide valid comment text.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidCommentText']);
             }
         }
     }
@@ -4410,13 +4433,13 @@ class BoldBI {
         }
         else {
             if (!isGuidDbrd || !isGuidMultiDbrd || !isGuidWidget) {
-                console.error('Please provide valid dashboard or widget ID.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidDbrdAndWidgetID']);
             }
             else if (!isReplyCmtId) {
-                console.error('Please provide a valid reply comment Id.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidReplyCommentID']);
             }
             else if (this._isEmptyOrSpaces(arg.content)) {
-                console.error('Please provide valid comment text.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidCommentText']);
             }
         }
     }
@@ -4462,10 +4485,10 @@ class BoldBI {
         }
         else {
             if (!isGuidDbrd || !isGuidMultiDbrd) {
-                console.error('Please provide valid dashboard ID.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidDashboardID']);
             }
             else if (this._isEmptyOrSpaces(arg.commentId)) {
-                console.error('Please provide a valid comment Id.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidCommentID']);
             }
         }
     }
@@ -4514,10 +4537,10 @@ class BoldBI {
         }
         else {
             if (!isGuidDbrd || !isGuidMultiDbrd || !isGuidWidget) {
-                console.error('Please provide valid dashboard or widget ID.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidDbrdAndWidgetID']);
             }
             else if (this._isEmptyOrSpaces(arg.commentId)) {
-                console.error('Please provide a valid comment Id.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidCommentID']);
             }
         }
     }
@@ -4565,13 +4588,13 @@ class BoldBI {
         }
         else {
             if (!isGuidDbrd || !isGuidMultiDbrd) {
-                console.error('Please provide valid dashboard ID.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidDashboardID']);
             }
             else if (this._isEmptyOrSpaces(arg.commentId)) {
-                console.error('Please provide a valid comment Id.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidCommentID']);
             }
             else if (this._isEmptyOrSpaces(arg.content)) {
-                console.error('Please provide valid comment text.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidCommentText']);
             }
         }
     }
@@ -4623,34 +4646,34 @@ class BoldBI {
         }
         else {
             if (!isGuidDbrd || !isGuidMultiDbrd || !isGuidWidget) {
-                console.error('Please provide valid dashboard or widget ID.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidDbrdAndWidgetID']);
             }
             else if (this._isEmptyOrSpaces(arg.commentId)) {
-                console.error('Please provide a valid comment Id.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidCommentID']);
             }
             else if (this._isEmptyOrSpaces(arg.content)) {
-                console.error('Please provide valid comment text.');
+                console.error(embeddingLocalization_1.errorMessages['InvalidCommentText']);
             }
         }
     }
     ajaxErrorFnc(jqXHR) {
         let msg = '';
         if (jqXHR.status == 0) {
-            msg = 'Not connected. Please check the network.';
+            msg = embeddingLocalization_1.errorMessages['NetworkIssue'];
         }
         else if (jqXHR.status == 404) {
             if (jqXHR.statusText == 'Not Found') {
-                msg = 'The view id is not found. Please provide valid view id';
+                msg = embeddingLocalization_1.errorMessages['ViewIDNotFound'];
             }
             else {
-                msg = 'The requested page was not found (404).';
+                msg = embeddingLocalization_1.errorMessages['PageNotFound'];
             }
         }
         else if (jqXHR.status == 500) {
-            msg = 'There is an Internal Server Error (500).';
+            msg = embeddingLocalization_1.errorMessages['InternalServerError'];
         }
         else {
-            msg = 'Uncaught Error occurred.' + jqXHR.responseText;
+            msg = embeddingLocalization_1.errorMessages['UncaughtError'] + jqXHR.responseText;
         }
         if (!this._isNullOrUndefined(this.embedOptions.onError) && this.embedOptions.onError != '') {
             this.onErrorClient(msg);
@@ -4882,6 +4905,15 @@ class BoldBI {
             this.embedOptions.widgetSettings.beforeWidgetItemsListed.call(this, arg);
         }
     }
+    _onBoldBIbeforeWidgetLayoutRender(arg) {
+        const clientFnc = window[this.embedOptions.widgetSettings.beforeWidgetLayoutRender];
+        if (clientFnc instanceof Function) {
+            clientFnc.call(this, arg);
+        }
+        if (this.embedOptions.widgetSettings.beforeWidgetLayoutRender instanceof Function) {
+            this.embedOptions.widgetSettings.beforeWidgetLayoutRender.call(this, arg);
+        }
+    }
     _onBoldBIDashboardWidgetIconClick(arg) {
         const serverFnc = window[this.onWidgetIconClickFn];
         if (serverFnc instanceof Function) {
@@ -4979,7 +5011,7 @@ class BoldBI {
                 callBackFn.call(that, typeof http.response == 'object' ? http.response : JSON.parse(http.response));
             }
             else if (http.readyState == 4 && http.status == 404) {
-                that._throwError('Server not found');
+                that._throwError(embeddingLocalization_1.errorMessages['ServerNotFound']);
             }
             else if (http.readyState == 4) {
                 that._throwError(http.statusText);
@@ -5030,11 +5062,11 @@ class BoldBI {
             alert(errorMsg);
         }
         if (!this._isNullOrUndefined(this.embedOptions.onError) && this.embedOptions.onError != '') {
-            const errormessage = new Error('BoldBI Embedded: ' + errorMsg);
+            const errormessage = new Error(embeddingLocalization_1.errorMessages['BoldBIEmbedded'] + errorMsg);
             this.onErrorClient(errormessage);
         }
         else {
-            throw new Error('BoldBI Embedded: ' + errorMsg);
+            throw new Error(embeddingLocalization_1.errorMessages['BoldBIEmbedded'] + errorMsg);
         }
     }
     //The method uses to passes the client side error.
