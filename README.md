@@ -42,13 +42,8 @@ Please refer to the `Bold BI` Product Release Notes on this [Release History](ht
 
 ### Improvement
 
-* Added API member support for multi-localization in iframe-based embedding.
 * Provided a new method for clearing filters in SDK-based embedding.
 * Provided an event to resize the widget in the mobile layout for SDK-based embedding.
-
-### Bug
-
-* Fixed the issue with the datasource iframe embedding that allowed redirection to the designer page from the datasource page.
 
 ## License Information
 
