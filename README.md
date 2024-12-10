@@ -42,13 +42,8 @@ Please refer to the `Bold BI` Product Release Notes on this [Release History](ht
 
 ### Improvement
 
-* Iframe Embedding - Provided an API to enable the AI Assistant feature for both the dashboard viewer and designer.
-* Added API member support for multi-localization in the SDK-based embedding.
-* Added a mobile view property that allows users to disable mobile view when the browser width reaches a specified pixel threshold for both SDK-based and Iframe embedding.
-
-### Bug
-
-* Fixed an issue where an invalid error message was displayed when the Group-based Authorization settings were incorrect in the server settings for SDK-based embedding.
+* Provided a new method for clearing filters in SDK-based embedding.
+* Provided an event to resize the widget in the mobile layout for SDK-based embedding.
 
 ## License Information
 
