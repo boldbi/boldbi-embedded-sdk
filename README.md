@@ -40,10 +40,23 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/?utm_source=github&utm_medium=backlinks) page.
 
-### Improvement
+### Improvements
 
-* Provided a new method for clearing filters in SDK-based embedding.
-* Provided an event to resize the widget in the mobile layout for SDK-based embedding.
+* Provided API key support.
+* Provided API support to hide the Custom Expression button and dropdown button in the dashboard designer banner.
+* Provided API support to hide the metric option.
+* Provided method support in the while embedding multiple widgets at single instance by using loadMultipleWidgets from version 8.1.41.
+* Introduced new method `removeInstance` to remove the filter widget instance.
+
+### Bugs
+
+* Shown the view Saved Filter Icon in the fullscreen mode.
+* Fixed the issue where the more option is not hidden when access via widget selection and export is set false in the client side.
+* Fixed the issue where the filter was not applying to the public dashboard in the programmatic Multitab dashboard embedding.
+* Fixed an issue where the datacache was not worked in the token draft SDK-based embedding.
+* Displayed an appropriate error message when invalid or empty widget names are provided in the loadMultipleWidgets method.
+* Fixed an issue while loading the multiple dashboards by using same dashboard ID or path.
+* Shown the proper state to the default view button in the SDK based embedding.
 
 ## License Information
 

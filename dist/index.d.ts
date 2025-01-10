@@ -95,6 +95,7 @@ export interface IDashboardSettings {
     showDashboardParameter?: boolean;
     enableComment?: boolean;
     showPreviewAs?: boolean;
+    showMetrics: boolean;
     widgetsPanel?: IWidgetsPanel;
     dataSourceConfig?: IDatasourceConfig;
     viewDataSettings?: IViewDataSettings;
@@ -428,7 +429,7 @@ export declare class BoldBI {
     updateDashboardTheme(dashboardTheme: string): any;
     resizeDashboard(filterParameters?: string): any;
     refreshDashboard(): any;
-    clearAllFilter(): void;
+    clearAllFilter(): any;
     hidePopup(): any;
     hideWaitingIndicator(): any;
     getWidgetData(widgetName: string, clientFnc: Function, dashboardId: string): any;
@@ -487,6 +488,8 @@ export declare class BoldBI {
     getDashboardData(): any;
     _renderDashboard: any;
     _renderPinboard(itemDetail: object): any;
+    _widgetNamesEmpty(): any;
+    errorOnContainer(error: string, containerId: string): void;
     createEmptyList(from: number, to: number): any;
     appendListItem(appendTo: number, count: number): any;
     changeLayout(layout: number): any;
@@ -709,8 +712,12 @@ export declare class BoldBI {
     _hasValue(filterObj: any, property: any): any;
     _unEscapeSelectedFilterDataforURLFilter(filterInfoList: any): any;
     _getWidgetFilterInfo(): any;
+    _multipleWidgets(methodName: string, ...args: any): void;
     addStyles(): any;
     destroyStyles(): any;
+    _validatetoken(token: string): any;
+    _isJwtFormat(token: any): boolean;
+    removeWidgetInstance(widgetId: string): any;
     static _putinstance(element: string, key: string, obj: object): any;
     static _gettinstance(element: string, key: string): any;
     static _hasinstance(element: string, key: string): any;
