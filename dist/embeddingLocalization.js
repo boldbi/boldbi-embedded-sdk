@@ -4,6 +4,8 @@ exports.successMessages = exports.errorMessages = void 0;
 exports.errorMessages = {
     'EmbedModeInvalid': 'Invalid embedded mode.',
     'EmptyWidgetID': 'Widget id and name cannot not be empty.',
+    'EmptyWidgetName': 'Widget name cannot not be empty.',
+    'InvalidAllWidgetNames': 'All the widget names are invalid.',
     'UnableWidgetRender': 'Unable to render the widget in design mode.',
     'PinboardNameEmpty': 'The pinboard name cannot be empty.',
     'EmptyWidgetList': 'Please provide the widget details with the containerID in an array.',
@@ -36,6 +38,7 @@ exports.errorMessages = {
     'DataSourceTokenAPIError': 'The Token API does not support rendering the dashboard with the datasourceName.',
     'ViewNameTokenAPIError': 'The Token API does not support rendering a dashboard with the viewName.',
     'InvalidAccessToken': 'Please provide a valid access token.',
+    'InvalidApiKey': 'Please provide a valid API Key.',
     'ViewDetailsNotFound': 'View details not found.',
     'WidgetNameTokenAPIError': 'The Token API does not support rendering widgets with the widgetName.',
     'EnsureServerOrSDKVersion': 'Unable to ensure the server version and SDK version for cloud environment.',
@@ -69,7 +72,8 @@ exports.errorMessages = {
     'CantReadNull': 'Cannot read property append of null',
     'NotImplementedMethod': 'The LoadDashboardView method has not been implemented.',
     'InvalidThemeName': 'Please provide a valid dashboard theme name',
-    'BoldBIEmbedded': 'BoldBI Embedded: '
+    'BoldBIEmbedded': 'BoldBI Embedded: ',
+    'ProvideCreatePermission': 'Please provide permission to create the dashboard.'
 };
 exports.successMessages = {
     'UpdateFilterViewMsg': 'and you can add custom functionalities using viewId:',

@@ -117,6 +117,7 @@ export interface IDashboardSettings {
     showDashboardParameter?: boolean;
     enableComment?: boolean;
     showPreviewAs?: boolean;
+    showMetrics: boolean;
     widgetsPanel?: IWidgetsPanel;
     dataSourceConfig?: IDatasourceConfig;
     viewDataSettings?: IViewDataSettings;
@@ -436,8 +437,9 @@ export class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail =  false;
         this.isDefaultView =  false;
-        this.embedSDKWrapperVersion = '8.3';
+        this.embedSDKWrapperVersion = '9.1';
         this.tokenResponse = {
+            draftItemID: '',
             DatasourceId : '',
             ConnectionList : '',
             ItemDetail : {
@@ -509,6 +511,7 @@ export class BoldBI {
         ];
 
         this.embedOptions = {
+            isdesignerdraft: false,
             serverUrl: '',
             dashboardId: '',
             dashboardIds: [],
@@ -538,6 +541,7 @@ export class BoldBI {
                 showExport: true,
                 showRefresh: true,
                 showMoreOption: true,
+                showMetrics: true,
                 onFavoriteIconClick: '',
                 beforeIconRender: '',
                 onIconClick: '',
@@ -571,7 +575,9 @@ export class BoldBI {
                 },
                 dataSourceConfig: {
                     hideDataSourceConfig: false,
-                    hideSampleDataSources: false
+                    hideSampleDataSources: false,
+                    hideExpression: false,
+                    hideDataSourceList: false
                 },
                 viewDataSettings: {
                     showAllColumns: false,
@@ -844,7 +850,9 @@ export class BoldBI {
                     const checkjQueryLoaded: any = setInterval(() => {
                         if (window.jQuery) {
                             clearInterval(checkjQueryLoaded);
-                            this._isDependencyLoaded(this, dashboardId);
+                            if (this._widgetNamesEmpty()) {
+                                this._isDependencyLoaded(this, dashboardId);
+                            }
                         }
                     }, 1000);
                 }
@@ -904,6 +912,8 @@ export class BoldBI {
                             break;
                         }
                     }
+                } else if (this.isMultipleWidgetMode) {
+                    this._multipleWidgets("refreshWidget", widgetNames, hideLoader);
                 } else {
                     const dbrdInstance: any = this._getDashboardInstance();
                     if (dbrdInstance != undefined) {
@@ -968,12 +978,13 @@ export class BoldBI {
                     'ChildItemId': this.isMultiTab ? viewParameters.ChildItemId : null,
                     'IsDefault' : viewParameters.IsDefault ? viewParameters.IsDefault : false
                 };
+                var token = this._validatetoken(this.accessToken)
                 bbEmbed.ajax({
                     async: false,
                     type: 'POST',
                     url: this.dashboardServerApiUrl + '/v4.0/dashboards/views',
                     headers: {
-                        'Authorization': 'bearer ' + this.accessToken
+                        'Authorization': token
                     },
                     data: JSON.stringify(data),
                     contentType: 'application/json',
@@ -1031,12 +1042,13 @@ export class BoldBI {
                     'ChildItemId': this.isMultiTab ? viewParameters.ChildItemId : null,
                     'IsDefault' : viewParameters.IsDefault ? viewParameters.IsDefault : false
                 };
+                var token = this._validatetoken(this.accessToken)
                 bbEmbed.ajax({
                     async: false,
                     type: 'POST',
                     url: this.dashboardServerApiUrl + '/v4.0/dashboards/views',
                     headers: {
-                        'Authorization': 'bearer ' + this.accessToken
+                        'Authorization': token
                     },
                     data: JSON.stringify(data),
                     contentType: 'application/json',
@@ -1093,12 +1105,13 @@ export class BoldBI {
                     'QueryString': viewParameters.QueryString,
                     'IsDefault' : viewParameters.IsDefault
                 };
+                var token = this._validatetoken(this.accessToken)
                 bbEmbed.ajax({
                     async: false,
                     type: 'PUT',
                     url: this.dashboardServerApiUrl + '/v4.0/dashboards/views',
                     headers: {
-                        'Authorization': 'bearer ' + this.accessToken
+                        'Authorization': token
                     },
                     data: JSON.stringify(data),
                     contentType: 'application/json',
@@ -1138,12 +1151,13 @@ export class BoldBI {
                 const data: any = {
                     'DashboardId': dashboardId
                 };
+                var token = this._validatetoken(this.accessToken)
                 bbEmbed.ajax({
                     async: false,
                     type: 'GET',
                     url: this.dashboardServerApiUrl + '/v4.0/dashboards/' + dashboardId + '/views',
                     headers: {
-                        'Authorization': 'bearer ' + this.accessToken
+                        'Authorization': token
                     },
                     data: JSON.stringify(data),
                     contentType: 'application/json',
@@ -1192,12 +1206,13 @@ export class BoldBI {
                 const data: any = {
                     'ViewId': viewId
                 };
+                var token = this._validatetoken(this.accessToken)
                 bbEmbed.ajax({
                     async: false,
                     type: 'GET',
                     url: this.dashboardServerApiUrl + '/v4.0/dashboards/views/' + viewId,
                     headers: {
-                        'Authorization': 'bearer ' + this.accessToken
+                        'Authorization':token
                     },
                     data: JSON.stringify(data),
                     contentType: 'application/json',
@@ -1233,12 +1248,13 @@ export class BoldBI {
                 const data: any = {
                     'ViewId': viewId
                 };
+                var token = this._validatetoken(this.accessToken)
                 bbEmbed.ajax({
                     async: false,
                     type: 'DELETE',
                     url: this.dashboardServerApiUrl + '/v4.0/dashboards/views/' + viewId,
                     headers: {
-                        'Authorization': 'bearer ' + this.accessToken
+                        'Authorization': token
                     },
                     data: JSON.stringify(data),
                     contentType: 'application/json',
@@ -1334,7 +1350,7 @@ export class BoldBI {
                 const retObj: BoldBI  = Object.assign(boldBIObj);
                 return retObj;
             }
-            if (boldBIObj.embedOptions.widgetList == ''){
+            if (boldBIObj.embedOptions.widgetList == '' || boldBIObj.embedOptions.embedContainerId ){
                 const ele: string = document.getElementById(boldBIObj.embedOptions.embedContainerId);
                 if (this._hasinstance(ele, 'embeddedBoldBI')) {
                     this._removeinstance(ele, 'embeddedBoldBI');
@@ -1343,7 +1359,7 @@ export class BoldBI {
             //const retObj:any = Object.assign({}, boldBIObj)
             // eslint-disable-next-line
             const retObj: BoldBI = (<any>Object).assign(boldBIObj);
-            if (boldBIObj.embedOptions.widgetList == ''){
+            if (boldBIObj.embedOptions.widgetList == '' || boldBIObj.embedOptions.embedContainerId ){
                 const ele: string = document.getElementById(boldBIObj.embedOptions.embedContainerId);
                 this._putinstance(ele, 'embeddedBoldBI', retObj);
             }
@@ -1395,7 +1411,11 @@ export class BoldBI {
             });
             BoldBI._removeinstance(document.getElementById(this.embedOptions.embedContainerId), 'embeddedBoldBI');
             document.getElementById(this.embedOptions.embedContainerId).innerHTML = '';
-        } else {
+        } else {       
+            if (this.isMultipleWidgetMode) {
+                this._multipleWidgets("destroy");
+                
+            }     
             const embedContainerId: any = this.embedOptions.embedContainerId;
             const existingDashboardInstance: any = this._getDashboardInstance();
             if (existingDashboardInstance != undefined) {
@@ -1613,6 +1633,9 @@ export class BoldBI {
                     }
                 }
             }
+        } 
+        else if (this.isMultipleWidgetMode) {
+            this._multipleWidgets("exportWidgetAsPdf", exportInformation.dashboardId, exportInformation.widgetName, exportInformation.fileName, exportInformation.pageSize, exportInformation.pageOrientation, exportInformation.showAppliedFilters);
         }
         else {
             const dbrdInstance: any = this._getDashboardInstance();
@@ -1657,6 +1680,9 @@ export class BoldBI {
                 }
             }
         }
+        else if (this.isMultipleWidgetMode) {
+            this._multipleWidgets("exportWidgetAsImage", exportInformation.dashboardId, exportInformation.widgetName, exportInformation.fileName, exportInformation.exportImageFormat, exportInformation.resolutionDpi, exportInformation.showAppliedFilters);
+        }
         else {
             const dbrdInstance: any = this._getDashboardInstance();
             if (dbrdInstance != undefined) {
@@ -1695,6 +1721,9 @@ export class BoldBI {
                 }
             }
         }
+        else if (this.isMultipleWidgetMode) {
+            this._multipleWidgets("exportWidgetAsExcel", exportInformation.dashboardId, exportInformation.widgetName, exportInformation.fileName, exportInformation.fileType);
+        }
         else {
             const dbrdInstance: any = this._getDashboardInstance();
             if (dbrdInstance != undefined) {
@@ -1732,6 +1761,9 @@ export class BoldBI {
                 }
             }
         }
+        else if (this.isMultipleWidgetMode) {
+            this._multipleWidgets("exportWidgetAsCsv", exportInformation.dashboardId, exportInformation.widgetName, exportInformation.fileName);
+        }
         else {
             const dbrdInstance: any = this._getDashboardInstance();
             if (dbrdInstance != undefined) {
@@ -1766,6 +1798,8 @@ export class BoldBI {
                     existingDashboardInstance.option('filterParameters', filterParameters);
                 }
             });
+        } else if (this.isMultipleWidgetMode) {
+           this._multipleWidgets("filterParameters", filterParameters);
         } else {
             const existingDashboardInstance: any = this._getDashboardInstance();
             if (existingDashboardInstance != undefined) {
@@ -1865,6 +1899,8 @@ export class BoldBI {
                     existingDashboardInstance.resizeDashboard();
                 }
             });
+        } else if (this.isMultipleWidgetMode) {
+            this._multipleWidgets("resizeDashboard");
         } else {
             const existingDashboardInstance: any = this._getDashboardInstance();
             if (existingDashboardInstance != undefined) {
@@ -1900,6 +1936,8 @@ export class BoldBI {
                     existingDashboardInstance.updateDashboard();
                 }
             });
+        } else if (this.isMultipleWidgetMode) {
+            this._multipleWidgets("updateDashboard");
         } else {
             const existingDashboardInstance: any = this._getDashboardInstance();
             if (existingDashboardInstance != undefined) {
@@ -1908,19 +1946,20 @@ export class BoldBI {
         }
     }
 
-    clearAllFilter() {
+    clearAllFilter(): any {
         if (this.isMultiTab) {
-            const dashboardContainer = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
-            for (let i = 0; i < dashboardContainer.length; i++) {
-                const embedId = bbEmbed(dashboardContainer[`${i}`]).attr('id');
-                const existingDashboardInstance = this._getDashboardInstance(embedId);
+            const dashboardContainer: any = bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+            for (let i: any = 0; i < dashboardContainer.length; i++) {
+                const embedId: string = bbEmbed(dashboardContainer[`${i}`]).attr('id');
+                const existingDashboardInstance: any = this._getDashboardInstance(embedId);
                 if (existingDashboardInstance != undefined) {
                     existingDashboardInstance.clearAllFilters();
                 }
             }
-        }
-        else {
-            const existingDashboardInstance = this._getDashboardInstance();
+        } else if (this.isMultipleWidgetMode) {
+            this._multipleWidgets("clearAllFilters");
+        } else {
+            const existingDashboardInstance: any = this._getDashboardInstance();
             if (existingDashboardInstance != undefined) {
                 existingDashboardInstance.clearAllFilters();
             }
@@ -2017,13 +2056,14 @@ export class BoldBI {
         }
 
         const thatIns: BoldBI = this;
+        var token = this._validatetoken(thatIns.accessToken)
         bbEmbed.ajax({
             type: 'POST',
             url: this.designerRootUrl + '/v1.0/design/loadwidgetdata',
             data: data,
             contentType: 'application/json; charset=utf-8',
             beforeSend: function (xhr: any): any {
-                xhr.setRequestHeader('Authorization', 'bearer ' + thatIns.accessToken);
+                xhr.setRequestHeader('Authorization', token);
                 xhr.setRequestHeader('Caller', thatIns.dashboardServerApiUrl);
             },
             success: function (result: any): any {
@@ -2128,6 +2168,8 @@ export class BoldBI {
                     existingDashboardInstance.option('widgets', filters);
                 }
             });
+        } else if (this.isMultipleWidgetMode) {
+            this._multipleWidgets("widgets", filters);
         } else {
             const dbrdInstance: any = (this._isNullOrUndefined(containerId) || this._isEmptyOrSpaces(containerId)) ? this._getDashboardInstance() : this._getDashboardInstance(containerId + '_embeddedbi');
             if (dbrdInstance != undefined) {
@@ -2592,7 +2634,7 @@ export class BoldBI {
                     childDashboardId = that.embedOptions.token ? embedResponse.ItemId : '';
                 }
                 else if (this.isMultiTab) {
-                    const Id: any = this.embedOptions.token ? embedResponse.DashboardId.toString().replaceAll('-', '') : embedResponse.ItemDetail.Id.toString().replaceAll('-', '');
+                    const Id: any = responseInfo.Data.MultiTabUniqueID;
                     embedContainerId = 'multi_' + Id;
                     if (!that._isNullOrUndefined(that.embedOptions.dashboardSettings.dashboardName) && typeof that.embedOptions.dashboardSettings.dashboardName != 'string') {
                         bbEmbed.map(that.embedOptions.dashboardSettings.dashboardName, function (val: {dashboardId: string, dashboardName: string}): any {
@@ -2657,7 +2699,7 @@ export class BoldBI {
                     environment: this.embedOptions.environment,
                     IsEmbed: true,
                     _isPublic: this.embedOptions.mode != BoldBI.Mode.Connection ? (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : embedResponse.ItemDetail.IsPublic : '',
-                    itemId: this.embedOptions.mode != BoldBI.Mode.Connection ? (this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? embedResponse.ItemDetail.Id : childDashboardId  ? childDashboardId : this.embedOptions.dashboardId : '',
+                    itemId: this.embedOptions.mode != BoldBI.Mode.Connection ? (this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? embedResponse.ItemDetail.Id : that.embedOptions.isdesignerdraft ? embedResponse.draftItemID : childDashboardId  ? childDashboardId : this.embedOptions.dashboardId : '',
                     dashboardPath: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : (this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? embedResponse.ItemDetail.ItemLocation : childDashboardId  ? childDashboardId + '/0' : this.embedOptions.dashboardId + '/0',
                     serviceAuthorizationToken: !(this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? this.embedOptions.token : embedResponse.access_token,
                     dashboardName: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' :  this._isEmptyOrSpaces(dashboardName) ? embedResponse.ItemDetail.Name : dashboardName,
@@ -2708,6 +2750,7 @@ export class BoldBI {
                         viewId: !this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings) ? this._isEmptyOrSpaces(this.embedOptions.dashboardSettings.filterOverviewSettings.viewId) ? null : this.embedOptions.dashboardSettings.filterOverviewSettings.viewId : null,
                         viewName: !this._isNullOrUndefined(this.embedOptions.dashboardSettings.filterOverviewSettings) ? this._isEmptyOrSpaces(this.embedOptions.dashboardSettings.filterOverviewSettings.viewName) ? null : this.embedOptions.dashboardSettings.filterOverviewSettings.viewName : null
                     },
+                    hideMetrics : this._isNullOrUndefined(this.embedOptions.dashboardSettings.showMetrics) ? false : !this.embedOptions.dashboardSettings.showMetrics,
                     widgets: this._getWidgetFilterInfo(),
                     actionComplete: function (arg: {eventType: string, data?: any, source?: any, schema?: any }): any {
                         that._onBoldBIDashboardInstaceActionComplete(arg);
@@ -2779,11 +2822,18 @@ export class BoldBI {
 
                 if (this.loadMultipleWidget) {
                     var widgetList: any = this.embedOptions.widgetList;
+                    widgetList.forEach((widget: any) => {
+                        const childDiv = document.createElement("div");
+                        childDiv.id = `${widget.containerId}_embeddedbi`;
+                        childDiv.style.width= "100%";
+                        childDiv.style.height ="100%";
+                        document.getElementById(widget.containerId).append(childDiv);
+                    });
                     const ids: any = Object.values(JSON.parse(responseInfo.Data.WidgetList));
                     var updatedWidgetList: any = widgetList.map((widget: any, index: number) => {
                         return {
                             widgetId: ids[index],
-                            container: widget.containerId
+                            container:`${widget.containerId}_embeddedbi`
                         };
                     });
                     dashboardOptions.loadMultipleWidget = this.loadMultipleWidget;
@@ -2861,7 +2911,9 @@ export class BoldBI {
                         },
                         dataSourceConfig: {
                             hideDataSourceConfig: this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceConfig,
-                            hideSampleDataSources : this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideSampleDataSources
+                            hideSampleDataSources : this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideSampleDataSources,
+                            hideDataSourceList: this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceList,
+                            hideExpression: this._isNullOrUndefined(this.embedOptions.dashboardSettings.dataSourceConfig) ? false : this.embedOptions.dashboardSettings.dataSourceConfig.hideExpression
                         }
                     };
                     dashboardOptions.userSettings = {
@@ -2914,23 +2966,48 @@ export class BoldBI {
                 }
 
                 if (window.bbEmbed instanceof Function) {
-                        let embedContainer: any = window.bbEmbed.call(that, '#' + (that.pinboardIds.length > 0 ? (embedContainerId + '_embeddedbi') : that.childContainer.id));
-                        let embedChildId: any;
-                        if (embedContainer.length === 0) {
-                            embedContainer = window.bbEmbed.call(that, '#' + embedContainerId + '_embeddedbi');
-                            embedChildId = embedContainerId + '_embeddedbi';
-                        }
-                        if (window.BoldBIDashboardDesigner instanceof Function) {
-                            const existingDashboardInstance: any = this._getDashboardInstance(embedChildId);
-                            if (existingDashboardInstance != undefined) {
-                                existingDashboardInstance.model = Object.assign(existingDashboardInstance.model, dashboardOptions);
-                                existingDashboardInstance.redrawDashboard();
-                            } else {
-                                window.BoldBIDashboardDesigner.call(that, embedContainer, dashboardOptions);
-                            }
+                    let embedContainer: any = window.bbEmbed.call(that, '#' + (that.pinboardIds.length > 0 ? (embedContainerId + '_embeddedbi') : that.childContainer.id));
+                    let embedChildId: any;
+                    if (embedContainer.length === 0) {
+                        embedContainer = window.bbEmbed.call(that, '#' + embedContainerId + '_embeddedbi');
+                        embedChildId = embedContainerId + '_embeddedbi';
+                    }
+                    if (window.BoldBIDashboardDesigner instanceof Function) {
+                        const existingDashboardInstance: any = this._getDashboardInstance(embedChildId);
+                        if (existingDashboardInstance != undefined) {
+                            existingDashboardInstance.model = Object.assign(existingDashboardInstance.model, dashboardOptions);
+                            existingDashboardInstance.redrawDashboard();
                         } else {
-                            this._throwError(errorMessages['ErrorInBoldBIDesigner']);
+                            window.BoldBIDashboardDesigner.call(that, embedContainer, dashboardOptions);
                         }
+                    } else {
+                        this._throwError(errorMessages['ErrorInBoldBIDesigner']);
+                    }
+                    if (this.isMultipleWidgetMode == true) {
+                        const widgetList = JSON.parse(embedResponse.WidgetList);
+                        let index = -1;
+                        Object.keys(widgetList).forEach((key) => {
+                            index++;
+                            if (widgetList[String(key)] == '') {
+                                const error = errorMessages['InvalidWidgetName'];
+                                delete widgetList[String(key)];
+                                const containerId = this.embedOptions.widgetList[Number(index)].containerId;
+                                this.errorOnContainer(error, containerId);
+                                this.embedOptions.widgetList.splice(index, 1);
+                                index--;
+                            }
+                        });
+                        if (this.embedOptions.widgetList.length == 0) {
+                            if (!this._isNullOrUndefined(this.embedOptions.onError) && this.embedOptions.onError != '') {
+                                const errormessage = new Error(errorMessages['InvalidAllWidgetNames']);
+                                this.onErrorClient(errormessage);
+                            }
+                            else {
+                                throw new Error(errorMessages['InvalidAllWidgetNames']);
+                            }
+                        }
+                        embedResponse.WidgetList = JSON.stringify(widgetList);
+                    }
                 } else {
                     throw new Error(errorMessages['bbEmbedNotDefined']);
                 }
@@ -3096,6 +3173,24 @@ export class BoldBI {
         });
     }
 
+    _widgetNamesEmpty(): any {
+        const error: any = errorMessages['EmptyWidgetName'];
+        for (let index: any = 0; index < this.embedOptions.widgetList.length; index++) {
+            const currentWidget: any = this.embedOptions.widgetList[Number(index)];
+            if (this._isEmptyOrSpaces(currentWidget.widgetName)) {
+                this.errorOnContainer(error, currentWidget.containerId);
+                this.embedOptions.widgetList.splice(index, 1);
+                index--;
+            }
+        }
+        return this.embedOptions.widgetList.length > 0;
+    }
+
+    errorOnContainer(error: string, containerId: string): void {
+        const errorMessage: any = '<div id="embedded-bi-error" style="display:table;height:100%;width:100%;"><div style="display: table-cell;vertical-align: middle;text-align: center;"><div style="display: inline-block;"><img src=' + this.errorImage + ' style="float: left"/><div style="float: left;margin-left: 10px;line-height: 20px;">BoldBI Embedded: ' + error + '</div></div>';
+        document.getElementById(containerId).innerHTML = errorMessage;
+    }
+    
     createEmptyList(from: number, to: number): any {
         for (let i: number = from; i <= to; i++) {
             bbEmbed('#widget-container').append('<ul id="column-' + i + '" data-column-id="' + i + '" data-child-count="0"><li class="empty click-container"><div class="empty-content empty-homepage"><span class="drag-widget" style="font-family:var(--font-family)">Drag your widgets here to customize layout</span></div></li></ul>');
@@ -3135,6 +3230,7 @@ export class BoldBI {
             this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._changeLayoutSuccess);
         }
         else {
+            var token = this._validatetoken(that.embedOptions.token)
             data = {
                 'homepageId': that.homepageItemId,
                 'layout': layout
@@ -3144,7 +3240,7 @@ export class BoldBI {
                 type: 'POST',
                 url: that.dashboardServerApiUrl + this.embedGetDetailsEndPoint,
                 headers: {
-                    'Authorization': 'Bearer ' + that.accessToken
+                    'Authorization': token
                 },
                 data: JSON.stringify(data),
                 contentType: 'application/json',
@@ -3371,6 +3467,7 @@ export class BoldBI {
             this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._dragAndDropSuccess);
         }
         else {
+            var token = this._validatetoken(that.embedOptions.token)
             data = {
                 'homepageId': homepageItemId,
                 'moveFrom': JSON.stringify(from),
@@ -3382,7 +3479,7 @@ export class BoldBI {
                 url: that.dashboardServerApiUrl + this.embedGetDetailsEndPoint,
                 data: JSON.stringify(data),
                 headers: {
-                    'Authorization': 'Bearer ' + that.accessToken
+                    'Authorization': token
                 },
                 contentType: 'application/json',
                 success: bbEmbed.proxy(that._dragAndDropSuccess, that)
@@ -3410,6 +3507,7 @@ export class BoldBI {
             this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._unPinSuccess);
         }
         else {
+            var token = this._validatetoken(that.embedOptions.token)
             data = {
                 'homepageId': homepageItemId,
                 'unpinPosition': JSON.stringify(unpinPosition),
@@ -3420,7 +3518,7 @@ export class BoldBI {
                 type: 'POST',
                 url: that.dashboardServerApiUrl + this.embedGetDetailsEndPoint,
                 headers: {
-                    'Authorization': 'Bearer ' + that.accessToken
+                    'Authorization': token
                 },
                 data: JSON.stringify(data),
                 contentType: 'application/json',
@@ -3730,7 +3828,7 @@ export class BoldBI {
         embedContainer.append(multiTabContainer);
         const tabHeader: any = bbEmbed('<div class="e-tab-header"></div>');
         const tabContent: any = bbEmbed('<div class="e-content"></div>');
-        bbEmbed.map(embedResponse, function (value: {ItemDetail?: any, parentId?: any, DashboardId?: any, DashboardName?: any}): any {
+        bbEmbed.map(embedResponse, function (value: {ItemDetail?: any, parentId?: any, DashboardId?: any, DashboardName?: any, MultiTabUniqueID?: any}, index: number): any {
             let dashboardItemDetail: any = {};
             if (that.embedOptions.token) {
                 dashboardItemDetail.Id = value.DashboardId;
@@ -3739,7 +3837,8 @@ export class BoldBI {
                 dashboardItemDetail = JSON.parse(value.ItemDetail);
             }
             that.parentDbrdId = that.embedOptions.token ? that.embedOptions.dashboardId : value.parentId ;
-            const dashboardId: any = dashboardItemDetail.Id.replaceAll('-', '');
+            const dashboardId: any = dashboardItemDetail.Id.replaceAll('-', '') + '_' + index;
+            value.MultiTabUniqueID = dashboardId;
             that.dashboardDetails[`${dashboardId}`] = value;
             if (!that._isNullOrUndefined(that.embedOptions.dashboardSettings.dashboardName) && typeof that.embedOptions.dashboardSettings.dashboardName != 'string') {
                 bbEmbed.map(that.embedOptions.dashboardSettings.dashboardName, function (val: {dashboardId: string, dashboardName: string}): any {
@@ -3791,7 +3890,7 @@ export class BoldBI {
                 window.bbEmbed(window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children()).css({ 'display': 'block', 'position': 'absolute', 'left': 0 });
                 const dbrdInstance: any = window.bbEmbed('#' + window.bbEmbed(window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children()).children().attr('id')).data('BoldBIDashboardDesigner');
                 if (dbrdInstance == null || dbrdInstance == undefined) {
-                    const dashboardId: any = window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children().attr('id').split('_')[1];
+                    const dashboardId: any = window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children().attr('id').split('_').slice(1).join('_');
                     const response: any = {
                         Apistatus: true,
                         Data: this.dashboardDetails[`${dashboardId}`],
@@ -3817,6 +3916,7 @@ export class BoldBI {
             }
 
             if (that.embedOptions.token) {
+                var token = that._validatetoken(that.embedOptions.token)
                 if (that.embedOptions.dashboardPath && !that.embedOptions.dashboardId){
                     that._throwError(errorMessages['DbrdPathTokenAPIError']);
                 }
@@ -3833,7 +3933,7 @@ export class BoldBI {
                         type: 'GET',
                         url: apiUrl,
                         headers: {
-                            'Authorization': 'bearer ' + that.embedOptions.token
+                            'Authorization': token
                         },
                         contentType: 'application/json',
                         success: function (result: { IsMultiDashboard?: any, TabDetail?: any, Status?: any, Data?: any  }): any {
@@ -3849,7 +3949,8 @@ export class BoldBI {
                         error: function (jqXHR: {status: number, responseText: string}): any {
                             if (jqXHR.status == 401)
                             {
-                                that._throwError(errorMessages['InvalidAccessToken']);
+                                const isJwtToken = that._isJwtFormat(that.embedOptions.token);
+                                that._throwError(isJwtToken ? errorMessages['InvalidAccessToken'] : errorMessages['InvalidApiKey']);
                             }
                             else if (jqXHR.status == 404 && that.isDashboardRendering) {
                                 that._throwError(errorMessages['InvalidDashboardID']);
@@ -3861,13 +3962,40 @@ export class BoldBI {
                     });
 
                 }
+                else if ( that.isDashboardRendering && that.embedOptions.mode == BoldBI.Mode.Design && (that._isEmptyOrSpaces(that.embedOptions.dashboardId)) && (that._isEmptyOrSpaces(that.embedOptions.dashboardPath))) {
+                    bbEmbed.ajax({
+                        async: false,
+                        type: 'POST',
+                        url: that.dashboardServerApiUrl + '/v5.0/dashboards/drafts',
+                        headers: {
+                            'Authorization': token
+                        },
+                        contentType: 'application/json',
+                        success: function (result: { Id?: any , Name?: any}): any {
+                            that.embedOptions.isdesignerdraft = true;
+                            that.tokenResponse.draftItemID = result.Id;
+                            that.tokenResponse.ItemDetail.Name = result.Name;
+                            that._renderDashboard({ Apistatus: true, Data: that.tokenResponse, Status: true });
+                        },
+                        error: function (jqXHR: {status: number, responseText: string}): any {
+                            if (jqXHR.status == 401) {
+                                const isJwtToken = that._isJwtFormat(that.embedOptions.token);
+                                that._throwError(isJwtToken ? errorMessages['InvalidAccessToken'] : errorMessages['InvalidApiKey']);
+                            }
+                            else if (jqXHR.status == 403)
+                            {
+                                that._throwError(errorMessages['ProvideCreatePermission']);
+                            }
+                        }
+                    });
+                }
                 else if (that.embedOptions.viewId && that.isDashboardViewRendering) {
                     bbEmbed.ajax({
                         async: false,
                         type: 'GET',
                         url: that.dashboardServerApiUrl + '/v5.0/dashboards/views/' + that.embedOptions.viewId ,
                         headers: {
-                            'Authorization': 'bearer ' + that.embedOptions.token
+                            'Authorization': token
                         },
                         contentType: 'application/json',
                         success: function (result: { ItemId?: any, QueryString?: any, ViewName?: any}): any {
@@ -3881,7 +4009,8 @@ export class BoldBI {
                         },
                         error: function (jqXHR: {status: number, responseText: string}): any {
                             if (jqXHR.status == 401) {
-                                that._throwError(errorMessages['InvalidAccessToken']);
+                                const isJwtToken = that._isJwtFormat(that.embedOptions.token);
+                                that._throwError(isJwtToken ? errorMessages['InvalidAccessToken'] : errorMessages['InvalidApiKey']);
                             }
                             else if (jqXHR.status == 400)
                             {
@@ -4169,7 +4298,7 @@ export class BoldBI {
         const themeGroup: any = arg.iconsinformation.shift();
         const filterOverviewOption: any = arg.iconsinformation.shift();
         const refreshGroup: any = arg.iconsinformation.shift();
-        if (this.embedOptions.dashboardSettings.showMoreOption == false || this.embedOptions.dashboardSettings.showExport == false || (this.embedOptions.exportSettings.showExcel == false && this.embedOptions.exportSettings.showImage == false && this.embedOptions.exportSettings.showPDF == false && this.embedOptions.exportSettings.showCSV == false)) {
+        if (this.embedOptions.dashboardSettings.showMoreOption == false || this.embedOptions.dashboardSettings.showExport == false && this.embedOptions.dashboardSettings.showMetrics == false || (this.embedOptions.exportSettings.showExcel == false && this.embedOptions.exportSettings.showImage == false && this.embedOptions.exportSettings.showPDF == false && this.embedOptions.exportSettings.showCSV == false && this.embedOptions.dashboardSettings.showMetrics == false)) {
             arg.iconsinformation = this._arraySlice(arg.iconsinformation, 'groupName', 'Option');
         }
 
@@ -4348,6 +4477,7 @@ export class BoldBI {
                     input:checked + .default_view_slider:before {-webkit-transform: translateX(17.5px); /* Half of the width minus half of the height */-ms-transform: translateX(17.5px);transform: translateX(13.5px);background-color: white;}\
                     #info-icon {padding-left: 15px; cursor: pointer; font-size: 12px;} \
                     .su-info:before {content: \u24D8;}\
+                    .default_view_slider_disable:before { position: absolute; content: ""; height: 9px; /* Height minus border width */width: 9px; /* Height minus border width */top: 3px; /* (Width - Height) / 2 to center it horizontally */ bottom: 3px; /* (Height - Height) / 2 to center it vertically */left:2px;background: var(--material-switch-foreground-bg-disable-color); -webkit-transition: .4s; transition: .4s; border-radius: 50%; }\
                     .tooltip {position: relative;display: inline-block;}\
                     .tooltip .tooltiptext {visibility: hidden;font-size: 11.8px;width: 320px;background: var(--primary-background-color);font-family: var(--font-family);color: var(--primary-text-normal-color);text-align: left;border-radius: 6px;padding: 5px;position: absolute;z-index: 1;top:130%;left:270%;margin-left:-60px; opacity: 0;transition: opacity 0.3s; border: 1px solid var(--secondary-border-color); box-shadow: 0 6px 12px rgba(0,0,0,.175)}\
                     .tooltip:hover .tooltiptext {visibility: visible;opacity: 1;}\
@@ -4380,7 +4510,7 @@ export class BoldBI {
                     <div id='default_view_right'>
                         <label class="default_view_switch">
                             <input type="checkbox" id="default_view_checkbox">
-                            <span class="default_view_slider"></span>
+                            <span class="default_view_slider" id="default_slider"></span>
                         </label>
                         <div class="tooltip">
                             <div class="su su-info bbi-dbrd-designer-hoverable" id="info-icon" data-tooltip></div>
@@ -4430,6 +4560,9 @@ export class BoldBI {
         });
 
         if (!this.isDefaultView) {
+            bbEmbed('.default_view_slider').css({ 'background': 'var(--material-switch-background-bg-disable-color)', 'border': '1px solid var(--material-switch-background-border-disable-color)' });
+            const defaultViewSlider = document.getElementById('default_slider');
+            defaultViewSlider.classList.add('default_view_slider_disable');
             document.getElementById('default_view_checkbox').checked = false;
             document.getElementById('default_view_checkbox').disabled = true;
             infoMessage = successMessages['DefaultViewInfoMsg'];
@@ -4638,12 +4771,13 @@ export class BoldBI {
             'CommentAction': 3, //To get dashboard comment or widget comment from server.
             'OrderBy': 1 //To get the comment in decending order (newly added first).
         };
+        var token = this._validatetoken(this.accessToken);
         bbEmbed.ajax({
             async: false,
             type: 'POST',
             url: this.dashboardServerApiUrl + '/comments/operation',
             headers: {
-                'Authorization': 'bearer ' + this.accessToken
+                'Authorization': token
             },
             data: JSON.stringify(data),
             contentType: 'application/json',
@@ -4719,12 +4853,13 @@ export class BoldBI {
                 'CurrentDate': isoStr, // Current time
                 'Url': this.dashboardUrl
             };
+            var token = this._validatetoken(this.accessToken)
             bbEmbed.ajax({
                 async: false,
                 type: 'POST',
                 url: this.dashboardServerApiUrl + '/comments/operation',
                 headers: {
-                    'Authorization': 'bearer ' + this.accessToken
+                    'Authorization': token
                 },
                 data: JSON.stringify(data),
                 contentType: 'application/json',
@@ -4779,12 +4914,13 @@ export class BoldBI {
                 'Url': this.dashboardUrl
 
             };
+            var token = this._validatetoken(this.accessToken)
             bbEmbed.ajax({
                 async: false,
                 type: 'POST',
                 url: this.dashboardServerApiUrl + '/comments/operation',
                 headers: {
-                    'Authorization': 'bearer ' + this.accessToken
+                    'Authorization': token
                 },
                 data: JSON.stringify(data),
                 contentType: 'application/json',
@@ -4833,12 +4969,13 @@ export class BoldBI {
                 'Url': this.dashboardUrl
 
             };
+            var token = this._validatetoken(this.accessToken)
             bbEmbed.ajax({
                 async: false,
                 type: 'POST',
                 url: this.dashboardServerApiUrl + '/comments/operation',
                 headers: {
-                    'Authorization': 'bearer ' + this.accessToken
+                    'Authorization': token
                 },
                 data: JSON.stringify(data),
                 contentType: 'application/json',
@@ -4886,12 +5023,13 @@ export class BoldBI {
                 'Url': this.dashboardUrl
 
             };
+            var token = this._validatetoken(this.accessToken)
             bbEmbed.ajax({
                 async: false,
                 type: 'POST',
                 url: this.dashboardServerApiUrl + '/comments/operation',
                 headers: {
-                    'Authorization': 'bearer ' + this.accessToken
+                    'Authorization': token
                 },
                 data: JSON.stringify(data),
                 contentType: 'application/json',
@@ -4939,12 +5077,13 @@ export class BoldBI {
                 'Url': this.dashboardUrl
 
             };
+            var token = this._validatetoken(this.accessToken)
             bbEmbed.ajax({
                 async: false,
                 type: 'POST',
                 url: this.dashboardServerApiUrl + '/comments/operation',
                 headers: {
-                    'Authorization': 'bearer ' + this.accessToken
+                    'Authorization': token
                 },
                 data: JSON.stringify(data),
                 contentType: 'application/json',
@@ -4998,12 +5137,13 @@ export class BoldBI {
                 'Url': this.dashboardUrl
 
             };
+            var token = this._validatetoken(this.accessToken)
             bbEmbed.ajax({
                 async: false,
                 type: 'POST',
                 url: this.dashboardServerApiUrl + '/comments/operation',
                 headers: {
-                    'Authorization': 'bearer ' + this.accessToken
+                    'Authorization': token
                 },
                 data: JSON.stringify(data),
                 contentType: 'application/json',
@@ -5118,7 +5258,24 @@ export class BoldBI {
             }
             bbEmbed('#pinboard-fullscreen').addClass('su-maximize-1').removeClass('su-minimize').attr('data-tooltip', 'Fullscreen');
             bbEmbed('#server-app-container').attr('style', 'background-color: #f9f9f9; height:' + bbEmbed('#content-area').height() + 'px;overflow: hidden !important;min-height: 600px; width:' + boldBIObj.embedOptions.width + '');
+            if (this.embedOptions?.dashboardSettings?.filterOverviewSettings?.showViewSavedFilterIcon) {
+                document.getElementById('remove-view-saved').innerHTML = '.bbi-dbrd-view-saved { display: block; }';
+            }
         } else {
+            const element: any = document.getElementById('remove-view-saved');
+            if (this.embedOptions?.dashboardSettings?.filterOverviewSettings?.showViewSavedFilterIcon) {
+                if (!element) {
+                    const style: any = document.createElement('style');
+                    style.type = 'text/css';
+                    style.id = 'remove-view-saved';
+                    const attr : any = '.bbi-dbrd-view-saved{display:none}';
+                    style.appendChild(document.createTextNode(attr));
+                    document.head.appendChild(style);
+                }
+                else {
+                    document.getElementById('remove-view-saved').innerHTML = '.bbi-dbrd-view-saved { display: none; }';
+                }
+            }
             this.isFullscreen = true;
             const displayVal: any = (this.embedOptions.dashboardSettings.showRefresh != false) ? 'block !important' : 'none !important';
             bbEmbed('<style id="embed-fullscreen" type="text/css"> .hide-dashboard-icons #dashboard-refresh { display:' + displayVal + '; } .hide-dashboard-icons ul.options, .hide-dashboard-icons .su-pin, .hide-dashboard-icons .su-edit, .hide-dashboard-icons .bbi-dbrd-banner-link, .hide-dashboard-icons .bbi-dbrd-banner-menu, .hide-dashboard-icons .bbi-dbrd-banner-text-icon, .hide-dashboard-icons .bbi-dbrd-banner-widget-withoutcomments, .hide-dashboard-icons .bbi-dbrd-banner-widget-withcomments, .hide-dashboard-icons .bbi-dbrd-control-menu, .hide-dashboard-icons .e-dashboard-banner-menu, .hide-dashboard-icons .e-dashboard-banner-link, .hide-dashboard-icons .su-icon, .hide-dashboard-icons .bbi-dbrd-control-menu-icon, .hide-dashboard-icons .e-dashboard-banner-icon:not(#dashboard-fullscreen):not(#dashboard-refresh):not(#pinboard-fullscreen), .hide-dashboard-icons .e-dashboard-banner-description, .hide-dashboard-icons .server-banner-icon + .e-banner-verticalsplitline, .hide-dashboard-icons #dashboard_bannerPanel div a + .e-banner-verticalsplitline, .hide-dashboard-icons .bbi-dashboard-widget-menu { display: none !important; } .hide-dashboard-icons #dashboard { width: 100% !important; } .hide-embed-dashboard-icons .bbi-dbrd-banner-link, .hide-embed-dashboard-icons .bbi-dbrd-banner-menu, .hide-embed-dashboard-icons .bbi-dbrd-banner-text-icon, .hide-embed-dashboard-icons .bbi-dbrd-banner-widget-withoutcomments, .hide-embed-dashboard-icons .bbi-dbrd-banner-widget-withcomments, .hide-embed-dashboard-icons .bbi-dbrd-control-menu, .hide-embed-dashboard-icons .e-dashboard-banner-menu, .hide-embed-dashboard-icons .e-dashboard-banner-link, .hide-embed-dashboard-icons .e-dashboard-banner-icon:not(#dashboard-fullscreen):not(#dashboard-refresh):not(#dashboard_otheroption):not(#dashboard-view):not(#dashboard-comment):not(#dashboard_dashboardmenu), .hide-embed-dashboard-icons #dashboard_bannerPanel div a + .e-banner-verticalsplitline, .hide-embed-dashboard-icons .saved-view .su.cursor-pointer { display: none !important; } </style>').appendTo('head');
@@ -5145,7 +5302,7 @@ export class BoldBI {
             if (!this._isNullOrUndefined(arg.widgetInformation) &&
                 !this._isNullOrUndefined(arg.widgetInformation.widgetJson) &&
                 !this._isNullOrUndefined(arg.widgetInformation.widgetJson.ContainerSettings) &&
-                !arg.widgetInformation.widgetJson.ContainerSettings.ViewData) {
+                (!arg.widgetInformation.widgetJson.ContainerSettings.ViewData || arg.widgetInformation.widgetJson.ContainerSettings.ViewActionData == 1)) {
                 arg.iconsinformation = this._arraySlice(arg.iconsinformation, 'name', 'menu');
             }
         }
@@ -5882,6 +6039,37 @@ export class BoldBI {
         return widgetDetails;
     }
 
+    _multipleWidgets(methodName: string, ...args: any) {
+        const existingDashboardInstance = this._getDashboardInstance();
+        if(!this._isNullOrUndefined(existingDashboardInstance)){
+            var multipleWidgetInstance = existingDashboardInstance.loadMultipleWidget.multipleWidgetInstanceCollection;
+            for (let i = 0; i < multipleWidgetInstance.length; i++) {
+                const currentInstance = multipleWidgetInstance[i].currentInstance;
+                if(methodName == "widgets") {
+                    if(multipleWidgetInstance[i].widgetId == args[0][0].id) {
+                        currentInstance.model[methodName] = [];
+                        currentInstance.option(methodName, ...args);
+                    }
+                }            
+                else if(methodName != "exportWidgetAsCsv" && methodName != "exportWidgetAsImage" && methodName != "exportWidgetAsExcel" && methodName != "exportWidgetAsPdf") {
+                    if (typeof currentInstance[methodName] === 'function') {
+                        currentInstance[methodName](...args);
+                    } 
+                    else {
+                        currentInstance.model[methodName] = "";
+                        currentInstance.option(methodName, ...args);
+                    }
+                }
+                else {
+                    if(multipleWidgetInstance[i].widgetId == args[0] && typeof currentInstance[methodName] === 'function') {
+                        const filteredArgs = args.slice(1);
+                        currentInstance[methodName](...filteredArgs);
+                    }
+                }
+            }
+        }
+    }
+
     addStyles(): any {
         const that: BoldBI = this;
         that._loadDepedentFiles();
@@ -5896,6 +6084,25 @@ export class BoldBI {
                 }
             });
         });
+    }
+
+    _validatetoken(token: string): any {
+        const tokenToValidate = token || this.embedOptions.token;
+        const isJWTToken = this._isJwtFormat(tokenToValidate);    
+        return isJWTToken ? `bearer ${tokenToValidate}` : `basic ${tokenToValidate}`;
+    }
+
+    _isJwtFormat(token) {
+        const jwtRegex = /^[A-Za-z0-9-_=]+?\.[A-Za-z0-9-_=]+?\.[A-Za-z0-9-_.+/=]*$/;
+        return jwtRegex.test(token);
+    }
+    
+    removeWidgetInstance(widgetId: string): any{
+        const ele: string = document.getElementById(this.embedOptions.embedContainerId);
+        BoldBI._removeinstance(ele, "embeddedBoldBIWidget_"+widgetId);       
+        this._widgetsCollection = this._widgetsCollection.filter(
+            Id => Id !== widgetId
+        );
     }
 
     static _putinstance(element: string, key: string , obj: object): any {
