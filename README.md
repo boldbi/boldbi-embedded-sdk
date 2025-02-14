@@ -40,14 +40,6 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/?utm_source=github&utm_medium=backlinks) page.
 
-### Improvements
-
-* Provided API key support.
-* Provided API support to hide the Custom Expression button and dropdown button in the dashboard designer banner.
-* Provided API support to hide the metric option.
-* Provided method support in the while embedding multiple widgets at single instance by using loadMultipleWidgets from version 8.1.41.
-* Introduced new method `removeInstance` to remove the filter widget instance.
-
 ### Bugs
 
 * A proper error message is now displayed when the site is unavailable in the token-based SDK embedding.
