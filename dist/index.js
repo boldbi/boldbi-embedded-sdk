@@ -75,6 +75,15 @@ class BoldBI {
             }
         });
         this._initializeUrls = this.Invoke(function () {
+            if (this.embedOptions.enableDomainMasking) {
+                if (this.embedOptions.authorizationServer.url === '' && this.embedOptions.token === '') {
+                    this.designerRootUrl = this.embedOptions.serverUrl;
+                    return true;
+                }
+                else {
+                    throw new Error(embeddingLocalization_1.errorMessages['DomainMaskingError']);
+                }
+            }
             if (this.embedOptions.serverUrl.indexOf('/bi') <= 0) {
                 throw new Error(embeddingLocalization_1.errorMessages['InvalidBoldBIURL']);
             }
@@ -99,7 +108,8 @@ class BoldBI {
             if (!this._checkDepedentFileExists(this.jQueryDepedentFile, false) && !(window.jQuery != undefined && window.jQuery().jquery == '1.10.2')) {
                 const script = document.createElement('script');
                 if (this.embedOptions.environment == BoldBI.Environment.Enterprise) {
-                    script.setAttribute('src', this.rootUrl + '/cdn/scripts/designer/' + this.jQueryDepedentFile);
+                    var URL = this.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + this.jQueryDepedentFile : this.rootUrl + '/cdn/scripts/designer/' + this.jQueryDepedentFile;
+                    script.setAttribute('src', URL);
                 }
                 else {
                     script.setAttribute('src', this.cdnLink + '/scripts/designer/' + this.jQueryDepedentFile);
@@ -147,7 +157,7 @@ class BoldBI {
             const that = this;
             const parameter = '';
             const responseMessage = responseInfo.Data;
-            if (!responseInfo.Status) {
+            if (!responseInfo.Status && !this.embedOptions.enableDomainMasking) {
                 if (responseInfo.errorMessage == embeddingLocalization_1.errorMessages['PageUnavailable']) {
                     responseInfo.Status = false;
                     responseInfo.Message = responseInfo.errorMessage;
@@ -196,7 +206,7 @@ class BoldBI {
                         throw new Error(embeddingLocalization_1.errorMessages['InvalidPinboardName']);
                     }
                 }
-                else if (embedResponse.length) {
+                else if (!this._isNullOrUndefined(embedResponse) && embedResponse.length) {
                     if (this.isWidgetMode) {
                         const ele = document.getElementById(this.embedOptions.embedContainerId);
                         if (BoldBI._hasinstance(ele, 'embeddedBoldBI')) {
@@ -215,8 +225,10 @@ class BoldBI {
                 }
                 else {
                     let embedContainerId;
-                    embedResponse.ItemDetail = this.embedOptions.mode != BoldBI.Mode.Connection ? !this.embedOptions.token ? JSON.parse(responseInfo.Data.ItemDetail) : responseInfo.Data.ItemDetail : null;
-                    if (!this.embedOptions.token) {
+                    if (!this.embedOptions.enableDomainMasking) {
+                        embedResponse.ItemDetail = this.embedOptions.mode != BoldBI.Mode.Connection ? !this.embedOptions.token ? JSON.parse(responseInfo.Data.ItemDetail) : responseInfo.Data.ItemDetail : null;
+                    }
+                    if (!this.embedOptions.token && !this.embedOptions.enableDomainMasking) {
                         if (this.embedOptions.mode == BoldBI.Mode.View || (embedResponse.ItemDetail && embedResponse.ItemDetail.IsEnableDefaultView)) {
                             this.isDefaultView = embedResponse.ItemDetail.IsEnableDefaultView;
                             this.embedOptions.dashboardSettings = this.embedOptions.dashboardSettings || {};
@@ -234,7 +246,7 @@ class BoldBI {
                             this.embedOptions.dashboardId = embedResponse.ItemDetail.Id;
                         }
                     }
-                    this.accessToken = that.embedOptions.token ? that.embedOptions.token : embedResponse.access_token;
+                    this.accessToken = that.embedOptions.enableDomainMasking ? null : that.embedOptions.token ? that.embedOptions.token : embedResponse.access_token;
                     let dashboardName = '';
                     let childDashboardId;
                     if (this.pinboardIds.length > 0) {
@@ -268,7 +280,7 @@ class BoldBI {
                         }
                     }
                     const height = this.pinboardIds.length > 0 ? bbEmbed('#' + embedContainerId).height() : this.isMultiTab ? (this.embedOptions.height.indexOf('%') > 0 ? (this.embedOptions.height.includes('calc') ? 'calc(100% - 36px)' : 'calc(' + this.embedOptions.height + ' - 36px)') : (parseInt(this.embedOptions.height, 10) - 36 + 'px')) : this.embedOptions.height;
-                    if (typeof (responseInfo.Data.UserDetail) != 'undefined') {
+                    if ((!this.embedOptions.enableDomainMasking && (typeof (responseInfo.Data.UserDetail) != 'undefined'))) {
                         embedResponse.UserDetail = JSON.parse(responseInfo.Data.UserDetail);
                     }
                     if (this.embedOptions.mode == BoldBI.Mode.Connection) {
@@ -313,12 +325,13 @@ class BoldBI {
                         },
                         environment: this.embedOptions.environment,
                         IsEmbed: true,
-                        _isPublic: this.embedOptions.mode != BoldBI.Mode.Connection ? (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : embedResponse.ItemDetail.IsPublic : '',
-                        itemId: this.embedOptions.mode != BoldBI.Mode.Connection ? (this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? embedResponse.ItemDetail.Id : that.embedOptions.isdesignerdraft ? embedResponse.draftItemID : childDashboardId ? childDashboardId : this.embedOptions.dashboardId : '',
-                        dashboardPath: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : (this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? embedResponse.ItemDetail.ItemLocation : childDashboardId ? childDashboardId + '/0' : this.embedOptions.dashboardId + '/0',
-                        serviceAuthorizationToken: !(this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? this.embedOptions.token : embedResponse.access_token,
-                        dashboardName: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : this._isEmptyOrSpaces(dashboardName) ? embedResponse.ItemDetail.Name : dashboardName,
-                        dashboardDescription: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : embedResponse.ItemDetail.Description,
+                        _isPublic: this.embedOptions.mode != BoldBI.Mode.Connection ? this.embedOptions.enableDomainMasking ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : embedResponse.ItemDetail.IsPublic : '',
+                        itemId: this.embedOptions.mode != BoldBI.Mode.Connection ? this.embedOptions.enableDomainMasking ? this.embedOptions.dashboardId : (this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? embedResponse.ItemDetail.Id : childDashboardId ? childDashboardId : this.embedOptions.dashboardId : '',
+                        dashboardPath: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : this.embedOptions.enableDomainMasking ? this.embedOptions.dashboardId + '/0' : (this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? embedResponse.ItemDetail.ItemLocation : childDashboardId ? childDashboardId + '/0' : this.embedOptions.dashboardId + '/0',
+                        serviceAuthorizationToken: !(this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? this.embedOptions.token : this.embedOptions.enableDomainMasking ? '' : embedResponse.access_token,
+                        dashboardName: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : this.embedOptions.enableDomainMasking ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : this._isEmptyOrSpaces(dashboardName) ? embedResponse.ItemDetail.Name : dashboardName,
+                        dashboardDescription: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : this.embedOptions.enableDomainMasking ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : embedResponse.ItemDetail.Description,
+                        IsProxy: this.embedOptions.enableDomainMasking ? true : false,
                         theme: this._isEmptyOrSpaces(this.multiTabTheme) ? this.embedOptions.theme : this.multiTabTheme,
                         enableTheme: this.embedOptions.dashboardSettings.enableTheme === undefined ? false : this.embedOptions.dashboardSettings.enableTheme,
                         enableFilterOverview: this.embedOptions.dashboardSettings.enableFilterOverview,
@@ -459,22 +472,22 @@ class BoldBI {
                         };
                     }
                     if ((this.embedOptions.mode == BoldBI.Mode.View && !this.isWidgetMode && !this.isMultipleWidgetMode && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design) {
-                        dashboardOptions.embedAiAssistant = {
-                            enableAiAssistant: this._isNullOrUndefined(this.embedOptions.enableAiAssistant) ? false : this.embedOptions.enableAiAssistant
-                        };
                         dashboardOptions.languageSettings = {
                             hideLanguageDropdown: this._isNullOrUndefined(this.embedOptions.languageSettings.hideLanguageDropdown) ? false : this.embedOptions.languageSettings.hideLanguageDropdown,
                             languageCode: this.embedOptions.languageSettings.languageCode
                         };
                     }
-                    if ((this.embedOptions.mode == BoldBI.Mode.View && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design) {
+                    if (!this.embedOptions.enableDomainMasking && (this.embedOptions.mode == BoldBI.Mode.View && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design) {
                         dashboardOptions.enableMobileView = this._isNullOrUndefined(this.embedOptions.restrictMobileView) ? false : this.embedOptions.restrictMobileView;
+                        if (embedResponse.IsAnonymousUser) {
+                            dashboardOptions.anonymousUserEmail = embedResponse.email;
+                        }
                     }
                     if (this.embedOptions.mode == BoldBI.Mode.Design) {
-                        if ((this.embedOptions.token && !this.embedOptions.dashboardId) || (!this.embedOptions.token && embedResponse.ItemDetail.IsDraft)) {
+                        if ((this.embedOptions.token && !this.embedOptions.dashboardId) || (!this.embedOptions.token && !this.embedOptions.enableDomainMasking && !this._isNullOrUndefined(embedResponse) && embedResponse.ItemDetail.IsDraft)) {
                             dashboardOptions.dashboardPath = '';
                         }
-                        const datasourceId = !this._isEmptyOrSpaces(embedResponse.DatasourceId) ? embedResponse.DatasourceId : '';
+                        const datasourceId = !this._isNullOrUndefined(embedResponse) && !this.embedOptions.enableDomainMasking && !this._isEmptyOrSpaces(embedResponse.DatasourceId) ? embedResponse.DatasourceId : '';
                         if (!this._isEmptyOrSpaces(datasourceId)) {
                             dashboardOptions.datasource = datasourceId;
                         }
@@ -487,11 +500,11 @@ class BoldBI {
                             summaryText: ''
                         };
                         dashboardOptions.serverSettings = {
-                            isAdmin: typeof (embedResponse.IsAdmin) == 'undefined' ? false : embedResponse.IsAdmin
+                            isAdmin: !this.embedOptions.enableDomainMasking ? typeof (embedResponse.IsAdmin) == 'undefined' ? false : embedResponse.IsAdmin : false
                         };
-                        dashboardOptions.intermediateDbStatus = embedResponse.IntermediateDbStatus;
-                        dashboardOptions.connectionList = embedResponse.ConnectionList;
-                        dashboardOptions.isAllowUserToCreateDatasource = embedResponse.CanCreateDatasource;
+                        dashboardOptions.intermediateDbStatus = this.embedOptions.enableDomainMasking ? undefined : embedResponse.IntermediateDbStatus; //true
+                        dashboardOptions.connectionList = this.embedOptions.enableDomainMasking ? undefined : embedResponse.ConnectionList; //""
+                        dashboardOptions.isAllowUserToCreateDatasource = this.embedOptions.enableDomainMasking ? undefined : embedResponse.CanCreateDatasource; //true
                         dashboardOptions.enablePublicDashboardSetting = false;
                         dashboardOptions.beforeNavigateToDashboard = function (arg) {
                             that._onBoldBIBeforeNavigateToDashboard(arg);
@@ -501,7 +514,7 @@ class BoldBI {
                         };
                         dashboardOptions.predefinedWidgets = this.embedOptions.preConfiguredWidgets;
                         if (this.embedOptions.environment == BoldBI.Environment.Enterprise) {
-                            dashboardOptions.configuration = this.rootUrl + '/webdesignerservice/scripts/settings/' + embedResponse.Branding + '/settings.min.js';
+                            dashboardOptions.configuration = this.embedOptions.enableDomainMasking ? ' ' : this.rootUrl + '/webdesignerservice/scripts/settings/' + embedResponse.Branding + '/settings.min.js';
                         }
                         else {
                             dashboardOptions.configuration = this.cdnLink + '/scripts/settings/' + embedResponse.Branding + '/settings.min.js';
@@ -571,6 +584,15 @@ class BoldBI {
                                     seconds: this.embedOptions.autoRefreshSettings.hourlySchedule.seconds
                                 }
                             }
+                        };
+                    }
+                    if (!this.loadMultipleWidget && this.embedOptions.embedAiAssistant.enableAiAssistant) {
+                        dashboardOptions.embedAiAssistant = {
+                            enableAiAssistant: true,
+                            aiAssistantPosition: this.embedOptions.embedAiAssistant.aiAssistantPosition,
+                            enableWidgetSummary: this.embedOptions.embedAiAssistant.enableWidgetSummary,
+                            enableDashboardSummary: this.embedOptions.embedAiAssistant.enableDashboardSummary,
+                            hideAIDataUsage: this.embedOptions.embedAiAssistant.hideAiDataUsage
                         };
                     }
                     if (window.bbEmbed instanceof Function) {
@@ -694,9 +716,15 @@ class BoldBI {
             const that = this;
             const embedContainer = bbEmbed('#' + that.embedOptions.embedContainerId);
             embedContainer.html('');
+            if (typeof ejdashboard !== 'undefined' && ejdashboard.base) {
+                ejdashboard.base.registerLicense("ORg4AjUWIQA/Gnt2V1hiQlRPd11dXmJWd1p/THNYflR1fV9DaUwxOX1dQl9gSXZQd0VkXHpfeXJURWY=");
+            }
+            const parentcontainerName = that.embedOptions.embedContainerId + '_parent_multi_tab_dashboard';
+            const multiTabparentContainer = bbEmbed('<div id="' + parentcontainerName + '" class="bi-dashboard parent-multitab-dbrd" style="height: 100% !important"></div>');
+            embedContainer.append(multiTabparentContainer);
             const containerName = that.embedOptions.embedContainerId + '_multi_tab_dashboard';
             const multiTabContainer = bbEmbed('<div id="' + containerName + '" class="multitab-dbrd" style="height: 100% !important"></div>');
-            embedContainer.append(multiTabContainer);
+            multiTabparentContainer.append(multiTabContainer);
             const tabHeader = bbEmbed('<div class="e-tab-header"></div>');
             const tabContent = bbEmbed('<div class="e-content"></div>');
             bbEmbed.map(embedResponse, function (value, index) {
@@ -767,6 +795,10 @@ class BoldBI {
                 '&embed_mode=' + this.embedOptions.mode +
                 '&embed_timestamp=' + Math.round((new Date()).getTime() / 1000) +
                 '&embed_expirationtime=' + this.embedOptions.expirationTime;
+            if (this.embedOptions.anonymousToken.isEnabled) {
+                const { groupName, userEmail } = this.embedOptions.anonymousToken;
+                embedQuerString += `&embed_user_email=${userEmail}&embed_anonymous_token=true&embed_authorize_group=${groupName}`;
+            }
             if (this.embedOptions.viewId) {
                 embedQuerString = embedQuerString +
                     '&embed_dashboardview_id=' + this.embedOptions.viewId;
@@ -812,6 +844,9 @@ class BoldBI {
             else if (!(this._isNullOrUndefined(this.embedOptions.authorizationServer.data)) && this.embedOptions.authorizationServer.data != '' && this.embedOptions.authorizationServer.url == '') {
                 this._renderDashboard(this.embedOptions.authorizationServer.data);
             }
+            else if (this.embedOptions.enableDomainMasking) {
+                this._renderDashboard(this.embedOptions.authorizationServer.data);
+            }
             else if ((this.embedOptions.authorizationServer.url == '' || this.embedOptions.authorizationServer.data == '') && this.embedOptions.mode == BoldBI.Mode.View && this._isEmptyOrSpaces(this.embedOptions.pinboardName) && (this.embedOptions.dashboardId || this.embedOptions.dashboardPath || this.embedOptions.dashboardIds || this.embedOptions.dashboardPaths)) {
                 bbEmbed.ajax({
                     async: true,
@@ -829,6 +864,9 @@ class BoldBI {
         });
         this._validateOptions = this.Invoke(function (options) {
             this.embedOptions.embedContainer = options.embedContainerId;
+            if (options.enableDomainMasking) {
+                return true;
+            }
             if (!this._isNullOrUndefined(options.onError)) {
                 this.embedOptions.onError = options.onError;
             }
@@ -894,6 +932,7 @@ class BoldBI {
         this.scheduleEndpointUrl = '';
         this.childContainer = '';
         this.cdnLink = '';
+        this.maskedCdnUrl = "https://cdn.boldbi.com/resources/v";
         this.beforeSaveViewDialogOpenFn = 'beforeSaveViewDialogRendered';
         this.beforeSaveAsViewDialogOpenFn = 'beforeSaveAsViewDialogRendered';
         this.onViewSavedFiltersClickFn = 'openViewSection';
@@ -940,7 +979,7 @@ class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail = false;
         this.isDefaultView = false;
-        this.embedSDKWrapperVersion = '9.1';
+        this.embedSDKWrapperVersion = '10.1';
         this.tokenResponse = {
             draftItemID: '',
             DatasourceId: '',
@@ -1013,7 +1052,6 @@ class BoldBI {
             embedType: BoldBI.EmbedType.Component,
             environment: BoldBI.Environment.Enterprise,
             mode: BoldBI.Mode.View,
-            enableAiAssistant: false,
             restrictMobileView: false,
             localData: {
                 loadFromData: false,
@@ -1023,6 +1061,11 @@ class BoldBI {
             viewId: '',
             viewName: '',
             nonce: '',
+            anonymousToken: {
+                isEnabled: false,
+                groupName: '',
+                userEmail: ''
+            },
             layoutSettings: {
                 hideDesignerScroller: false
             },
@@ -1142,6 +1185,13 @@ class BoldBI {
                     seconds: 0
                 }
             },
+            embedAiAssistant: {
+                enableAiAssistant: false,
+                aiAssistantPosition: 'bottom',
+                enableWidgetSummary: false,
+                enableDashboardSummary: false,
+                hideAiDataUsage: false
+            },
             isRemoveStyle: false,
             scalingFactor: 1,
             localeSettings: {
@@ -1187,7 +1237,8 @@ class BoldBI {
             disableAutoRecover: false,
             ajaxBeforeLoad: '',
             isBingMapRequired: false,
-            widgetList: ''
+            widgetList: '',
+            enableDomainMasking: false,
         };
         this.loadDashboard = this.Invoke(function (dashboardId) {
             if (!this.invalidDetail) {
@@ -1199,6 +1250,18 @@ class BoldBI {
                 }
                 if (dashboardId != undefined) {
                     this.embedOptions.dashboardId = dashboardId;
+                }
+                if (this.embedOptions.anonymousToken.isEnabled) {
+                    const { groupName, userEmail } = this.embedOptions.anonymousToken;
+                    if (this._isEmptyOrSpaces(groupName) && this._isEmptyOrSpaces(userEmail)) {
+                        throw new Error(embeddingLocalization_1.errorMessages['AnonymousEmailandGroup']);
+                    }
+                    if (this._isEmptyOrSpaces(groupName)) {
+                        throw new Error(embeddingLocalization_1.errorMessages['AnonymousGroup']);
+                    }
+                    if (this._isEmptyOrSpaces(userEmail)) {
+                        throw new Error(embeddingLocalization_1.errorMessages['AnonymousEmail']);
+                    }
                 }
                 this.embedOptions.dashboardIds = [];
                 this.embedOptions.dashboardPaths = [];
@@ -1770,7 +1833,7 @@ class BoldBI {
             document.addEventListener('MSFullscreenChange', function () { boldBIObj._fullscreenExitHandler(boldBIObj); }, false);
             window.addEventListener('resize', function () {
                 boldBIObj.resizeDashboard();
-                if (!boldBIObj._isEmptyOrSpaces(boldBIObj.embedOptions.pinboardName) || !boldBIObj._isNullOrUndefined(boldBIObj.embedOptions.pinboardName)) {
+                if (!boldBIObj._isEmptyOrSpaces(boldBIObj.embedOptions.pinboardName) || !boldBIObj._isNullOrUndefined(boldBIObj.embedOptions.pinboardName) && !boldBIObj._isNullOrUndefined(bbEmbed)) {
                     boldBIObj.setListMinimumHeight();
                 }
             });
@@ -2694,13 +2757,14 @@ class BoldBI {
                     scriptTag.nonce = this.embedOptions.nonce;
                 }
                 if (file == 'jquery.easing.1.3.min.js') {
-                    scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
+                    scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
                 }
                 if (file == 'jquery-ui.min.js') {
-                    scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.rootUrl + '/cdn/scripts/' + file : that.cdnLink + '/scripts/' + file;
+                    scriptTag.src = 'https://code.jquery.com/ui/1.12.1/jquery-ui.js';
+                    //scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/' + file : that.cdnLink + '/scripts/' + file;
                 }
                 else if (file == 'jsrender.min.js') {
-                    scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
+                    scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
                 }
                 document.head.appendChild(scriptTag);
                 scriptTag.onerror = (arg) => this._handleEnvironmentError(arg);
@@ -2714,7 +2778,7 @@ class BoldBI {
                 if (isCSS) {
                     if (that.embedOptions.environment == BoldBI.Environment.Enterprise) {
                         if (file == 'font-server.min.css') {
-                            fileUri = that.rootUrl + '/cdn/css/' + file;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/" + file : that.rootUrl + '/cdn/css/' + file;
                         }
                         else if (file == 'bootstrap.min.css') {
                             fileUri = that.rootUrl + '/Content/Styles/Bootstrap/' + file;
@@ -2727,7 +2791,7 @@ class BoldBI {
                                 fileUri = that.rootUrl + '/cdn/css/designer/' + that.embedOptions.dashboardSettings.themeSettings.appearance + '/' + file;
                             }
                             else {
-                                fileUri = that.rootUrl + '/cdn/css/designer/light/' + file;
+                                fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/" + file : that.rootUrl + '/cdn/css/designer/light/' + file;
                             }
                         }
                         else if (file == 'application.theme.css' || file == 'dashboard.theme.css') {
@@ -2743,12 +2807,12 @@ class BoldBI {
                             fileUri = fontFamilyUrl + '?family=' + that.embedOptions.dashboardSettings.fontFamily;
                         }
                         else {
-                            fileUri = that.rootUrl + '/webdesignerservice/themes/' + file;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/" + file : that.rootUrl + '/webdesignerservice/themes/' + file;
                         }
                     }
                     else {
                         if (file == 'font-server.min.css') {
-                            fileUri = that.cdnLink + '/css/' + file;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/" + file : that.cdnLink + '/css/' + file;
                         }
                         else if (file == 'bootstrap.min.css') {
                             fileUri = that.cdnLink + '/css/' + file;
@@ -2761,7 +2825,7 @@ class BoldBI {
                                 fileUri = that.cdnLink + '/css/designer/' + that.embedOptions.dashboardSettings.themeSettings.appearance + '/' + file;
                             }
                             else {
-                                fileUri = that.cdnLink + '/css/designer/light/' + file;
+                                fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/light/" + file : that.cdnLink + '/css/designer/light/' + file;
                             }
                         }
                         else if (file == 'application.theme.css' || file == 'dashboard.theme.css') {
@@ -2776,7 +2840,7 @@ class BoldBI {
                             fileUri = that.rootUrl + '/user-interface/fonts?family=' + that.embedOptions.dashboardSettings.fontFamily;
                         }
                         else {
-                            fileUri = that.cdnLink + '/css/designer/' + file;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/" + file : that.cdnLink + '/css/designer/' + file;
                         }
                     }
                     const cssTag = document.createElement('link');
@@ -2792,13 +2856,13 @@ class BoldBI {
                             fileUri = that.rootUrl + '/cdn/scripts/' + file;
                         }
                         else if (file == 'designerlocalization.js') {
-                            fileUri = that.rootUrl + '/designer/localization/' + file + '?c=' + that.embedOptions.localeSettings.appLocale;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/designer/localization/' + file + '?c=' + that.embedOptions.localeSettings.appLocale;
                         }
                         else if (file == 'signalr.min.js') {
-                            fileUri = that.rootUrl + '/cdn/scripts/signalr/' + file;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/signalr/' + file;
                         }
                         else {
-                            fileUri = that.rootUrl + '/cdn/scripts/designer/' + file;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file;
                         }
                     }
                     else {
@@ -2806,13 +2870,13 @@ class BoldBI {
                             fileUri = that.cdnLink + '/scripts/' + file;
                         }
                         else if (file == 'designerlocalization.js') {
-                            fileUri = that.designerRootUrl + '/localization/' + file;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.designerRootUrl + '/localization/' + file;
                         }
                         else if (file == 'signalr.min.js') {
-                            fileUri = that.cdnLink + '/scripts/signalr/' + file;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.cdnLink + '/scripts/signalr/' + file;
                         }
                         else {
-                            fileUri = that.cdnLink + '/scripts/designer/' + file;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.cdnLink + '/scripts/designer/' + file;
                         }
                     }
                     const scriptTag = document.createElement('script');
@@ -2851,7 +2915,7 @@ class BoldBI {
         return data;
     }
     _renderPinboard(itemDetail) {
-        const widgetContainer = bbEmbed('<div id="server-app-container" style="background: #f9f9f9; overflow: hidden !important;min-height: 600px; width:' + this.embedOptions.width + ';"><div id="content-area" class="clearfix col-xs-12 e-waitingpopup e-js" style="padding: 0;padding-bottom: 30px"><div id="homepage-page-container"><div id="homepage-header" style="display:' + (this.embedOptions.pinboardSettings.enablePinboardHeader || this.embedOptions.pinboardSettings.enablePinboardHeader === undefined ? 'block' : 'none') + ';font-family:var(--font-family)"><div id="element-container"><div id="homepage-menu" style="margin-top: 5px"><span id="homepage-list-container" style="font-size: 15px;width: 165px;line-height: 18px;padding: 25px;">' + this.embedOptions.pinboardName + '</span></div><div id="options-container"><div id="pinboard-fullscreen" class="server-banner-icon e-dashboard-banner-icon bbi-dbrd-designer-hoverable su su-maximize-1 e-icon-dbrd-theme" data-tooltip="Fullscreen" data-name="fullscreen" data-event="true" style="font-size: 14px;display: block;float: left;margin: 8px 15px 0 7px; cursor: pointer"></div><div id="divider"></div><div id="layout-container"><div id="layout" class="dropdown-toggle" data-toggle="dropdown">Edit Layout</div><div class="dropdown-menu" id="layout-items" role="menu"><span class="su su-single-column" id="1"></span><span class="su su-two-column" id="11"></span><span class="su su-small-big-column" id="12"></span><span class="su su-big-small-column" id="21"></span><span class="su su-three-column" id="111"></span></div></div></div></div></div><div id="widget-container" data-homepage-id="" data-current-layout="" data-virtual-homepage="" style="margin-bottom: 30px"></div></div></div></div>');
+        const widgetContainer = bbEmbed('<div id="server-app-container" style="background: #f9f9f9; overflow: hidden !important;min-height: 600px; width:' + this.embedOptions.width + ';"><div id="content-area" class="clearfix col-xs-12 e-waitingpopup e-js" style="padding: 0;padding-bottom: 30px"><div id="homepage-page-container"><div id="homepage-header" style="display:' + (this.embedOptions.pinboardSettings.enablePinboardHeader || this.embedOptions.pinboardSettings.enablePinboardHeader === undefined ? 'block' : 'none') + ';font-family:var(--font-family)"><div id="element-container"><div id="homepage-menu" style="margin-top: 5px"><span id="homepage-list-container" style="font-size: 15px;width: 165px;line-height: 18px;padding: 25px;">' + this.embedOptions.pinboardName + '</span></div><div id="options-container"><div id="pinboard-fullscreen" class="server-banner-icon e-dashboard-banner-icon bbi-dbrd-designer-hoverable su su-maximize-1 e-icon-dbrd-theme" data-tooltip="Fullscreen" data-name="fullscreen" data-event="true" style="font-size: 14px;display: block;float: left;margin: 8px 15px 0 7px; cursor: pointer"></div><div id="divider"></div><div id="layout-container"><div id="layout" class="dropdown-toggle" data-bs-toggle="dropdown">Edit Layout</div><div class="dropdown-menu" id="layout-items" role="menu"><span class="su su-single-column" id="1"></span><span class="su su-two-column" id="11"></span><span class="su su-small-big-column" id="12"></span><span class="su su-big-small-column" id="21"></span><span class="su su-three-column" id="111"></span></div></div></div></div></div><div id="widget-container" data-homepage-id="" data-current-layout="" data-virtual-homepage="" style="margin-bottom: 30px"></div></div></div></div>');
         bbEmbed('#' + this.embedOptions.embedContainerId).append(widgetContainer);
         this._createPinboardDom(itemDetail);
         this._renderItem(itemDetail);
@@ -3568,10 +3632,10 @@ class BoldBI {
         this._removeElementsClass(this.embedOptions.embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
     }
     _tabSelected() {
-        const containerName = window.bbEmbed('.multitab-dbrd').attr('id');
+        const containerName = window.bbEmbed('.parent-multitab-dbrd').children().attr('id');
         for (let i = 0; i < window.bbEmbed('#' + containerName + ' .e-toolbar-item').length; i++) {
             window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).attr('style', 'display:block !important');
-            if (window.bbEmbed('#' + containerName + ' .e-toolbar-item.e-active').attr('aria-controls') == 'e-content-' + containerName + '_' + i) {
+            if (window.bbEmbed('#' + containerName + ' .e-toolbar-item.e-active').children().attr('aria-controls') == 'e-content-' + containerName + '_' + i) {
                 window.bbEmbed(window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children()).css({ 'display': 'block', 'position': 'absolute', 'left': 0 });
                 const dbrdInstance = window.bbEmbed('#' + window.bbEmbed(window.bbEmbed('.e-content').find('#e-content-' + containerName + '_' + i).children()).children().attr('id')).data('BoldBIDashboardDesigner');
                 if (dbrdInstance == null || dbrdInstance == undefined) {
@@ -3630,6 +3694,9 @@ class BoldBI {
                             }
                         },
                         error: function (jqXHR) {
+                            if (jqXHR.status == 0) {
+                                that._throwError(embeddingLocalization_1.errorMessages['PageUnavailable']);
+                            }
                             if (jqXHR.status == 401) {
                                 const isJwtToken = that._isJwtFormat(that.embedOptions.token);
                                 that._throwError(isJwtToken ? embeddingLocalization_1.errorMessages['InvalidAccessToken'] : embeddingLocalization_1.errorMessages['InvalidApiKey']);
@@ -3952,7 +4019,17 @@ class BoldBI {
         }
     }
     _onBoldBIDashboardBeforeBannerIconRender(arg) {
+        var isDynamicTranslatorAdded = false;
+        var isSummarizationAdded = false;
+        if (arg.iconsinformation.find((group) => group.groupId === 'Summarize')) {
+            var summarizegroup = arg.iconsinformation.shift();
+            isSummarizationAdded = true;
+        }
         const themeGroup = arg.iconsinformation.shift();
+        if (arg.iconsinformation.find((group) => group.groupId === 'translatorgroup')) {
+            var translatorGroup = arg.iconsinformation.shift();
+            isDynamicTranslatorAdded = true;
+        }
         const filterOverviewOption = arg.iconsinformation.shift();
         const refreshGroup = arg.iconsinformation.shift();
         if (this.embedOptions.dashboardSettings.showMoreOption == false || this.embedOptions.dashboardSettings.showExport == false && this.embedOptions.dashboardSettings.showMetrics == false || (this.embedOptions.exportSettings.showExcel == false && this.embedOptions.exportSettings.showImage == false && this.embedOptions.exportSettings.showPDF == false && this.embedOptions.exportSettings.showCSV == false && this.embedOptions.dashboardSettings.showMetrics == false)) {
@@ -3988,8 +4065,14 @@ class BoldBI {
         if (filterOverviewOption.items.length > 0) {
             arg.iconsinformation.unshift(filterOverviewOption);
         }
+        if (isDynamicTranslatorAdded) {
+            arg.iconsinformation.unshift(translatorGroup);
+        }
         if (themeGroup.items.length > 0) {
             arg.iconsinformation.unshift(themeGroup);
+        }
+        if (isSummarizationAdded) {
+            arg.iconsinformation.unshift(summarizegroup);
         }
         if (serverFnc instanceof Function) {
             serverFnc.call(this, arg);
@@ -4134,7 +4217,10 @@ class BoldBI {
         const that = this;
         that._addSaveViewDialogStyles();
         const saveViewDialogWrapper = bbEmbed('<div>')
-            .attr('id', 'save_view_dialog_wrapper')
+            .attr({
+            'id': 'save_view_dialog_wrapper',
+            'class': 'bi-dashboard'
+        })
             .appendTo('body');
         const saveViewDialog = bbEmbed('<div>')
             .attr('id', 'save_view_dialog')
@@ -4408,7 +4494,7 @@ class BoldBI {
             'DashboardItemId': commentType == 'dashboard' ? ((this.isMultiTab ? args.multitabDashboardId : args.dashboardId)) : (args.dashboardId),
             'ItemType': commentType,
             'ParentItemId': this.isMultiTab ? args.multitabDashboardId : null,
-            'CommentAction': 3, //To get dashboard comment or widget comment from server.
+            'CommentAction': 3,
             'OrderBy': 1 //To get the comment in decending order (newly added first).
         };
         var token = this._validatetoken(this.accessToken);
@@ -4488,8 +4574,8 @@ class BoldBI {
                 'ItemId': arg.dashboardId,
                 'ParentId': arg.parentCommentId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 0, //To add comment in server
-                'CurrentDate': isoStr, // Current time
+                'CommentAction': 0,
+                'CurrentDate': isoStr,
                 'Url': this.dashboardUrl
             };
             var token = this._validatetoken(this.accessToken);
@@ -4547,8 +4633,8 @@ class BoldBI {
                 'DashboardItemId': arg.dashboardId,
                 'ParentId': arg.parentCommentId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 0, // To add comment in server
-                'CurrentDate': isoStr, // Current time
+                'CommentAction': 0,
+                'CurrentDate': isoStr,
                 'Url': this.dashboardUrl
             };
             var token = this._validatetoken(this.accessToken);
@@ -4600,8 +4686,8 @@ class BoldBI {
                 'CommentId': arg.commentId,
                 'ItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 2, // To delete comment in server
-                'CurrentDate': isoStr, // Current time
+                'CommentAction': 2,
+                'CurrentDate': isoStr,
                 'Url': this.dashboardUrl
             };
             var token = this._validatetoken(this.accessToken);
@@ -4653,8 +4739,8 @@ class BoldBI {
                 'ItemId': arg.widgetId,
                 'DashboardItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 2, // To delete comment in server
-                'CurrentDate': isoStr, // Current time
+                'CommentAction': 2,
+                'CurrentDate': isoStr,
                 'Url': this.dashboardUrl
             };
             var token = this._validatetoken(this.accessToken);
@@ -4705,8 +4791,8 @@ class BoldBI {
                 'CommentId': arg.commentId,
                 'ItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 1, // To edit comment in server
-                'CurrentDate': isoStr, // Current time
+                'CommentAction': 1,
+                'CurrentDate': isoStr,
                 'Url': this.dashboardUrl
             };
             var token = this._validatetoken(this.accessToken);
@@ -4763,8 +4849,8 @@ class BoldBI {
                 'ItemId': arg.widgetId,
                 'DashboardItemId': arg.dashboardId,
                 'ParentItemId': arg.multitabDashboardId,
-                'CommentAction': 1, // To edit comment in server
-                'CurrentDate': isoStr, // Current time
+                'CommentAction': 1,
+                'CurrentDate': isoStr,
                 'Url': this.dashboardUrl
             };
             var token = this._validatetoken(this.accessToken);
@@ -5214,6 +5300,9 @@ class BoldBI {
     _throwError(errorMsg, embedContainerId) {
         embedContainerId = this._isEmptyOrSpaces(embedContainerId) ? this.embedOptions.embedContainerId : embedContainerId;
         if (embedContainerId) {
+            if (typeof errorMsg === 'string') {
+                errorMsg = errorMsg.replace(/^BoldBI Embedded:\s*/, '');
+            }
             this._removeElementsClass(embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
             const errorMessage = '<div id="embedded-bi-error" style="display:table;height:100%;width:100%;"><div style="display: table-cell;vertical-align: middle;text-align: center;"><div style="display: inline-block;"><img src=' + this.errorImage + ' style="float: left"/><div style="float: left;margin-left: 10px;line-height: 20px;">BoldBI Embedded: ' + errorMsg + '</div></div>';
             document.getElementById(embedContainerId).innerHTML = errorMessage;
@@ -5554,7 +5643,7 @@ class BoldBI {
     }
     removeWidgetInstance(widgetId) {
         const ele = document.getElementById(this.embedOptions.embedContainerId);
-        BoldBI._removeinstance(ele, "embeddedBoldBIWidget_" + widgetId);
+        BoldBI._removewidgetinstance(ele, "embeddedBoldBIWidget_" + widgetId);
         this._widgetsCollection = this._widgetsCollection.filter(Id => Id !== widgetId);
     }
     static _putinstance(element, key, obj) {
@@ -5578,6 +5667,12 @@ class BoldBI {
             if (BoldBI._storage.get(element).size != 0) {
                 BoldBI._storage.delete(element);
             }
+            return ret;
+        }
+    }
+    static _removewidgetinstance(element, key) {
+        if (BoldBI._storage.has(element)) {
+            const ret = BoldBI._storage.get(element).delete(key);
             return ret;
         }
     }

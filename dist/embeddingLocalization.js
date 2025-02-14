@@ -73,7 +73,11 @@ exports.errorMessages = {
     'NotImplementedMethod': 'The LoadDashboardView method has not been implemented.',
     'InvalidThemeName': 'Please provide a valid dashboard theme name',
     'BoldBIEmbedded': 'BoldBI Embedded: ',
-    'ProvideCreatePermission': 'Please provide permission to create the dashboard.'
+    'ProvideCreatePermission': 'Please provide permission to create the dashboard.',
+    'AnonymousEmailandGroup': 'Please provide a user email and group name to access the group for an anonymous user',
+    'AnonymousEmail': 'Please provide an anonymous user email.',
+    'AnonymousGroup': 'Please provide a group name to access the group for an anonymous user.',
+    'DomainMaskingError': 'Please remove the authorization URL or token API when when domain masking is enabled.'
 };
 exports.successMessages = {
     'UpdateFilterViewMsg': 'and you can add custom functionalities using viewId:',
