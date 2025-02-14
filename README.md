@@ -50,13 +50,16 @@ Please refer to the `Bold BI` Product Release Notes on this [Release History](ht
 
 ### Bugs
 
-* Shown the view Saved Filter Icon in the fullscreen mode.
-* Fixed the issue where the more option is not hidden when access via widget selection and export is set false in the client side.
-* Fixed the issue where the filter was not applying to the public dashboard in the programmatic Multitab dashboard embedding.
-* Fixed an issue where the datacache was not worked in the token draft SDK-based embedding.
-* Displayed an appropriate error message when invalid or empty widget names are provided in the loadMultipleWidgets method.
-* Fixed an issue while loading the multiple dashboards by using same dashboard ID or path.
-* Shown the proper state to the default view button in the SDK based embedding.
+* A proper error message is now displayed when the site is unavailable in the token-based SDK embedding.
+* Fixed the rearrangement of banner icons to their proper order, addressing the inclusion of localization features in the dashboard banner.
+
+### Improvement
+
+* Provided new member APIs to show or hide the AI summarize icon for both the dashboard and widgets.
+
+### Feature
+
+* Enhanced functionality allows anonymous users to embed the dashboard viewer based on group permissions.
 
 ## License Information
 

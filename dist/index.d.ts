@@ -24,6 +24,7 @@ export interface IDashboardOptions {
     pinboardName?: string;
     dashboardIds?: string[];
     dashboardPaths?: string[];
+    anonymousToken?: IAnonymousToken;
     datasources?: IDatasources[];
     widgetList?: IWidgetList[];
     expirationTime?: number;
@@ -31,7 +32,6 @@ export interface IDashboardOptions {
     isRemoveStyle?: boolean;
     isBingMapRequired?: boolean;
     disableAutoRecover?: boolean;
-    enableAiAssistant?: boolean;
     restrictMobileView?: boolean;
     embedType?: typeof BoldBI.EmbedType;
     environment?: typeof BoldBI.Environment;
@@ -52,6 +52,7 @@ export interface IDashboardOptions {
     designCanvasSettings?: IDesignCanvasSettings;
     widgetContainerSettings?: IWidgetContainerSettings;
     preConfiguredWidgets?: IPreConfiguredWidgets;
+    embedAiAssistant?: IEmbedAiAssistant;
     actionBegin?: (_event: Event) => void;
     actionComplete?: (_event: Event) => void;
     beforeContextMenuRender?: (_event: Event) => void;
@@ -69,6 +70,7 @@ export interface IDashboardOptions {
     beforeDatasourceSave?: (_event: Event) => void;
     afterDatasourceSave?: (_event: Event) => void;
     ajaxBeforeLoad?: (_event: Event) => void;
+    enableDomainMasking?: boolean;
 }
 export interface ILocalData {
     layoutData?: string;
@@ -77,6 +79,11 @@ export interface ILocalData {
 }
 export interface ILayoutSettings {
     hideDesignerScroller?: boolean;
+}
+export interface IAnonymousToken {
+    isEnabled?: boolean;
+    groupName?: string;
+    userEmail?: string;
 }
 export interface IDashboardList {
     dashboardId: string;
@@ -95,7 +102,7 @@ export interface IDashboardSettings {
     showDashboardParameter?: boolean;
     enableComment?: boolean;
     showPreviewAs?: boolean;
-    showMetrics: boolean;
+    showMetrics?: boolean;
     widgetsPanel?: IWidgetsPanel;
     dataSourceConfig?: IDatasourceConfig;
     viewDataSettings?: IViewDataSettings;
@@ -221,6 +228,13 @@ export interface IPreConfiguredWidgets {
     dashboardId?: string;
     categoryName?: string;
 }
+export interface IEmbedAiAssistant {
+    enableAiAssistant?: boolean;
+    aiAssistantPosition?: string;
+    enableWidgetSummary?: boolean;
+    enableDashboardSummary?: boolean;
+    hideAiDataUsage?: boolean;
+}
 export declare class BoldBI {
     IsDependencyLoaded: boolean;
     rootUrl: string;
@@ -297,6 +311,7 @@ export declare class BoldBI {
     isPinboardRendering: boolean;
     isDashboardViewRendering: boolean;
     tokenResponse: any;
+    maskedCdnUrl: any;
     static Mode: any;
     static EmbedType: any;
     static Environment: any;
@@ -722,6 +737,7 @@ export declare class BoldBI {
     static _gettinstance(element: string, key: string): any;
     static _hasinstance(element: string, key: string): any;
     static _removeinstance(element: string, key: string): any;
+    static _removewidgetinstance(element: string, key: string): any;
 }
 export declare class widgetBI {
     containerID: string;

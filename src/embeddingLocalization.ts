@@ -68,9 +68,13 @@ export const errorMessages: any = {
     'NotMatchVersion': 'The Embedded SDK version does not match the Bold BI Server version.',
     'CantReadNull': 'Cannot read property append of null',
     'NotImplementedMethod': 'The LoadDashboardView method has not been implemented.',
-    'InvalidThemeName':'Please provide a valid dashboard theme name',
-    'BoldBIEmbedded':'BoldBI Embedded: ',
-    'ProvideCreatePermission':'Please provide permission to create the dashboard.'
+    'InvalidThemeName': 'Please provide a valid dashboard theme name',
+    'BoldBIEmbedded': 'BoldBI Embedded: ',
+    'ProvideCreatePermission': 'Please provide permission to create the dashboard.',
+    'AnonymousEmailandGroup': 'Please provide a user email and group name to access the group for an anonymous user',
+    'AnonymousEmail': 'Please provide an anonymous user email.',
+    'AnonymousGroup': 'Please provide a group name to access the group for an anonymous user.',
+    'DomainMaskingError':'Please remove the authorization URL or token API when when domain masking is enabled.'
 };
 
 export const successMessages: any = {
