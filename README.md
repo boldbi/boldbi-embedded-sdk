@@ -42,16 +42,13 @@ Please refer to the `Bold BI` Product Release Notes on this [Release History](ht
 
 ### Bugs
 
-* A proper error message is now displayed when the site is unavailable in the token-based SDK embedding.
-* Fixed the rearrangement of banner icons to their proper order, addressing the inclusion of localization features in the dashboard banner.
+* Fixed the issue where group-based authorization was not functioning in SDK-based embedding since version 9.1.73.
+* Fixed a minor alignment issue with the unpin icon in the Pinboard SDK-based embedding.
 
 ### Improvement
 
-* Provided new member APIs to show or hide the AI summarize icon for both the dashboard and widgets.
-
-### Feature
-
-* Enhanced functionality allows anonymous users to embed the dashboard viewer based on group permissions.
+* Added support for displaying or hiding summary icons in the dashboard and widget SDK-based embedding.
+* Provided custom domain support for the dashboard designer in SDK-based embedding.
 
 ## License Information
 

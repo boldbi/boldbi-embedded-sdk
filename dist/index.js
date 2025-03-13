@@ -477,13 +477,20 @@ class BoldBI {
                             languageCode: this.embedOptions.languageSettings.languageCode
                         };
                     }
-                    if (!this.embedOptions.enableDomainMasking && (this.embedOptions.mode == BoldBI.Mode.View && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design) {
-                        dashboardOptions.enableMobileView = this._isNullOrUndefined(this.embedOptions.restrictMobileView) ? false : this.embedOptions.restrictMobileView;
-                        if (embedResponse.IsAnonymousUser) {
-                            dashboardOptions.anonymousUserEmail = embedResponse.email;
+                    if (!this.embedOptions.enableDomainMasking) {
+                        if ((this.embedOptions.mode == BoldBI.Mode.View && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design) {
+                            dashboardOptions.enableMobileView = this._isNullOrUndefined(this.embedOptions.restrictMobileView) ? false : this.embedOptions.restrictMobileView;
+                            if (embedResponse.IsAnonymousUser) {
+                                dashboardOptions.anonymousUserEmail = embedResponse.email;
+                            }
                         }
                     }
                     if (this.embedOptions.mode == BoldBI.Mode.Design) {
+                        dashboardOptions.customBrandSettings = {
+                            hideHelpLink: this._isNullOrUndefined(this.embedOptions.customBrandSettings.hideHelpLink) ? false : this.embedOptions.customBrandSettings.hideHelpLink,
+                            customBrandName: this.embedOptions.customBrandSettings.customBrandName,
+                            customDomain: this.embedOptions.customBrandSettings.customDomain
+                        };
                         if ((this.embedOptions.token && !this.embedOptions.dashboardId) || (!this.embedOptions.token && !this.embedOptions.enableDomainMasking && !this._isNullOrUndefined(embedResponse) && embedResponse.ItemDetail.IsDraft)) {
                             dashboardOptions.dashboardPath = '';
                         }
@@ -587,13 +594,16 @@ class BoldBI {
                         };
                     }
                     if (!this.loadMultipleWidget && this.embedOptions.embedAiAssistant.enableAiAssistant) {
+                        dashboardOptions.isAiSummariesEnabledGlobally = this.embedOptions.embedAiAssistant.enableAiSummary;
                         dashboardOptions.embedAiAssistant = {
                             enableAiAssistant: true,
                             aiAssistantPosition: this.embedOptions.embedAiAssistant.aiAssistantPosition,
-                            enableWidgetSummary: this.embedOptions.embedAiAssistant.enableWidgetSummary,
-                            enableDashboardSummary: this.embedOptions.embedAiAssistant.enableDashboardSummary,
                             hideAIDataUsage: this.embedOptions.embedAiAssistant.hideAiDataUsage
                         };
+                        if (dashboardOptions.isAiSummariesEnabledGlobally) {
+                            dashboardOptions.embedAiAssistant.enableWidgetSummary = this.embedOptions.embedAiAssistant.enableWidgetSummary;
+                            dashboardOptions.embedAiAssistant.enableDashboardSummary = this.embedOptions.embedAiAssistant.enableDashboardSummary;
+                        }
                     }
                     if (window.bbEmbed instanceof Function) {
                         let embedContainer = window.bbEmbed.call(that, '#' + (that.pinboardIds.length > 0 ? (embedContainerId + '_embeddedbi') : that.childContainer.id));
@@ -979,7 +989,7 @@ class BoldBI {
         this.isMultipleWidgetMode = false;
         this.invalidDetail = false;
         this.isDefaultView = false;
-        this.embedSDKWrapperVersion = '10.1';
+        this.embedSDKWrapperVersion = '11.2';
         this.tokenResponse = {
             draftItemID: '',
             DatasourceId: '',
@@ -1155,6 +1165,11 @@ class BoldBI {
                 hideLanguageDropdown: false,
                 languageCode: ''
             },
+            customBrandSettings: {
+                hideHelpLink: false,
+                customBrandName: '',
+                customDomain: ''
+            },
             filterParameters: '',
             dynamicConnection: {
                 isEnabled: false,
@@ -1188,6 +1203,7 @@ class BoldBI {
             embedAiAssistant: {
                 enableAiAssistant: false,
                 aiAssistantPosition: 'bottom',
+                enableAiSummary: false,
                 enableWidgetSummary: false,
                 enableDashboardSummary: false,
                 hideAiDataUsage: false
@@ -1350,6 +1366,8 @@ class BoldBI {
                 }
                 this.embedOptions.dashboardIds = [];
                 this.embedOptions.dashboardPaths = [];
+                this.embedOptions.viewId = '';
+                this.embedOptions.viewName = '';
                 if (!this._checkWidgetList()) {
                     if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
                         this.isWidgetMode = true;
@@ -2760,8 +2778,8 @@ class BoldBI {
                     scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
                 }
                 if (file == 'jquery-ui.min.js') {
-                    scriptTag.src = 'https://code.jquery.com/ui/1.12.1/jquery-ui.js';
-                    //scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/' + file : that.cdnLink + '/scripts/' + file;
+                    scriptTag.src = this.maskedCdnUrl.slice(0, -1) + 'jquery-ui.min.js';
+                    // scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/' + file : that.cdnLink + '/scripts/' + file;
                 }
                 else if (file == 'jsrender.min.js') {
                     scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
@@ -2791,7 +2809,7 @@ class BoldBI {
                                 fileUri = that.rootUrl + '/cdn/css/designer/' + that.embedOptions.dashboardSettings.themeSettings.appearance + '/' + file;
                             }
                             else {
-                                fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/" + file : that.rootUrl + '/cdn/css/designer/light/' + file;
+                                fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/light/" + file : that.rootUrl + '/cdn/css/designer/light/' + file;
                             }
                         }
                         else if (file == 'application.theme.css' || file == 'dashboard.theme.css') {
