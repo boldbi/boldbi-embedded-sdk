@@ -47,6 +47,7 @@ export interface IDashboardOptions {
     autoRefreshSettings?: IAutoRefreshSettings;
     localeSettings?: ILocaleSettings;
     languageSettings?: ILanguageSettings;
+    customBrandSettings?: ICustomBrandSettings;
     toolbarSettings?: IToolbarSettings;
     pinboardSettings?: IPinboardSettings;
     designCanvasSettings?: IDesignCanvasSettings;
@@ -128,6 +129,11 @@ export interface IDashboardSettings {
 export interface ILanguageSettings {
     hideLanguageDropdown?: boolean;
     languageCode?: string;
+}
+export interface ICustomBrandSettings {
+    hideHelpLink?: boolean;
+    customBrandName?: string;
+    customDomain?: string;
 }
 export interface IWidgetsPanel {
     defaultPanelDisplayText?: string;
@@ -231,6 +237,7 @@ export interface IPreConfiguredWidgets {
 export interface IEmbedAiAssistant {
     enableAiAssistant?: boolean;
     aiAssistantPosition?: string;
+    enableAiSummary?: boolean;
     enableWidgetSummary?: boolean;
     enableDashboardSummary?: boolean;
     hideAiDataUsage?: boolean;
