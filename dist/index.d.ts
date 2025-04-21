@@ -1,247 +1,6 @@
-export interface IWidgetList {
-    widgetName: string;
-    containerId: string;
-}
-export interface IDatasources {
-    id: string;
-    canEdit?: boolean;
-    canDelete?: boolean;
-}
-export interface IDashboardOptions {
-    serverUrl?: string;
-    dashboardId?: string;
-    dashboardPath?: string;
-    datasourceId?: string;
-    datasourceName?: string;
-    embedContainerId?: string;
-    viewId?: string;
-    viewName?: string;
-    nonce?: string;
-    filterParameters?: string;
-    height?: string;
-    width?: string;
-    token?: string;
-    pinboardName?: string;
-    dashboardIds?: string[];
-    dashboardPaths?: string[];
-    anonymousToken?: IAnonymousToken;
-    datasources?: IDatasources[];
-    widgetList?: IWidgetList[];
-    expirationTime?: number;
-    scalingFactor?: number;
-    isRemoveStyle?: boolean;
-    isBingMapRequired?: boolean;
-    disableAutoRecover?: boolean;
-    restrictMobileView?: boolean;
-    embedType?: typeof BoldBI.EmbedType;
-    environment?: typeof BoldBI.Environment;
-    mode?: typeof BoldBI.Mode;
-    theme?: typeof BoldBI.Theme;
-    localData?: ILocalData;
-    layoutSettings?: ILayoutSettings;
-    dashboardSettings?: IDashboardSettings;
-    widgetSettings?: IWidgetSettings;
-    dynamicConnection?: IDynamicConnection;
-    exportSettings?: IExportSettings;
-    authorizationServer?: IAuthorizationServer;
-    autoRefreshSettings?: IAutoRefreshSettings;
-    localeSettings?: ILocaleSettings;
-    languageSettings?: ILanguageSettings;
-    customBrandSettings?: ICustomBrandSettings;
-    toolbarSettings?: IToolbarSettings;
-    pinboardSettings?: IPinboardSettings;
-    designCanvasSettings?: IDesignCanvasSettings;
-    widgetContainerSettings?: IWidgetContainerSettings;
-    preConfiguredWidgets?: IPreConfiguredWidgets;
-    embedAiAssistant?: IEmbedAiAssistant;
-    actionBegin?: (_event: Event) => void;
-    actionComplete?: (_event: Event) => void;
-    beforeContextMenuRender?: (_event: Event) => void;
-    beforeDashboardMobileMenuOpen?: (_event: Event) => void;
-    beforeNavigateUrlLinking?: (_event: Event) => void;
-    beforeNavigateToDashboard?: (_event: Event) => void;
-    beforeFilterApply?: (_event: Event) => void;
-    afterFilterApply?: (_event: Event) => void;
-    onError?: (_event: Event) => void;
-    onUnpin?: (_event: Event) => void;
-    onDrag?: (_event: Event) => void;
-    onDrop?: (_event: Event) => void;
-    onLayoutChange?: (_event: Event) => void;
-    onResize?: (_event: Event) => void;
-    beforeDatasourceSave?: (_event: Event) => void;
-    afterDatasourceSave?: (_event: Event) => void;
-    ajaxBeforeLoad?: (_event: Event) => void;
-    enableDomainMasking?: boolean;
-}
-export interface ILocalData {
-    layoutData?: string;
-    widgetData?: string;
-    loadFromData?: boolean;
-}
-export interface ILayoutSettings {
-    hideDesignerScroller?: boolean;
-}
-export interface IAnonymousToken {
-    isEnabled?: boolean;
-    groupName?: string;
-    userEmail?: string;
-}
-export interface IDashboardList {
-    dashboardId: string;
-    dashboardName: string;
-}
-export interface IDashboardSettings {
-    dashboardName?: string | IDashboardList[];
-    fontFamily?: string;
-    showHeader?: boolean;
-    showExport?: boolean;
-    showRefresh?: boolean;
-    showMoreOption?: boolean;
-    enableTheme?: boolean;
-    enableFilterOverview?: boolean;
-    enableFullScreen?: boolean;
-    showDashboardParameter?: boolean;
-    enableComment?: boolean;
-    showPreviewAs?: boolean;
-    showMetrics?: boolean;
-    widgetsPanel?: IWidgetsPanel;
-    dataSourceConfig?: IDatasourceConfig;
-    viewDataSettings?: IViewDataSettings;
-    themeSettings?: IThemeSettings;
-    filterOverviewSettings?: IFilterOverviewSettings;
-    onFavoriteIconClick?: (_event: Event) => void;
-    beforeIconRender?: (_event: Event) => void;
-    onIconClick?: (_event: Event) => void;
-    onInteraction?: (_event: Event) => void;
-    beforePublishAs?: (_event: Event) => void;
-    beforeDesignerToolbarButtons?: (_event: Event) => void;
-    beforeDesignerToolbarIconsRendered?: (_event: Event) => void;
-    beforeDatasourceToolbarButtonsRendered?: (_event: Event) => void;
-    beforeDatasourceToolbarIconsRendered?: (_event: Event) => void;
-    toolbarClick?: (_event: Event) => void;
-    saveFilterClick?: (_event: Event) => void;
-    saveAsFilterClick?: (_event: Event) => void;
-    viewSavedFiltersClick?: (_event: Event) => void;
-    beforeSaveViewDialogOpen?: (_event: Event) => void;
-    beforeSaveAsViewDialogOpen?: (_event: Event) => void;
-    onViewSavedFiltersClick?: (_event: Event) => void;
-}
-export interface ILanguageSettings {
-    hideLanguageDropdown?: boolean;
-    languageCode?: string;
-}
-export interface ICustomBrandSettings {
-    hideHelpLink?: boolean;
-    customBrandName?: string;
-    customDomain?: string;
-}
-export interface IWidgetsPanel {
-    defaultPanelDisplayText?: string;
-    existingPanelDisplayText?: string;
-    defaultPanelSearchPlaceholder?: string;
-    existingPanelSearchPlaceholder?: string;
-    existingDashboards?: string[];
-    hideDefaultWidgets?: boolean;
-    hideExistingWidgets?: boolean;
-    dragAndDropSettings?: IDragAndDropSettings;
-}
-export interface IDragAndDropSettings {
-    rowSpan?: number | null;
-    columnSpan?: number | null;
-    isWidgetMode?: boolean;
-}
-export interface IDatasourceConfig {
-    hideDataSourceConfig?: boolean;
-    hideSampleDataSources?: boolean;
-}
-export interface IViewDataSettings {
-    showAllColumns?: boolean;
-    enableExporting?: boolean;
-    enableColumnSelection?: boolean;
-}
-export interface IThemeSettings {
-    appearance?: string;
-    application?: string;
-    dashboard?: string;
-    isLocalTheme?: boolean;
-}
-export interface IFilterOverviewSettings {
-    viewId?: string;
-    viewName?: string;
-    showSaveAsIcon?: boolean;
-    showSaveIcon?: boolean;
-    showViewSavedFilterIcon?: boolean;
-}
-export interface IWidgetSettings {
-    showExport?: boolean;
-    showMaximize?: boolean;
-    showMoreOption?: boolean;
-    showFilter?: boolean;
-    enableComment?: boolean;
-    beforeIconRender?: (_event: Event) => void;
-    onIconClick?: (_event: Event) => void;
-    beforeWidgetControlMenuOpen?: (_event: Event) => void;
-    onWidgetControlMenuClick?: (_event: Event) => void;
-    beforeWidgetItemsListed?: (_event: Event) => void;
-    beforeWidgetLayoutRender?: (_event: Event) => void;
-}
-export interface IDynamicConnection {
-    identity?: string;
-    isEnabled?: boolean;
-}
-export interface IExportSettings {
-    showExcel?: boolean;
-    showPDF?: boolean;
-    showImage?: boolean;
-    showCSV?: boolean;
-}
-export interface IAuthorizationServer {
-    url?: string;
-    data?: string;
-    headers?: Record<string, any>;
-    authorizionComplete?: (_event: Event) => void;
-}
-export interface IAutoRefreshSettings {
-    enabled?: boolean;
-    hourlySchedule?: IHourlySchedule;
-}
-export interface IHourlySchedule {
-    hours?: number;
-    minutes?: number;
-    seconds?: number;
-}
-export interface ILocaleSettings {
-    culture?: string;
-    dateFormat?: string;
-    timeFormat?: string;
-    appLocale?: string;
-}
-export interface IToolbarSettings {
-    showToolbar?: boolean;
-}
-export interface IPinboardSettings {
-    enablePinboardHeader?: boolean;
-    enableUnpinWidget?: boolean;
-}
-export interface IDesignCanvasSettings {
-    margin?: number | null;
-}
-export interface IWidgetContainerSettings {
-    margin?: number | null;
-    boxShadow?: string;
-}
-export interface IPreConfiguredWidgets {
-    dashboardId?: string;
-    categoryName?: string;
-}
-export interface IEmbedAiAssistant {
-    enableAiAssistant?: boolean;
-    aiAssistantPosition?: string;
-    enableAiSummary?: boolean;
-    enableWidgetSummary?: boolean;
-    enableDashboardSummary?: boolean;
-    hideAiDataUsage?: boolean;
-}
+import { IDashboardOptions } from './types/dashboard-options';
+import { Mode, EmbedType, Environment, Theme } from './types/enum';
+import { DefaultConstructor } from './types/default';
 export declare class BoldBI {
     IsDependencyLoaded: boolean;
     rootUrl: string;
@@ -319,10 +78,10 @@ export declare class BoldBI {
     isDashboardViewRendering: boolean;
     tokenResponse: any;
     maskedCdnUrl: any;
-    static Mode: any;
-    static EmbedType: any;
-    static Environment: any;
-    static Theme: any;
+    static Mode: typeof Mode;
+    static EmbedType: typeof EmbedType;
+    static Environment: typeof Environment;
+    static Theme: typeof Theme;
     static _storage: any;
     static _widgetsCollection: any;
     loadDashboard: any;
@@ -339,7 +98,32 @@ export declare class BoldBI {
     getViewsByDashboardId: any;
     getViewByViewId: any;
     deleteFilterView: any;
-    constructor();
+    loadMultipleWidget: boolean;
+    constructor(config?: Partial<typeof DefaultConstructor>);
+    private _loadDashboard;
+    private _loadMultitabDashboard;
+    private _loadView;
+    private _loadDashboardWidget;
+    private _loadMultipleWidgets;
+    private _loadDesigner;
+    private _createIframe;
+    private _setEmbedDefaults;
+    private _isInvalidEmbed;
+    private _refreshWidgetData;
+    private _addWidgetToPinboard;
+    private _makeAjaxRequest;
+    private _saveFilterViews;
+    private _saveAsFilterViews;
+    private _updateFilterViews;
+    private _getViewsByDashboardId;
+    private _getViewByViewId;
+    private _deleteFilterView;
+    private _saveViewSuccess;
+    private _updateFilterViewsSuccess;
+    private _deleteFilterViewSuccess;
+    private _getViewByViewIdSuccess;
+    private _getViewsByDashboardIdSuccess;
+    private _isValidGuid;
     static create(options: IDashboardOptions): any;
     static getInstance(eleID: string): any;
     Invoke<T extends (...args: any[]) => any>(originalMethod: T): T;
@@ -538,6 +322,7 @@ export declare class BoldBI {
     }): any;
     _renderMultiTabDashboard: any;
     _tabSelected(): any;
+    _handleTabSelected(containerName: any, i: any): any;
     _isDependencyLoaded(that: BoldBI, dashboardId?: string): any;
     validateServerAndWrapperVersion(): any;
     _getDashboardInstance(embedChildId?: string): any;

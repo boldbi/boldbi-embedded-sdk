@@ -42,13 +42,9 @@ Please refer to the `Bold BI` Product Release Notes on this [Release History](ht
 
 ### Bugs
 
-* Fixed the issue where group-based authorization was not functioning in SDK-based embedding since version 9.1.73.
-* Fixed a minor alignment issue with the unpin icon in the Pinboard SDK-based embedding.
-
-### Improvement
-
-* Added support for displaying or hiding summary icons in the dashboard and widget SDK-based embedding.
-* Provided custom domain support for the dashboard designer in SDK-based embedding.
+* Resolved an issue where the tab header name changes that are not reflected in multi-tab dashboards on the JS-based embedding application that changes have made on the Bold BI server.
+* Fixed the problem where duplicate files were being downloaded when navigating between Bold BI dashboards in JS-based embedding.
+* Addressed the rendering issue that occurred in multi-tab dashboards due to SDK and server version mismatches in JS-based embedding.
 
 ## License Information
 
