@@ -50,7 +50,7 @@ export const DefaultConstructor = {
     dashboardUrl: '',
     commentsArgs: {},
     _widgetsCollection: [],
-    jQueryDepedentFile: 'jquery-1.10.2.min.js',
+    jQueryDepedentFile: 'jquery-3.5.0.min.js',
     jqConflictFile: 'window.bb$ = jQuery.noConflict();',
     isFullscreen: false,
     embedAuthorizeEndPoint: '/embed/authorize',
@@ -58,8 +58,9 @@ export const DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '11.3',
+    embedSDKWrapperVersion: '12.1',
     tokenResponse: {
+        dashboardVersion: '0',
         draftItemID: '',
         DatasourceId: '',
         ConnectionList: '',
@@ -116,6 +117,11 @@ export const DefaultConstructor = {
         embedContainerId: '',
         embedType: EmbedType.Component,
         environment: Environment.Enterprise,
+        cloudCdnTimeStamp: '',
+        customDashboardVersion: '0',
+        embedToken: '',
+        isPublicDashboard: false,
+        isMultiTabDashboard: false,
         mode: Mode.View,
         restrictMobileView: false,
         localData: {
@@ -259,12 +265,15 @@ export const DefaultConstructor = {
 
         },
         embedAiAssistant: {
-            enableAiAssistant: false,
-            aiAssistantPosition: 'bottom',
-            enableAiSummary: false,
-            enableWidgetSummary: false,
-            enableDashboardSummary: false,
-            hideAiDataUsage: false
+            enabled: false,
+            position: 'bottom',
+            name: '',
+            hideAiDataUsage: false,
+            summary: {
+                enabled: false,
+                includeWidgetSummary: false,
+                includeDashboardSummary: false
+            },            
         },
         isRemoveStyle : false,
         scalingFactor: 1,
@@ -278,6 +287,7 @@ export const DefaultConstructor = {
         actionComplete: '',
         beforeContextMenuRender: '',
         beforeNavigateUrlLinking: '',
+        beforeViewdataIconRender: '',
         beforeNavigateToDashboard: '',
         beforeFilterApply: '',
         afterFilterApply: '',
@@ -312,7 +322,8 @@ export const DefaultConstructor = {
         ajaxBeforeLoad: '',
         isBingMapRequired: false,
         widgetList: '',
-        enableDomainMasking: false
+        enableDomainMasking: false,
+        hideErrorMessage: false
     }
 
 };

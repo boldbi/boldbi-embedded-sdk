@@ -33,6 +33,7 @@ export interface IDashboardOptions {
     height?: string;
     width?: string;
     token?: string;
+    embedToken?: string;
     pinboardName?: string;
     dashboardIds?: string[];
     dashboardPaths?: string[];
@@ -49,6 +50,7 @@ export interface IDashboardOptions {
     environment?: Environment;
     mode?: Mode;
     theme?: Theme;
+    isMultiTabDashboard?: boolean;
     localData?: ILocalData;
     layoutSettings?: ILayoutSettings;
     dashboardSettings?: IDashboardSettings;
@@ -71,6 +73,7 @@ export interface IDashboardOptions {
     beforeContextMenuRender?: (_event: Event) => void;
     beforeDashboardMobileMenuOpen?: (_event: Event) => void;
     beforeNavigateUrlLinking?: (_event: Event) => void;
+    beforeViewdataIconRender?: (_event: Event) => void;
     beforeNavigateToDashboard?: (_event: Event) => void;
     beforeFilterApply?: (_event: Event) => void;
     afterFilterApply?: (_event: Event) => void;
@@ -84,4 +87,5 @@ export interface IDashboardOptions {
     afterDatasourceSave?: (_event: Event) => void;
     ajaxBeforeLoad?: (_event: Event) => void;
     enableDomainMasking?: boolean;
+    hideErrorMessage?: boolean;
 }

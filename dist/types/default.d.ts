@@ -1,4 +1,3 @@
-import { EmbedType, Environment, Mode } from './enum';
 export declare const DefaultConstructor: {
     IsDependencyLoaded: boolean;
     rootUrl: string;
@@ -59,6 +58,7 @@ export declare const DefaultConstructor: {
     isDefaultView: boolean;
     embedSDKWrapperVersion: string;
     tokenResponse: {
+        dashboardVersion: string;
         draftItemID: string;
         DatasourceId: string;
         ConnectionList: string;
@@ -90,9 +90,14 @@ export declare const DefaultConstructor: {
         datasourceId: string;
         datasourceName: string;
         embedContainerId: string;
-        embedType: EmbedType;
-        environment: Environment;
-        mode: Mode;
+        embedType: "component";
+        environment: "onpremise";
+        cloudCdnTimeStamp: string;
+        customDashboardVersion: string;
+        embedToken: string;
+        isPublicDashboard: boolean;
+        isMultiTabDashboard: boolean;
+        mode: "view";
         restrictMobileView: boolean;
         localData: {
             loadFromData: boolean;
@@ -232,12 +237,15 @@ export declare const DefaultConstructor: {
             };
         };
         embedAiAssistant: {
-            enableAiAssistant: boolean;
-            aiAssistantPosition: string;
-            enableAiSummary: boolean;
-            enableWidgetSummary: boolean;
-            enableDashboardSummary: boolean;
+            enabled: boolean;
+            position: string;
+            name: string;
             hideAiDataUsage: boolean;
+            summary: {
+                enabled: boolean;
+                includeWidgetSummary: boolean;
+                includeDashboardSummary: boolean;
+            };
         };
         isRemoveStyle: boolean;
         scalingFactor: number;
@@ -251,6 +259,7 @@ export declare const DefaultConstructor: {
         actionComplete: string;
         beforeContextMenuRender: string;
         beforeNavigateUrlLinking: string;
+        beforeViewdataIconRender: string;
         beforeNavigateToDashboard: string;
         beforeFilterApply: string;
         afterFilterApply: string;
@@ -286,5 +295,6 @@ export declare const DefaultConstructor: {
         isBingMapRequired: boolean;
         widgetList: string;
         enableDomainMasking: boolean;
+        hideErrorMessage: boolean;
     };
 };

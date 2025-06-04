@@ -1,23 +1,27 @@
-// enums.ts
-export enum Mode {
-    View = "view",
-    Design = "design",
-    Connection = "connection",
-    DataSource = "datasource",
-}
-
-export enum EmbedType {
-    Component = "component",
-    IFrame = "iframe",
-}
-
-export enum Environment {
-    Enterprise = "onpremise",
-    Cloud = "cloud",
-}
-
-export enum Theme {
-    Off = "off",
-    Light = "light",
-    Dark = "dark",
-}
+export const Mode = {
+    View: "view",
+    Design: "design",
+    Connection: "connection",
+    DataSource: "datasource",
+  } as const;
+  export type Mode = typeof Mode[keyof typeof Mode];
+  
+  export const EmbedType = {
+    Component: "component",
+    IFrame: "iframe",
+  } as const;
+  export type EmbedType = typeof EmbedType[keyof typeof EmbedType];
+  
+  export const Environment = {
+    Enterprise: "onpremise",
+    Cloud: "cloud",
+  } as const;
+  export type Environment = typeof Environment[keyof typeof Environment];
+  
+  export const Theme = {
+    Off: "off",
+    Light: "light",
+    Dark: "dark",
+  } as const;
+  export type Theme = typeof Theme[keyof typeof Theme];
+  

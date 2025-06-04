@@ -42,9 +42,17 @@ Please refer to the `Bold BI` Product Release Notes on this [Release History](ht
 
 ### Bugs
 
-* Resolved an issue where the tab header name changes that are not reflected in multi-tab dashboards on the JS-based embedding application that changes have made on the Bold BI server.
-* Fixed the problem where duplicate files were being downloaded when navigating between Bold BI dashboards in JS-based embedding.
-* Addressed the rendering issue that occurred in multi-tab dashboards due to SDK and server version mismatches in JS-based embedding.
+* Restricted dashboard embedding through the authorization server when the user is not verified.
+* Fixed the issue where embedding API methods were not functioning properly for multi-tab dashboards.
+* Resolved an issue where dashboards were not rendering when category-level permissions were applied to a group for Anonymous User.
+
+### Improvements
+
+* Introduced a new API member to hide error messages.
+* Provided a new API to customize the AI Co-Pilot title.
+* Introduced a new member called embedToken to securely store the access token generated from the embedAuthorize API, enabling support to render dashboards.
+* Provided event Support that selected tab will be loaded as the default tab.
+* Resolved a security vulnerability by upgrading jQuery from version 1.10.2 to version 3.5.0 and jquery.UI from version 1.12 to 1.14
 
 ## License Information
 

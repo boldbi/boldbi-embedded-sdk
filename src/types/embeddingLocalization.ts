@@ -74,7 +74,17 @@ export const errorMessages: any = {
     'AnonymousEmailandGroup': 'Please provide a user email and group name to access the group for an anonymous user',
     'AnonymousEmail': 'Please provide an anonymous user email.',
     'AnonymousGroup': 'Please provide a group name to access the group for an anonymous user.',
-    'DomainMaskingError': 'Please remove the authorization URL or token API when when domain masking is enabled.'
+    'DomainMaskingError': 'Please remove the authorization URL or token API when when domain masking is enabled.',
+    'InvalidEditAccess': 'Write access is required to render the dashboard in Designer mode.',
+    'DashboardNotAvailable': 'The requested dashboard could not be loaded. Please verify the configuration or try again later.',
+    'NotRenderMultitabDashboardForAnonymousUser': 'Anonymous users are not allowed to view or design multi-tab dashboards.',
+    'UnablePinboardRenderEmbedToken': 'Pinboard dashboards are not supported when using the embed token.',
+    'UnableDatasourceRenderEmbedToken': 'Creating or editing data sources is not supported when using the embed token.',
+    'UnableMultitabDashboardToken': 'Embedding multi-tab dashboards is not supported when using the token and embed token api member.',
+    'UnableViewEmbedToken': 'Dashboard View is not not supported when using the embed token.',
+    'UnableMultipleWidgetsToken': 'Embedding multiple widgets is not supported when using the token and embed token api member.',
+    'UnableDraftWithEmbedToken': 'Draft dashboards is not supported when using the embed token.',
+    'NotRenderDesignerForAnonymousUser':"Anonymous users are not allowed to design dashboards"
 };
 
 export const successMessages: any = {
