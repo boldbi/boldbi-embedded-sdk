@@ -1,8 +1,8 @@
+import { IEmbedAiSummary } from "./embed-ai-summary";
 export interface IEmbedAiAssistant {
-    enableAiAssistant?: boolean;
-    aiAssistantPosition?: string;
-    enableAiSummary?: boolean;
-    enableWidgetSummary?: boolean;
-    enableDashboardSummary?: boolean;
+    enabled?: boolean;
+    name?: string;
+    position?: string;
     hideAiDataUsage?: boolean;
+    summary?: IEmbedAiSummary;
 }

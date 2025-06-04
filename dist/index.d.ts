@@ -1,5 +1,4 @@
 import { IDashboardOptions } from './types/dashboard-options';
-import { Mode, EmbedType, Environment, Theme } from './types/enum';
 import { DefaultConstructor } from './types/default';
 export declare class BoldBI {
     IsDependencyLoaded: boolean;
@@ -78,10 +77,25 @@ export declare class BoldBI {
     isDashboardViewRendering: boolean;
     tokenResponse: any;
     maskedCdnUrl: any;
-    static Mode: typeof Mode;
-    static EmbedType: typeof EmbedType;
-    static Environment: typeof Environment;
-    static Theme: typeof Theme;
+    static Mode: {
+        readonly View: "view";
+        readonly Design: "design";
+        readonly Connection: "connection";
+        readonly DataSource: "datasource";
+    };
+    static EmbedType: {
+        readonly Component: "component";
+        readonly IFrame: "iframe";
+    };
+    static Environment: {
+        readonly Enterprise: "onpremise";
+        readonly Cloud: "cloud";
+    };
+    static Theme: {
+        readonly Off: "off";
+        readonly Light: "light";
+        readonly Dark: "dark";
+    };
     static _storage: any;
     static _widgetsCollection: any;
     loadDashboard: any;
@@ -485,6 +499,7 @@ export declare class BoldBI {
     _onBoldBIonControlMenuClick(arg: object): any;
     _onBoldBIDashboardUpdatefavorite(arg: object): any;
     _onBoldBIBeforeNavigateUrlLinking(arg: object): any;
+    _onBoldBIBeforeViewdataIconRender(arg: object): any;
     _onBoldBIBeforeNavigateToDashboard(arg: object): any;
     _onBoldBIAuthorizionComplete(arg: object): any;
     _showLoader(container?: any): any;
@@ -492,7 +507,7 @@ export declare class BoldBI {
     _xhrRequestHelper(type: string, url: string, data: object, headers: object, callBackFn: Function): any;
     _emptyHtml(elementID: string): any;
     _removeElement(id: string): any;
-    _uuidv4Generartor(): string;
+    _uuidv4Generator(): string;
     _isEmptyOrSpaces(str: string): any;
     _isNullOrUndefined(value: string): any;
     _validateOptions: any;
