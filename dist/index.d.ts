@@ -1,7 +1,14 @@
 import { IDashboardOptions } from './types/dashboard-options';
 import { DefaultConstructor } from './types/default';
+import { ViewerMethods } from './types/viewer-methods';
+import { PinboardMethods } from './types/pinboard-methods';
+import { DatasourceMethods } from './types/datasource-methods';
+import { DesignerMethods } from './types/designer-methods';
+import { ViewMethods } from './types/view-methods';
+import { WidgetMethods } from './types/widget-methods';
 export declare class BoldBI {
     IsDependencyLoaded: boolean;
+    deprecated: boolean;
     rootUrl: string;
     baseUrl: string;
     siteIdentifier: string;
@@ -19,6 +26,8 @@ export declare class BoldBI {
     onWidgetIconClickFn: string;
     actionBeginFn: string;
     actionCompleteFn: string;
+    reportOpenedFn: string;
+    performNavigateDashboardFn: string;
     beforeBannerIconRenderFn: string;
     beforeOtherRenderFn: string;
     isWidgetMode: boolean;
@@ -75,8 +84,16 @@ export declare class BoldBI {
     isDashboardRendering: boolean;
     isPinboardRendering: boolean;
     isDashboardViewRendering: boolean;
+    isEditGroupSeparatorEnabled: boolean;
+    editIgnore: boolean;
+    bingMapRequired: boolean;
+    restrictMobileView: boolean;
+    disableAutoRecover: boolean;
     tokenResponse: any;
+    dashboardWidgetExports: any;
     maskedCdnUrl: any;
+    private _authorizeResponse;
+    storeObj: BoldBI;
     static Mode: {
         readonly View: "view";
         readonly Design: "design";
@@ -100,9 +117,12 @@ export declare class BoldBI {
     static _widgetsCollection: any;
     loadDashboard: any;
     loadMultitabDashboard: any;
+    loadTabbedDashboards: any;
     loadView: any;
     loadDashboardWidget: any;
     loadMultipleWidgets: any;
+    loadWidgets: any;
+    loadWidget: any;
     loadDesigner: any;
     refreshWidgetData: any;
     addWidgetToPinboard: any;
@@ -138,9 +158,11 @@ export declare class BoldBI {
     private _getViewByViewIdSuccess;
     private _getViewsByDashboardIdSuccess;
     private _isValidGuid;
+    private _initializeDashboardContainer;
     static create(options: IDashboardOptions): any;
     static getInstance(eleID: string): any;
     Invoke<T extends (...args: any[]) => any>(originalMethod: T): T;
+    dispose(): any;
     destroy(): any;
     loadPinboard: any;
     loadDashboardView(): any;
@@ -197,7 +219,7 @@ export declare class BoldBI {
      */
     exportWidgetAsPdf(exportInformation: {
         dashboardId: string;
-        widgetName: string;
+        widgetName?: string;
         fileName?: string;
         pageSize?: string;
         pageOrientation?: string;
@@ -214,7 +236,7 @@ export declare class BoldBI {
      */
     exportWidgetAsImage(exportInformation: {
         dashboardId: string;
-        widgetName: string;
+        widgetName?: string;
         fileName?: string;
         exportImageFormat?: string;
         resolutionDpi?: string;
@@ -229,7 +251,7 @@ export declare class BoldBI {
      */
     exportWidgetAsExcel(exportInformation: {
         dashboardId: string;
-        widgetName: string;
+        widgetName?: string;
         fileName?: string;
         fileType?: string;
     }): any;
@@ -241,24 +263,35 @@ export declare class BoldBI {
      */
     exportWidgetAsCsv(exportInformation: {
         dashboardId: string;
-        widgetName: string;
+        widgetName?: string;
         fileName?: string;
     }): any;
     updateDatasource(): any;
     updateFilters(filterParameters: string): any;
+    applyTheme(dashboardTheme: string): any;
     updateDashboardTheme(dashboardTheme: string): any;
     resizeDashboard(filterParameters?: string): any;
+    viewer: ViewerMethods;
+    pinboard: PinboardMethods;
+    dataSource: DatasourceMethods;
+    designer: DesignerMethods;
+    widget: WidgetMethods;
+    view: ViewMethods;
+    deprecationMessage(methodName: string): void;
     refreshDashboard(): any;
     clearAllFilter(): any;
     hidePopup(): any;
+    hideLoader(): any;
     hideWaitingIndicator(): any;
     getWidgetData(widgetName: string, clientFnc: Function, dashboardId: string): any;
     getWidgetDataWithFilters(widgetName: string, dashboardId: string, filter: any, clientFnc: Function): any;
+    fetchCategories(clientFnc: Function, containerId: string): any;
     /**
      * @param {string} clientFnc - It denotes the method name to be defined
      * @param {string} containerId - This should be the container id where you want to embed the dashboard
      */
     getDashboardCategories(clientFnc: Function, containerId: string): any;
+    createCategory(categoryName: string, categoryDescription: string, clientFnc: Function, containerId: string): any;
     /**
      * @param {string} categoryName - Define new category name want to create .
      * @param {string} categoryDescription - Define the description of new category name .
@@ -338,6 +371,7 @@ export declare class BoldBI {
     _tabSelected(): any;
     _handleTabSelected(containerName: any, i: any): any;
     _isDependencyLoaded(that: BoldBI, dashboardId?: string): any;
+    checkCompatibility(): any;
     validateServerAndWrapperVersion(): any;
     _getDashboardInstance(embedChildId?: string): any;
     _checkWidgetList(): any;
@@ -350,11 +384,13 @@ export declare class BoldBI {
         source?: any;
         schema?: any;
     }): any;
+    _onBoldBIDashboardInstaceReportOpen(arg: any): void;
+    _onBoldBIDashboardInstanceNavigateToDashboard(arg: any): void;
     _onBoldBIBeforeDatasourceSaveAction(arg: object): any;
     _onBoldBIAfterDatasourceSaveAction(arg: object): any;
     _onBoldBIDashboardBeforeBannerIconRender(arg: {
         iconsinformation?: any;
-    }): any;
+    }, itemDetails?: any): any;
     _createBannerIcon(tag: string, id: string, className: string, label: string, dataName: string, dataEvent: boolean, showText: boolean, css: object, href?: string): any;
     _onBoldBIDashboardBeforeOtherOptionContextMenuRender(arg: {
         iconsinformation?: any;
@@ -403,7 +439,7 @@ export declare class BoldBI {
      */
     addWidgetComment(arg: {
         content: string;
-        widgetId: string;
+        widgetId?: string;
         dashboardId: string;
         multitabDashboardId?: string;
         parentCommentId?: string;
@@ -418,7 +454,7 @@ export declare class BoldBI {
     deleteDashboardComment(arg: {
         dashboardId: string;
         multitabDashboardId?: string;
-        commentId: string;
+        commentId?: string;
     }, callBackFn: Function): any;
     /**
      * @param {object} arg - It is an object that holds "commentId" - It defines the comment Id of the comment that you want to delete,"widgetId" -Defines the unique widget Id,"dashboardId" -Defines the unique id of the dashboard,"multitabDashboardId" - Defines the unique id of the multitab dashboard. It should be defined only when deleting a multitab widget comment. For other cases, it should be null.
@@ -429,10 +465,10 @@ export declare class BoldBI {
      * @param {string} callBackFn -  It denotes the callback method name that must be defined. It would returns the updated comments as arguments.
      */
     deleteWidgetComment(arg: {
-        widgetId: string;
+        widgetId?: string;
         dashboardId: string;
         multitabDashboardId?: string;
-        commentId: string;
+        commentId?: string;
     }, callBackFn: Function): any;
     /**
      * @param {object} arg - It is an object that holds "content" - Defines the comment you have edited,"commentId" - Defines the comment Id of the comment you have edited,"dashboardId" - Defines the unique dashboard Id,"multitabDashboardId" - Defines the unique id of the multitab dashboard. It should be defined only when editing a multitab widget comment. For other cases, it should be null.
@@ -446,7 +482,7 @@ export declare class BoldBI {
         content: string;
         dashboardId: string;
         multitabDashboardId?: string;
-        commentId: string;
+        commentId?: string;
     }, callBackFn: Function): any;
     /**
      * @param {object} arg - It is an object that holds,"content" - Defines the comment you have edited,"commentId" - Defines the comment Id of the comment you have edited,"widgetId" - Defines the unique widget Id,"dashboardId" - Defines the unique id of the dashboard,"multitabDashboardId" - Defines the unique id of the multitab dashboard. It should be defined only when editing a multitab dashboard comment or widget comment. For other cases, it should be null.
@@ -459,10 +495,10 @@ export declare class BoldBI {
      */
     editWidgetComment(arg: {
         content: string;
-        widgetId: string;
+        widgetId?: string;
         dashboardId: string;
         multitabDashboardId?: string;
-        commentId: string;
+        commentId?: string;
     }, callBackFn: Function): any;
     ajaxErrorFnc(jqXHR: {
         status: number;
@@ -512,7 +548,7 @@ export declare class BoldBI {
     _isNullOrUndefined(value: string): any;
     _validateOptions: any;
     _isUrl(str: string): any;
-    _throwError(errorMsg: string, embedContainerId?: string): any;
+    _throwError(errorMsg: any, embedContainerId?: string): any;
     onErrorClient(errorMessage: any): any;
     _removeElementsClass(id: string, childElement: string, targeClass: string): any;
     _hasClass(el: {
@@ -535,7 +571,9 @@ export declare class BoldBI {
     _unEscapeSelectedFilterDataforURLFilter(filterInfoList: any): any;
     _getWidgetFilterInfo(): any;
     _multipleWidgets(methodName: string, ...args: any): void;
+    applyStyles(): any;
     addStyles(): any;
+    removeStyles(): any;
     destroyStyles(): any;
     _validatetoken(token: string): any;
     _isJwtFormat(token: any): boolean;
@@ -549,6 +587,8 @@ export declare class BoldBI {
 export declare class widgetBI {
     containerID: string;
     widgetCollection: Array<string>;
+    deprecated: boolean;
     constructor();
     setFilterParameters(filters: any): any;
+    setFilters(filters: any): any;
 }

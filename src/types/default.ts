@@ -1,7 +1,11 @@
-import { EmbedType, Environment, Mode } from './enum';
+import { EmbedType, Environment, Mode, Theme } from './enum';
 
 export const DefaultConstructor = {
     IsDependencyLoaded: false,
+    deprecated: true,
+    bingMapRequired: false,
+    disableAutoRecover: false,
+    restrictMobileView: false,
     rootUrl: '',
     baseUrl: '',
     siteIdentifier: '',
@@ -20,6 +24,8 @@ export const DefaultConstructor = {
     onWidgetIconClickFn: 'onWidgetIconClick',
     actionBeginFn: 'onActionBeginOfNewDashboardViewer',
     actionCompleteFn: 'onActionCompleteOfNewDashboardViewer',
+    reportOpenedFn: 'onReportOpenedOfNewDashboardViewer',
+    performNavigateDashboardFn: 'performNavigateToDashboard',
     beforeBannerIconRenderFn: 'beforeBannerIconRender',
     beforeOtherRenderFn: 'beforeOtherOptionContextMenuRender',
     isWidgetMode: false,
@@ -58,16 +64,34 @@ export const DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '12.1',
+    embedSDKWrapperVersion: '13.1',
     tokenResponse: {
         dashboardVersion: '0',
         draftItemID: '',
+        CanWrite: false,
         DatasourceId: '',
         ConnectionList: '',
         ItemDetail: {
             IsPublic: false,
             Description: '',
             Name: ''
+        }
+    },
+    dashboardWidgetExports: {
+        dashboard: {
+            showExport: true,
+            showMoreOption: true,
+            showMetrics: true
+        },
+        widget: {
+            showExport: true,
+            showMoreOption: true
+        },
+        export: {
+            image: true,
+            pdf: true,
+            excel: true,
+            csv: true
         }
     },
     wrapperDependentScriptFiles: [
@@ -140,6 +164,138 @@ export const DefaultConstructor = {
         layoutSettings: {
             hideDesignerScroller: false
         },
+        settings: {
+            bingMapRequired: false,
+            hideErrorMessage: false,
+            restrictMobileView: false,
+            disableAutoRecover: false,
+            datasources: [],
+            viewer: {
+                dashboardName: '',
+                header: true,
+                export: true,
+                refresh: true,
+                moreOption: true,
+                fullScreen: false,
+                edit: false,
+                dashboardParameter: true,
+                comment: false,
+                metrics: true,
+                filterOverview: {
+                    enabled: true,
+                    saveAs: false,
+                    save: false,
+                    viewSavedFilter: false,
+                    viewId: '',
+                    viewName: ''
+                },
+                widgetContainer: {
+                    margin: null,
+                    boxShadow: null
+                },
+                autoRefresh: {
+                    enabled: false,
+                    hourlySchedule: {
+                        hours: 0,
+                        minutes: 0,
+                        seconds: 0
+                    }
+                }
+            },
+            designer: {
+                previewAs: true,
+                widgetsPanel: {
+                    hideDefaultWidgets: false,
+                    hideExistingWidgets: false,
+                    defaultPanelDisplayText: '',
+                    existingPanelDisplayText: '',
+                    defaultPanelSearchPlaceholder: '',
+                    existingPanelSearchPlaceholder: '',
+                    existingDashboards: [],
+                    dragAndDropSettings: {
+                        rowSpan: null,
+                        columnSpan: null,
+                        isWidgetMode: false
+                    }
+                },
+                dataSourceConfig: {
+                    hideDataSourceConfig: false,
+                    hideSampleDataSources: false,
+                    hideExpression: false,
+                    hideDataSourceList: false
+                },
+                toolbar: {
+                    enabled: true
+                },
+                preConfiguredWidgets: {
+                    dashboardId: '',
+                    categoryName: ''
+                }
+            },
+            designCanvas: {
+                margin: null
+            },
+            viewData: {
+                allColumns: false,
+                exporting: true,
+                columnSelection: true
+            },
+            theme: {
+                appearance: '',
+                application: '',
+                dashboard: '',
+                localTheme: false,
+                fontFamily: ''
+            },
+            widget: {
+                export: true,
+                filter: true,
+                maximize: true,
+                moreOption: true,
+                comment: false
+            },
+            dynamicConnection: {
+                enabled: false,
+                identity: ''
+            },
+            pinboard: {
+                header: true,
+                unpinWidget: true
+            },
+            export: {
+                csv: true,
+                image: true,
+                excel: true,
+                pdf: true
+            },
+            brand: {
+                hideHelpLink: false,
+                domain: '',
+                name: ''
+            },
+            language: {
+                hideDropdown: false,
+                code: ''
+            },
+            locale: {
+                culture: 'en-US',
+                dateFormat: 'M/d/yyyy',
+                timeFormat: 'h:mm:ss tt',
+                appLocale: 'en-US'
+            },
+            aiAssistant: {
+                enabled: false,
+                position: 'bottom',
+                name: '',
+                hideUsageAnalytics: false,
+                hideChatHelp: false,
+                summary: {
+                    enabled: false,
+                    widget: false,
+                    dashboard: false
+                }
+            }
+        },
         dashboardSettings: {
             showHeader: true,
             showExport: true,
@@ -150,9 +306,9 @@ export const DefaultConstructor = {
             beforeIconRender: '',
             onIconClick: '',
             onInteraction: '',
-            enableTheme: false,
             enableFilterOverview: true,
             enableFullScreen: false,
+            edit: false,
             showDashboardParameter: true,
             dashboardName: '',
             beforePublishAs: '',
@@ -269,11 +425,12 @@ export const DefaultConstructor = {
             position: 'bottom',
             name: '',
             hideAiDataUsage: false,
+            hideAiChatHelp: false,
             summary: {
                 enabled: false,
                 includeWidgetSummary: false,
                 includeDashboardSummary: false
-            },            
+            }
         },
         isRemoveStyle : false,
         scalingFactor: 1,
@@ -285,6 +442,8 @@ export const DefaultConstructor = {
         },
         actionBegin: '',
         actionComplete: '',
+        reportOpened: '',
+        performNavigateToDashboard: '',
         beforeContextMenuRender: '',
         beforeNavigateUrlLinking: '',
         beforeViewdataIconRender: '',
@@ -323,7 +482,56 @@ export const DefaultConstructor = {
         isBingMapRequired: false,
         widgetList: '',
         enableDomainMasking: false,
-        hideErrorMessage: false
-    }
+        hideErrorMessage: false,
+        events: {
+            onActionStart: '',
+            onActionComplete: '',
+            onAjaxStart: '',
+            onResize: '',
+            onError: '',
+            viewer: {
+                beforeContextMenuRender: '',
+                beforeUrlNavigation: '',
+                beforeViewDataRender: '',
+                beforeToolBarItemsRender: '',
+                onToolbarItemClick: '',
+                beforeMobileMenuOpen: '',
+            },
+            designer: {
+                beforeWidgetsListed: '',
+                beforeToolbarButtonsRender: '',
+                beforeToolbarIconsRender: '',
+                onToolbarItemClick: '',
+                beforePublishDialogOpen: '',
+            },
+            datasource: {
+                beforeToolbarButtonsRender: '',
+                beforeToolbarIconsRender: '',
+                beforeSave: '',
+                afterSave: '',
+                onToolbarItemClick: ''
+            },
+            pinboard: {
+                onDrag: '',
+                onDrop: '',
+                onLayoutChange: '',
+                onUnpin: '',
+            },
+            widget: {
+                beforeLayoutRender: '',
+                beforeToolBarItemsRender: '',
+                beforeContextMenuRender: '',
+                onToolbarItemClick: '',
+            },
+            filters: {
+                afterApply: '',
+                beforeApply: '',
+                onInteraction: '',
+                onSavedFilterClick: '',
+                beforeSaveViewDialogOpen: '',
+                beforeSaveAsViewDialogOpen: '',
+            }
 
+        }
+    }
 };

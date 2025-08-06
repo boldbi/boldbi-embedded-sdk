@@ -42,17 +42,24 @@ Please refer to the `Bold BI` Product Release Notes on this [Release History](ht
 
 ### Bugs
 
-* Restricted dashboard embedding through the authorization server when the user is not verified.
-* Fixed the issue where embedding API methods were not functioning properly for multi-tab dashboards.
-* Resolved an issue where dashboards were not rendering when category-level permissions were applied to a group for Anonymous User.
+* Resolved the issue of multiple error messages appearing in multi-tab dashboards during SDK-based embedding.
+* Improved error handling by displaying a proper error message when an invalid widget ID format is passed in widget-based SDK embedding.
+* Added appropriate error messages when either the dashboard ID or view ID is missing in SDK-based token embedding.
+* Fixed the issue where the header of a multi-tab dashboard was not displaying correctly in SDK-based token embedding.
+* Resolved the issue where long tab names in multi-tab dashboards were getting truncated in SDK-based embedding.
+* Fixed the issue where data caching was not functioning correctly in draft mode for SDK-based embedding.
+* Addressed UI spacing issues in Pinboard SDK-based embedding.
+* Fixed the issue where dashboards rendered blank when a data source ID was provided in viewer SDK-based embedding.
+* Fixed the issue where a dashboard was not correctly saved as public when saving a draft using the saveDashboard method by properly setting the isPublic parameter to true in SDK-based embedding.
+* Fixed the issue when rendering the multi-tab dashboard using same dashboard IDs in SDK-based embedding.
+* Fixed the issue where the AI Assistant was not functioning unless summarization was initialized in SDK-based embedding.
+* Fixed an issue where loading multiple widgets with the same widget name caused an infinite loading state.
 
 ### Improvements
 
-* Introduced a new API member to hide error messages.
-* Provided a new API to customize the AI Co-Pilot title.
-* Introduced a new member called embedToken to securely store the access token generated from the embedAuthorize API, enabling support to render dashboards.
-* Provided event Support that selected tab will be loaded as the default tab.
-* Resolved a security vulnerability by upgrading jQuery from version 1.10.2 to version 3.5.0 and jquery.UI from version 1.12 to 1.14
+* Introduced a new boolean member, hideChatHelp, to control the visibility of the help icon in the AI Assistant.
+* Enable seamless transition between dashboard viewer to designer modes and vice versa in embedded application.
+* Provided custom brand name in the AI Assistant for SDK-based embedding
 
 ## License Information
 

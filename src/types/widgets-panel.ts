@@ -1,4 +1,4 @@
-import {IDragAndDropSettings} from './drag-drop-settings'
+import {IDragAndDropSettings} from './drag-drop-settings';
 export interface IWidgetsPanel {
     defaultPanelDisplayText?: string;
     existingPanelDisplayText?: string;

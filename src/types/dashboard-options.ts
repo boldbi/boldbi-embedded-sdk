@@ -20,6 +20,9 @@ import { IDesignCanvasSettings } from './design-canvas-settings';
 import { IWidgetContainerSettings } from './widget-container-settings';
 import { IPreConfiguredWidgets } from './preconfigured-widgets';
 import { IEmbedAiAssistant } from './embed-ai-assistant';
+import { ISettings } from './settings';
+import { IEvents } from './events';
+
 import { Mode, EmbedType, Environment, Theme } from './enum';
 export interface IDashboardOptions {
     serverUrl?: string;
@@ -48,11 +51,12 @@ export interface IDashboardOptions {
     isBingMapRequired?: boolean;
     disableAutoRecover?: boolean;
     restrictMobileView?: boolean;
+    isMultiTabDashboard?: boolean;
     embedType?: EmbedType;
     environment?: Environment;
     mode?: Mode;
     theme?: Theme;
-    isMultiTabDashboard?: boolean;
+    settings?: ISettings;
     localData?: ILocalData;
     layoutSettings?: ILayoutSettings;
     dashboardSettings?: IDashboardSettings;
@@ -72,6 +76,7 @@ export interface IDashboardOptions {
     embedAiAssistant?: IEmbedAiAssistant;
     actionBegin?: (_event: Event) => void;
     actionComplete?: (_event: Event) => void;
+    reportOpened?: (_event: Event) => void;
     beforeContextMenuRender?: (_event: Event) => void;
     beforeDashboardMobileMenuOpen?: (_event: Event) => void;
     beforeNavigateUrlLinking?: (_event: Event) => void;
@@ -90,4 +95,5 @@ export interface IDashboardOptions {
     ajaxBeforeLoad?: (_event: Event) => void;
     enableDomainMasking?: boolean;
     hideErrorMessage?: boolean;
+    events?: IEvents;
 }
