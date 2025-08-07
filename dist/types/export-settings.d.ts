@@ -3,4 +3,8 @@ export interface IExportSettings {
     showPDF?: boolean;
     showImage?: boolean;
     showCSV?: boolean;
+    excel?: boolean;
+    pdf?: boolean;
+    image?: boolean;
+    csv?: boolean;
 }

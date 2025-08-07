@@ -1,5 +1,9 @@
 export declare const DefaultConstructor: {
     IsDependencyLoaded: boolean;
+    deprecated: boolean;
+    bingMapRequired: boolean;
+    disableAutoRecover: boolean;
+    restrictMobileView: boolean;
     rootUrl: string;
     baseUrl: string;
     siteIdentifier: string;
@@ -18,6 +22,8 @@ export declare const DefaultConstructor: {
     onWidgetIconClickFn: string;
     actionBeginFn: string;
     actionCompleteFn: string;
+    reportOpenedFn: string;
+    performNavigateDashboardFn: string;
     beforeBannerIconRenderFn: string;
     beforeOtherRenderFn: string;
     isWidgetMode: boolean;
@@ -60,12 +66,30 @@ export declare const DefaultConstructor: {
     tokenResponse: {
         dashboardVersion: string;
         draftItemID: string;
+        CanWrite: boolean;
         DatasourceId: string;
         ConnectionList: string;
         ItemDetail: {
             IsPublic: boolean;
             Description: string;
             Name: string;
+        };
+    };
+    dashboardWidgetExports: {
+        dashboard: {
+            showExport: boolean;
+            showMoreOption: boolean;
+            showMetrics: boolean;
+        };
+        widget: {
+            showExport: boolean;
+            showMoreOption: boolean;
+        };
+        export: {
+            image: boolean;
+            pdf: boolean;
+            excel: boolean;
+            csv: boolean;
         };
     };
     wrapperDependentScriptFiles: string[];
@@ -115,6 +139,138 @@ export declare const DefaultConstructor: {
         layoutSettings: {
             hideDesignerScroller: boolean;
         };
+        settings: {
+            bingMapRequired: boolean;
+            hideErrorMessage: boolean;
+            restrictMobileView: boolean;
+            disableAutoRecover: boolean;
+            datasources: any[];
+            viewer: {
+                dashboardName: string;
+                header: boolean;
+                export: boolean;
+                refresh: boolean;
+                moreOption: boolean;
+                fullScreen: boolean;
+                edit: boolean;
+                dashboardParameter: boolean;
+                comment: boolean;
+                metrics: boolean;
+                filterOverview: {
+                    enabled: boolean;
+                    saveAs: boolean;
+                    save: boolean;
+                    viewSavedFilter: boolean;
+                    viewId: string;
+                    viewName: string;
+                };
+                widgetContainer: {
+                    margin: any;
+                    boxShadow: any;
+                };
+                autoRefresh: {
+                    enabled: boolean;
+                    hourlySchedule: {
+                        hours: number;
+                        minutes: number;
+                        seconds: number;
+                    };
+                };
+            };
+            designer: {
+                previewAs: boolean;
+                widgetsPanel: {
+                    hideDefaultWidgets: boolean;
+                    hideExistingWidgets: boolean;
+                    defaultPanelDisplayText: string;
+                    existingPanelDisplayText: string;
+                    defaultPanelSearchPlaceholder: string;
+                    existingPanelSearchPlaceholder: string;
+                    existingDashboards: any[];
+                    dragAndDropSettings: {
+                        rowSpan: any;
+                        columnSpan: any;
+                        isWidgetMode: boolean;
+                    };
+                };
+                dataSourceConfig: {
+                    hideDataSourceConfig: boolean;
+                    hideSampleDataSources: boolean;
+                    hideExpression: boolean;
+                    hideDataSourceList: boolean;
+                };
+                toolbar: {
+                    enabled: boolean;
+                };
+                preConfiguredWidgets: {
+                    dashboardId: string;
+                    categoryName: string;
+                };
+            };
+            designCanvas: {
+                margin: any;
+            };
+            viewData: {
+                allColumns: boolean;
+                exporting: boolean;
+                columnSelection: boolean;
+            };
+            theme: {
+                appearance: string;
+                application: string;
+                dashboard: string;
+                localTheme: boolean;
+                fontFamily: string;
+            };
+            widget: {
+                export: boolean;
+                filter: boolean;
+                maximize: boolean;
+                moreOption: boolean;
+                comment: boolean;
+            };
+            dynamicConnection: {
+                enabled: boolean;
+                identity: string;
+            };
+            pinboard: {
+                header: boolean;
+                unpinWidget: boolean;
+            };
+            export: {
+                csv: boolean;
+                image: boolean;
+                excel: boolean;
+                pdf: boolean;
+            };
+            brand: {
+                hideHelpLink: boolean;
+                domain: string;
+                name: string;
+            };
+            language: {
+                hideDropdown: boolean;
+                code: string;
+            };
+            locale: {
+                culture: string;
+                dateFormat: string;
+                timeFormat: string;
+                appLocale: string;
+            };
+            aiAssistant: {
+                enabled: boolean;
+                position: string;
+                name: string;
+                hideUsageAnalytics: boolean;
+                hideChatHelp: boolean;
+                summary: {
+                    enabled: boolean;
+                    widget: boolean;
+                    dashboard: boolean;
+                };
+            };
+        };
         dashboardSettings: {
             showHeader: boolean;
             showExport: boolean;
@@ -125,9 +281,9 @@ export declare const DefaultConstructor: {
             beforeIconRender: string;
             onIconClick: string;
             onInteraction: string;
-            enableTheme: boolean;
             enableFilterOverview: boolean;
             enableFullScreen: boolean;
+            edit: boolean;
             showDashboardParameter: boolean;
             dashboardName: string;
             beforePublishAs: string;
@@ -241,6 +397,7 @@ export declare const DefaultConstructor: {
             position: string;
             name: string;
             hideAiDataUsage: boolean;
+            hideAiChatHelp: boolean;
             summary: {
                 enabled: boolean;
                 includeWidgetSummary: boolean;
@@ -257,6 +414,8 @@ export declare const DefaultConstructor: {
         };
         actionBegin: string;
         actionComplete: string;
+        reportOpened: string;
+        performNavigateToDashboard: string;
         beforeContextMenuRender: string;
         beforeNavigateUrlLinking: string;
         beforeViewdataIconRender: string;
@@ -296,5 +455,54 @@ export declare const DefaultConstructor: {
         widgetList: string;
         enableDomainMasking: boolean;
         hideErrorMessage: boolean;
+        events: {
+            onActionStart: string;
+            onActionComplete: string;
+            onAjaxStart: string;
+            onResize: string;
+            onError: string;
+            viewer: {
+                beforeContextMenuRender: string;
+                beforeUrlNavigation: string;
+                beforeViewDataRender: string;
+                beforeToolBarItemsRender: string;
+                onToolbarItemClick: string;
+                beforeMobileMenuOpen: string;
+            };
+            designer: {
+                beforeWidgetsListed: string;
+                beforeToolbarButtonsRender: string;
+                beforeToolbarIconsRender: string;
+                onToolbarItemClick: string;
+                beforePublishDialogOpen: string;
+            };
+            datasource: {
+                beforeToolbarButtonsRender: string;
+                beforeToolbarIconsRender: string;
+                beforeSave: string;
+                afterSave: string;
+                onToolbarItemClick: string;
+            };
+            pinboard: {
+                onDrag: string;
+                onDrop: string;
+                onLayoutChange: string;
+                onUnpin: string;
+            };
+            widget: {
+                beforeLayoutRender: string;
+                beforeToolBarItemsRender: string;
+                beforeContextMenuRender: string;
+                onToolbarItemClick: string;
+            };
+            filters: {
+                afterApply: string;
+                beforeApply: string;
+                onInteraction: string;
+                onSavedFilterClick: string;
+                beforeSaveViewDialogOpen: string;
+                beforeSaveAsViewDialogOpen: string;
+            };
+        };
     };
 };

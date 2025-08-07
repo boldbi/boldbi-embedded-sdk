@@ -1,4 +1,5 @@
 export interface IDashboardList {
     dashboardId: string;
-    dashboardName: string;
+    dashboardName?: string;
+    displayName?: string;
 }

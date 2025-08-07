@@ -87,7 +87,9 @@ exports.errorMessages = {
     'UnableViewEmbedToken': 'Dashboard View is not not supported when using the embed token.',
     'UnableMultipleWidgetsToken': 'Embedding multiple widgets is not supported when using the token and embed token api member.',
     'UnableDraftWithEmbedToken': 'Draft dashboards is not supported when using the embed token.',
-    'NotRenderDesignerForAnonymousUser': "Anonymous users are not allowed to design dashboards"
+    'NotRenderDesignerForAnonymousUser': 'Anonymous users are not allowed to design dashboards',
+    'InvalidWidgetID': 'The provided Widget Id appears to be a GUID but is not in a valid format.Please provide valid widget Id',
+    'EmptyDbrdOrViewIDForToken': 'Dashboard ID and view ID cannot be empty.'
 };
 exports.successMessages = {
     'UpdateFilterViewMsg': 'and you can add custom functionalities using viewId:',

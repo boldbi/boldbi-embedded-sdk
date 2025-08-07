@@ -3,4 +3,6 @@ export interface IThemeSettings {
     application?: string;
     dashboard?: string;
     isLocalTheme?: boolean;
+    localTheme?: boolean;
+    fontFamily?: string;
 }

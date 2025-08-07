@@ -3,7 +3,11 @@ export interface IWidgetSettings {
     showMaximize?: boolean;
     showMoreOption?: boolean;
     showFilter?: boolean;
-    enableComment?: boolean;
+    export?: boolean;
+    maximize?: boolean;
+    moreOption?: boolean;
+    filter?: boolean;
+    comment?: boolean;
     beforeIconRender?: (_event: Event) => void;
     onIconClick?: (_event: Event) => void;
     beforeWidgetControlMenuOpen?: (_event: Event) => void;
