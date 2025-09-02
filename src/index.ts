@@ -3628,6 +3628,7 @@ export class BoldBI {
         bbEmbed('#widget_1' + '_' + (ulElementListLength + 1)).append('<div class="pinWidget" style="height:calc(100% - 5px);width:calc(100% - 25px);overflow: hidden !important;" id="' + pinboardIdName + '"><div id="' + pinboardIdName + '_embeddedbi" class="pinBoardDbrd"></div ></div>');
         this.pinBoardRendered = false;
         this.pinboardIds.push({ 'widgetId': column.Item[0].Id, 'pinboardContainerId': pinboardIdName });
+        this.deprecated = false;
         this.loadDashboardWidget(column.Item[0].Id, column.Item[0].ItemId);
         this.enableSorting();
         this.setListMinimumHeight();
