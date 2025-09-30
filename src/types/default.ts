@@ -64,7 +64,7 @@ export const DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '13.1',
+    embedSDKWrapperVersion: '13.2',
     tokenResponse: {
         dashboardVersion: '0',
         draftItemID: '',
