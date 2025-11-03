@@ -15,6 +15,7 @@ import { IDesignCanvasSettings } from './design-canvas-settings';
 
 export interface ISettings {
     bingMapRequired?: boolean,
+    azureMapRequired?: boolean;
     hideErrorMessage?: boolean,
     restrictMobileView?: boolean,
     disableAutoRecover?: boolean,

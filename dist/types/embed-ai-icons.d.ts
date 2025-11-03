@@ -1,4 +1,6 @@
 export interface IEmbedAiIcons {
-    hideAiDataUsage?: boolean;
-    hideAiChatHelp?: boolean;
+    history?: boolean;
+    usageAnalytics?: boolean;
+    helpLink?: boolean;
+    newSession?: boolean;
 }

@@ -40,6 +40,19 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/?utm_source=github&utm_medium=backlinks) page.
 
+### Feature
+* Introduced AI Assistant embedding support in SDK based embedding.
+### Improvement
+* Provided Object model implementation for token generation in SDK-based embedding
+* Provided custom branding support to customize the branding in the error message for SDK-based embedding.
+* Enhanced embed token support for Designer, Data Source, and Connection modules in SDK-based embedding.
+* Provided support to embed Azure Map widget in SDK-based embedding.
+
+### Bug
+
+* Fixed the typo error in the embedQuerString, correcting it to embedQueryString in the authorization endpoint of SDK-based embedding.
+* Fixed the issue where the theme was not properly applied in domain masking for SDK-based embedding.
+
 ## License Information
 
 For licensing information about `Bold BI Embedding`, Take a look at the Bold BI License Agreements from [here](https://www.boldbi.com/terms-of-use?utm_source=github&utm_medium=backlinks).

@@ -18,9 +18,6 @@ class BoldBI {
                 if (this.embedOptions.mode != BoldBI.Mode.View) {
                     throw new Error(embeddingLocalization_1.errorMessages['UnablePinboardRender']);
                 }
-                if (this.embedOptions.embedToken) {
-                    throw new Error(embeddingLocalization_1.errorMessages['UnablePinboardRenderEmbedToken']);
-                }
                 this.embedOptions.dashboardIds = [];
                 this.embedOptions.dashboardPaths = [];
                 if (!this._checkWidgetList()) {
@@ -50,11 +47,6 @@ class BoldBI {
                 }
                 if (this.embedOptions.pinboardName != '') {
                     this.embedOptions.pinboardName = '';
-                }
-                if (this.embedOptions.embedToken) {
-                    if (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) {
-                        throw new Error(embeddingLocalization_1.errorMessages['UnableDatasourceRenderEmbedToken']);
-                    }
                 }
                 if (!this._checkWidgetList()) {
                     if (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) {
@@ -234,7 +226,7 @@ class BoldBI {
         };
         this._initializeUrls = this.Invoke(function () {
             if (this.embedOptions.enableDomainMasking) {
-                if (this.embedOptions.authorizationServer.url === '' && this.embedOptions.token === '') {
+                if (this.embedOptions.authorizationServer.url === '' && this.embedOptions.token === '' && this.embedOptions.embedToken === '') {
                     this.designerRootUrl = this.embedOptions.serverUrl;
                     return true;
                 }
@@ -312,9 +304,12 @@ class BoldBI {
             }
         });
         this._renderDashboard = this.Invoke(function (responseInfo) {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, _61, _62, _63, _64, _65, _66, _67, _68, _69, _70, _71, _72, _73, _74, _75, _76, _77, _78, _79, _80, _81, _82, _83, _84, _85, _86, _87, _88, _89, _90, _91, _92, _93, _94, _95, _96, _97, _98, _99, _100, _101, _102, _103, _104, _105, _106, _107, _108, _109, _110, _111, _112, _113, _114, _115, _116, _117, _118, _119, _120, _121, _122, _123, _124, _125, _126, _127, _128, _129, _130, _131, _132, _133, _134, _135, _136, _137, _138, _139, _140, _141, _142, _143, _144, _145, _146, _147, _148, _149, _150, _151, _152, _153, _154, _155, _156, _157, _158, _159, _160, _161, _162, _163, _164, _165, _166, _167, _168, _169, _170, _171, _172, _173, _174, _175, _176, _177, _178, _179, _180, _181, _182, _183, _184, _185, _186, _187, _188, _189, _190, _191, _192, _193, _194, _195, _196, _197, _198, _199, _200, _201, _202, _203, _204, _205, _206, _207, _208, _209, _210, _211, _212, _213, _214, _215, _216, _217, _218, _219, _220, _221, _222, _223, _224, _225, _226, _227, _228, _229, _230, _231, _232, _233, _234, _235, _236, _237, _238, _239, _240, _241, _242, _243, _244, _245, _246, _247, _248, _249, _250, _251, _252, _253, _254, _255, _256, _257, _258, _259, _260, _261, _262, _263, _264, _265, _266, _267, _268, _269, _270, _271, _272, _273, _274, _275, _276, _277, _278, _279, _280, _281, _282, _283, _284, _285, _286, _287, _288, _289, _290, _291, _292, _293, _294, _295, _296, _297, _298, _299, _300, _301, _302, _303, _304, _305;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, _61, _62, _63, _64, _65, _66, _67, _68, _69, _70, _71, _72, _73, _74, _75, _76, _77, _78, _79, _80, _81, _82, _83, _84, _85, _86, _87, _88, _89, _90, _91, _92, _93, _94, _95, _96, _97, _98, _99, _100, _101, _102, _103, _104, _105, _106, _107, _108, _109, _110, _111, _112, _113, _114, _115, _116, _117, _118, _119, _120, _121, _122, _123, _124, _125, _126, _127, _128, _129, _130, _131, _132, _133, _134, _135, _136, _137, _138, _139, _140, _141, _142, _143, _144, _145, _146, _147, _148, _149, _150, _151, _152, _153, _154, _155, _156, _157, _158, _159, _160, _161, _162, _163, _164, _165, _166, _167, _168, _169, _170, _171, _172, _173, _174, _175, _176, _177, _178, _179, _180, _181, _182, _183, _184, _185, _186, _187, _188, _189, _190, _191, _192, _193, _194, _195, _196, _197, _198, _199, _200, _201, _202, _203, _204, _205, _206, _207, _208, _209, _210, _211, _212, _213, _214, _215, _216, _217, _218, _219, _220, _221, _222, _223, _224, _225, _226, _227, _228, _229, _230, _231, _232, _233, _234, _235, _236, _237, _238, _239, _240, _241, _242, _243, _244, _245, _246, _247, _248, _249, _250, _251, _252, _253, _254, _255, _256, _257, _258, _259, _260, _261, _262, _263, _264, _265, _266, _267, _268, _269, _270, _271, _272, _273, _274, _275, _276, _277, _278, _279, _280, _281, _282, _283, _284, _285, _286, _287, _288, _289, _290, _291, _292, _293, _294, _295, _296, _297, _298, _299, _300, _301, _302, _303, _304, _305, _306, _307, _308, _309, _310, _311, _312, _313, _314, _315, _316, _317, _318, _319, _320, _321, _322, _323, _324, _325, _326, _327, _328, _329, _330, _331, _332, _333, _334, _335, _336, _337, _338, _339, _340, _341, _342, _343, _344, _345;
             const that = this;
             const parameter = '';
+            if (responseInfo == null) {
+                throw new Error(embeddingLocalization_1.errorMessages['NullResponse']);
+            }
             const responseMessage = responseInfo.Data;
             if (!responseInfo.Status && !this.embedOptions.enableDomainMasking) {
                 if (responseInfo.errorMessage == embeddingLocalization_1.errorMessages['PageUnavailable']) {
@@ -331,7 +326,12 @@ class BoldBI {
                         }
                     }
                 }
-                throw new Error(responseInfo.Message);
+                if (responseInfo.Message == undefined) {
+                    throw new Error(embeddingLocalization_1.errorMessages['InvalidResponse']);
+                }
+                else {
+                    throw new Error(responseInfo.Message);
+                }
             }
             else {
                 if (Array.isArray(responseInfo.Data) && this._isEmptyOrSpaces(this.embedOptions.dashboardId) && this._isEmptyOrSpaces(this.embedOptions.dashboardPath)) {
@@ -412,7 +412,7 @@ class BoldBI {
                     let dashboardName = '';
                     let childDashboardId;
                     if (this.pinboardIds.length > 0) {
-                        const id = this.embedOptions.token ? embedResponse.Id : embedResponse.WidgetId;
+                        const id = this.authToken ? embedResponse.Id : embedResponse.WidgetId;
                         bbEmbed.map(this.pinboardIds, function (value) {
                             if (value['widgetId'] == id) {
                                 const instance = that._getDashboardInstance(value['pinboardContainerId'] + '_embeddedbi');
@@ -421,7 +421,7 @@ class BoldBI {
                                 }
                             }
                         });
-                        childDashboardId = that.embedOptions.token ? embedResponse.ItemId : '';
+                        childDashboardId = this.authToken ? embedResponse.ItemId : '';
                     }
                     else if (this.isMultiTab) {
                         const Id = this.embedOptions.token || this.embedOptions.embedToken ? embedResponse.DashboardId.toString().replaceAll('-', '') : embedResponse.ItemDetail.Id.toString().replaceAll('-', '');
@@ -473,7 +473,6 @@ class BoldBI {
                         }
                     }
                     let dashboardOptions;
-                    const selectedToken = this.embedOptions.token ? this.embedOptions.token : this.embedOptions.embedToken;
                     const fontFamilyValue = !this._isEmptyOrSpaces((_l = this.embedOptions.dashboardSettings) === null || _l === void 0 ? void 0 : _l.fontFamily) ? this.embedOptions.dashboardSettings.fontFamily : !this._isEmptyOrSpaces((_p = (_o = (_m = this.embedOptions) === null || _m === void 0 ? void 0 : _m.settings) === null || _o === void 0 ? void 0 : _o.theme) === null || _p === void 0 ? void 0 : _p.fontFamily) ? this.embedOptions.settings.theme.fontFamily : '';
                     const fontFamilyUrl = this.embedOptions.environment === BoldBI.Environment.Enterprise ? this.rootUrl.replace(/\/bi(?!.*\/bi)/, '/ums/user-interface/fonts') + '?family=' + fontFamilyValue : `${this.rootUrl + '/user-interface/fonts?family=' + fontFamilyValue}`;
                     // eslint-disable-next-line
@@ -501,8 +500,8 @@ class BoldBI {
                         environment: this.embedOptions.environment,
                         IsEmbed: true,
                         _isPublic: this.embedOptions.mode != BoldBI.Mode.Connection ? this.embedOptions.enableDomainMasking || !(this._isNullOrUndefined(this.embedOptions.embedToken) || this._isEmptyOrSpaces(this.embedOptions.embedToken)) ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : embedResponse.ItemDetail.IsPublic : '',
-                        itemId: this.embedOptions.mode != BoldBI.Mode.Connection ? this.embedOptions.enableDomainMasking ? this.embedOptions.dashboardId : (this._isNullOrUndefined(selectedToken) || this._isEmptyOrSpaces(selectedToken)) ? embedResponse.ItemDetail.Id : that.embedOptions.isdesignerdraft ? embedResponse.draftItemID : childDashboardId ? childDashboardId : this.embedOptions.dashboardId : '',
-                        dashboardPath: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : this.embedOptions.enableDomainMasking ? this.embedOptions.dashboardId + '/0' : (this._isNullOrUndefined(selectedToken) || this._isEmptyOrSpaces(selectedToken)) ? embedResponse.ItemDetail.ItemLocation : childDashboardId ? childDashboardId + '/0' : this.embedOptions.dashboardId + '/' + embedResponse.dashboardVersion,
+                        itemId: this.embedOptions.mode != BoldBI.Mode.Connection ? this.embedOptions.enableDomainMasking ? this.embedOptions.dashboardId : (this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.ItemDetail.Id : that.embedOptions.isdesignerdraft ? embedResponse.draftItemID : childDashboardId ? childDashboardId : this.embedOptions.dashboardId : '',
+                        dashboardPath: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : this.embedOptions.enableDomainMasking ? this.embedOptions.dashboardId + '/0' : (this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.ItemDetail.ItemLocation : childDashboardId ? childDashboardId + '/0' : this.embedOptions.dashboardId + '/' + embedResponse.dashboardVersion,
                         serviceAuthorizationToken: this.accessToken,
                         dashboardName: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : this.embedOptions.enableDomainMasking ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : this._isEmptyOrSpaces(dashboardName) ? embedResponse.ItemDetail.Name : dashboardName,
                         dashboardDescription: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : this.embedOptions.enableDomainMasking ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : embedResponse.ItemDetail.Description,
@@ -630,7 +629,7 @@ class BoldBI {
                             that._onBoldBIbeforeWidgetLayoutRender(args);
                         }
                     };
-                    if (isViewMode) {
+                    if (isViewMode || this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
                         dashboardOptions.filterOverviewSettings = {
                             showSaveIcon: typeof ((_77 = (_76 = this.embedOptions.dashboardSettings) === null || _76 === void 0 ? void 0 : _76.filterOverviewSettings) === null || _77 === void 0 ? void 0 : _77.showSaveIcon) === 'boolean' ? (_79 = (_78 = this.embedOptions.dashboardSettings) === null || _78 === void 0 ? void 0 : _78.filterOverviewSettings) === null || _79 === void 0 ? void 0 : _79.showSaveAsIcon : (_83 = (_82 = (_81 = (_80 = this.embedOptions.settings) === null || _80 === void 0 ? void 0 : _80.viewer) === null || _81 === void 0 ? void 0 : _81.filterOverview) === null || _82 === void 0 ? void 0 : _82.save) !== null && _83 !== void 0 ? _83 : false,
                             showSaveAsIcon: typeof ((_85 = (_84 = this.embedOptions.dashboardSettings) === null || _84 === void 0 ? void 0 : _84.filterOverviewSettings) === null || _85 === void 0 ? void 0 : _85.showSaveAsIcon) === 'boolean' ? (_87 = (_86 = this.embedOptions.dashboardSettings) === null || _86 === void 0 ? void 0 : _86.filterOverviewSettings) === null || _87 === void 0 ? void 0 : _87.showSaveAsIcon : (_91 = (_90 = (_89 = (_88 = this.embedOptions.settings) === null || _88 === void 0 ? void 0 : _88.viewer) === null || _89 === void 0 ? void 0 : _89.filterOverview) === null || _90 === void 0 ? void 0 : _90.saveAs) !== null && _91 !== void 0 ? _91 : false,
@@ -672,7 +671,7 @@ class BoldBI {
                             that._onBoldBIDashboardInstaceActionBegin(arg, embedContainerId);
                         };
                     }
-                    if ((this.embedOptions.mode == BoldBI.Mode.View && !this.isWidgetMode && !this.isMultipleWidgetMode && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design) {
+                    if ((this.embedOptions.mode == BoldBI.Mode.View && !this.isWidgetMode && !this.isMultipleWidgetMode && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design || this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
                         dashboardOptions.languageSettings = {
                             hideLanguageDropdown: typeof ((_106 = this.embedOptions.languageSettings) === null || _106 === void 0 ? void 0 : _106.hideLanguageDropdown) === 'boolean' ? this.embedOptions.languageSettings.hideLanguageDropdown : (_109 = (_108 = (_107 = this.embedOptions.settings) === null || _107 === void 0 ? void 0 : _107.language) === null || _108 === void 0 ? void 0 : _108.hideDropdown) !== null && _109 !== void 0 ? _109 : false,
                             languageCode: !this._isEmptyOrSpaces((_111 = (_110 = this.embedOptions) === null || _110 === void 0 ? void 0 : _110.languageSettings) === null || _111 === void 0 ? void 0 : _111.languageCode) ? this.embedOptions.languageSettings.languageCode : !this._isEmptyOrSpaces((_114 = (_113 = (_112 = this.embedOptions) === null || _112 === void 0 ? void 0 : _112.settings) === null || _113 === void 0 ? void 0 : _113.language) === null || _114 === void 0 ? void 0 : _114.code) ? this.embedOptions.settings.language.code : ''
@@ -692,10 +691,8 @@ class BoldBI {
                         }
                     }
                     if (this.embedOptions.mode == BoldBI.Mode.Design) {
-                        if (this._isNullOrUndefined(this.embedOptions.embedToken) || this._isEmptyOrSpaces(this.embedOptions.embedToken)) {
-                            if ((this.embedOptions.token && !this.embedOptions.dashboardId) || (!this.embedOptions.token && !this.embedOptions.enableDomainMasking && !this._isNullOrUndefined(embedResponse) && embedResponse.ItemDetail.IsDraft)) {
-                                dashboardOptions.dashboardPath = '';
-                            }
+                        if ((this.authToken && !this.embedOptions.dashboardId) || (!this.authToken && !this.embedOptions.enableDomainMasking && !this._isNullOrUndefined(embedResponse) && embedResponse.ItemDetail.IsDraft)) {
+                            dashboardOptions.dashboardPath = '';
                         }
                         const datasourceId = !this._isNullOrUndefined(embedResponse) && !this.embedOptions.enableDomainMasking && !this._isEmptyOrSpaces(embedResponse.DatasourceId) ? embedResponse.DatasourceId : '';
                         if (!this._isEmptyOrSpaces(datasourceId)) {
@@ -765,14 +762,14 @@ class BoldBI {
                         dashboardOptions.connectionList = embedResponse.ConnectionList;
                     }
                     if (this.embedOptions.mode == BoldBI.Mode.DataSource) {
-                        dashboardOptions.itemId = (this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? embedResponse.ItemDetail.Id : this.embedOptions.datasourceId;
-                        dashboardOptions.datasourceName = (this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? embedResponse.ItemDetail.Name : this.embedOptions.datasourceName;
-                        dashboardOptions.datasource = (this._isNullOrUndefined(this.embedOptions.token) || this._isEmptyOrSpaces(this.embedOptions.token)) ? embedResponse.ItemDetail.Id : this.embedOptions.datasourceId;
+                        dashboardOptions.itemId = (this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.ItemDetail.Id : this.embedOptions.datasourceId;
+                        dashboardOptions.datasourceName = (this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.ItemDetail.Name : this.embedOptions.datasourceName;
+                        dashboardOptions.datasource = (this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.ItemDetail.Id : this.embedOptions.datasourceId;
                     }
                     this.isMultipleWidgetMode = (this.embedOptions.widgetList == '') ? false : this.isMultipleWidgetMode;
                     if (this.isWidgetMode) {
                         dashboardOptions.isPinWidget = this.isWidgetMode;
-                        dashboardOptions.widgetId = (this._isNullOrUndefined(selectedToken) || this._isEmptyOrSpaces(selectedToken)) ? embedResponse.WidgetId : this.widgetName;
+                        dashboardOptions.widgetId = (this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.WidgetId : this.widgetName;
                     }
                     const dashboardHeader = typeof ((_225 = this.embedOptions.dashboardSettings) === null || _225 === void 0 ? void 0 : _225.showHeader) === 'boolean' ? this.embedOptions.dashboardSettings.showHeader : (_228 = (_227 = (_226 = this.embedOptions.settings) === null || _226 === void 0 ? void 0 : _226.viewer) === null || _227 === void 0 ? void 0 : _227.header) !== null && _228 !== void 0 ? _228 : true;
                     if (dashboardHeader == false) {
@@ -805,22 +802,57 @@ class BoldBI {
                             }
                         };
                     }
-                    if (!this.loadMultipleWidget && (((_259 = this.embedOptions.embedAiAssistant) === null || _259 === void 0 ? void 0 : _259.enabled) || ((_261 = (_260 = this.embedOptions.settings) === null || _260 === void 0 ? void 0 : _260.aiAssistant) === null || _261 === void 0 ? void 0 : _261.enabled))) {
+                    if (this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
+                        dashboardOptions.isUnifiedAI = true;
+                        dashboardOptions.dataSourceId = this.embedOptions.dataSourceId;
+                        dashboardOptions.dashboardApiUrl = this.dashboardServerApiUrl;
+                    }
+                    if (!this.loadMultipleWidget && ((((_259 = this.embedOptions.embedAiAssistant) === null || _259 === void 0 ? void 0 : _259.enabled) || ((_261 = (_260 = this.embedOptions.settings) === null || _260 === void 0 ? void 0 : _260.aiAssistant) === null || _261 === void 0 ? void 0 : _261.enabled))) || this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
                         dashboardOptions.isAiSummariesEnabledGlobally = typeof ((_263 = (_262 = this.embedOptions.embedAiAssistant) === null || _262 === void 0 ? void 0 : _262.summary) === null || _263 === void 0 ? void 0 : _263.enabled) === 'boolean' ? (_265 = (_264 = this.embedOptions.embedAiAssistant) === null || _264 === void 0 ? void 0 : _264.summary) === null || _265 === void 0 ? void 0 : _265.enabled : (_269 = (_268 = (_267 = (_266 = this.embedOptions.settings) === null || _266 === void 0 ? void 0 : _266.aiAssistant) === null || _267 === void 0 ? void 0 : _267.summary) === null || _268 === void 0 ? void 0 : _268.enabled) !== null && _269 !== void 0 ? _269 : false;
                         dashboardOptions.embedAiAssistant = {
                             enableAiAssistant: true,
                             aiAssistantPosition: !this._isEmptyOrSpaces((_271 = (_270 = this.embedOptions) === null || _270 === void 0 ? void 0 : _270.embedAiAssistant) === null || _271 === void 0 ? void 0 : _271.position) ? this.embedOptions.embedAiAssistant.position : !this._isEmptyOrSpaces((_274 = (_273 = (_272 = this.embedOptions) === null || _272 === void 0 ? void 0 : _272.settings) === null || _273 === void 0 ? void 0 : _273.aiAssistant) === null || _274 === void 0 ? void 0 : _274.position) ? this.embedOptions.settings.aiAssistant.position : 'bottom',
-                            hideAIDataUsage: typeof ((_275 = this.embedOptions.embedAiAssistant) === null || _275 === void 0 ? void 0 : _275.hideAiDataUsage) === 'boolean' ? (_276 = this.embedOptions.embedAiAssistant) === null || _276 === void 0 ? void 0 : _276.hideAiDataUsage : (_279 = (_278 = (_277 = this.embedOptions.settings) === null || _277 === void 0 ? void 0 : _277.aiAssistant) === null || _278 === void 0 ? void 0 : _278.hideUsageAnalytics) !== null && _279 !== void 0 ? _279 : false,
-                            hideAIChatHelp: typeof ((_280 = this.embedOptions.embedAiAssistant) === null || _280 === void 0 ? void 0 : _280.hideAiChatHelp) === 'boolean' ? (_281 = this.embedOptions.embedAiAssistant) === null || _281 === void 0 ? void 0 : _281.hideAiChatHelp : (_284 = (_283 = (_282 = this.embedOptions.settings) === null || _282 === void 0 ? void 0 : _282.aiAssistant) === null || _283 === void 0 ? void 0 : _283.hideChatHelp) !== null && _284 !== void 0 ? _284 : false,
-                            customizedAITitle: !this._isEmptyOrSpaces(this.embedOptions.embedAiAssistant.name) ? this.embedOptions.embedAiAssistant.name : (_287 = (_286 = (_285 = this.embedOptions.settings) === null || _285 === void 0 ? void 0 : _285.aiAssistant) === null || _286 === void 0 ? void 0 : _286.name) !== null && _287 !== void 0 ? _287 : '',
-                            summarization: {}
+                            hideAIDataUsage: typeof ((_275 = this.embedOptions.embedAiAssistant) === null || _275 === void 0 ? void 0 : _275.hideAiDataUsage) === 'boolean' ? (_276 = this.embedOptions.embedAiAssistant) === null || _276 === void 0 ? void 0 : _276.hideAiDataUsage : typeof ((_278 = (_277 = this.embedOptions.settings) === null || _277 === void 0 ? void 0 : _277.aiAssistant) === null || _278 === void 0 ? void 0 : _278.hideUsageAnalytics) === 'boolean' ? (_280 = (_279 = this.embedOptions.settings) === null || _279 === void 0 ? void 0 : _279.aiAssistant) === null || _280 === void 0 ? void 0 : _280.hideUsageAnalytics : (_284 = (_283 = (_282 = (_281 = this.embedOptions.settings) === null || _281 === void 0 ? void 0 : _281.aiAssistant) === null || _282 === void 0 ? void 0 : _282.hideIcons) === null || _283 === void 0 ? void 0 : _283.usageAnalytics) !== null && _284 !== void 0 ? _284 : false,
+                            hideAIChatHelp: typeof ((_286 = (_285 = this.embedOptions.embedAiAssistant) === null || _285 === void 0 ? void 0 : _285.hideIcons) === null || _286 === void 0 ? void 0 : _286.helpLink) === 'boolean' ? (_288 = (_287 = this.embedOptions.embedAiAssistant) === null || _287 === void 0 ? void 0 : _287.hideIcons) === null || _288 === void 0 ? void 0 : _288.helpLink : (_291 = (_290 = (_289 = this.embedOptions.settings) === null || _289 === void 0 ? void 0 : _289.aiAssistant) === null || _290 === void 0 ? void 0 : _290.hideChatHelp) !== null && _291 !== void 0 ? _291 : false,
+                            enableChatHistory: typeof ((_294 = (_293 = (_292 = this.embedOptions.settings) === null || _292 === void 0 ? void 0 : _292.aiAssistant) === null || _293 === void 0 ? void 0 : _293.hideIcons) === null || _294 === void 0 ? void 0 : _294.history) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideIcons.history) : true,
+                            enableNewSession: typeof ((_297 = (_296 = (_295 = this.embedOptions.settings) === null || _295 === void 0 ? void 0 : _295.aiAssistant) === null || _296 === void 0 ? void 0 : _296.hideIcons) === null || _297 === void 0 ? void 0 : _297.newSession) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideIcons.newSession) : true,
+                            showBetaTag: typeof ((_299 = (_298 = this.embedOptions.settings) === null || _298 === void 0 ? void 0 : _298.aiAssistant) === null || _299 === void 0 ? void 0 : _299.hideBetaTag) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideBetaTag) : true,
+                            headerTextColorHex: !this._isEmptyOrSpaces((_301 = (_300 = this.embedOptions.settings) === null || _300 === void 0 ? void 0 : _300.aiAssistant) === null || _301 === void 0 ? void 0 : _301.headerTextColor) ? this.embedOptions.settings.aiAssistant.headerTextColor : '',
+                            showChatLogo: typeof ((_303 = (_302 = this.embedOptions.settings) === null || _302 === void 0 ? void 0 : _302.aiAssistant) === null || _303 === void 0 ? void 0 : _303.hideLogo) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideLogo) : true,
+                            showWelcomeMessage: typeof ((_305 = (_304 = this.embedOptions.settings) === null || _304 === void 0 ? void 0 : _304.aiAssistant) === null || _305 === void 0 ? void 0 : _305.hideWelcomeNote) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideWelcomeNote) : true,
+                            showDashboardCategory: typeof ((_307 = (_306 = this.embedOptions.settings) === null || _306 === void 0 ? void 0 : _306.aiAssistant) === null || _307 === void 0 ? void 0 : _307.hideDashboardTag) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideDashboardTag) : true,
+                            showDatasourceCategory: typeof ((_309 = (_308 = this.embedOptions.settings) === null || _308 === void 0 ? void 0 : _308.aiAssistant) === null || _309 === void 0 ? void 0 : _309.hideDatasourceTag) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideDatasourceTag) : true,
+                            dashboardId: Array.isArray((_311 = (_310 = this.embedOptions.settings) === null || _310 === void 0 ? void 0 : _310.aiAssistant) === null || _311 === void 0 ? void 0 : _311.dashboards) && ((_313 = (_312 = this.embedOptions.settings) === null || _312 === void 0 ? void 0 : _312.aiAssistant) === null || _313 === void 0 ? void 0 : _313.dashboards.length) > 0 ? this.embedOptions.settings.aiAssistant.dashboards : [],
+                            datasourceId: Array.isArray((_315 = (_314 = this.embedOptions.settings) === null || _314 === void 0 ? void 0 : _314.aiAssistant) === null || _315 === void 0 ? void 0 : _315.dataSources) && ((_317 = (_316 = this.embedOptions.settings) === null || _316 === void 0 ? void 0 : _316.aiAssistant) === null || _317 === void 0 ? void 0 : _317.dataSources.length) > 0 ? this.embedOptions.settings.aiAssistant.dataSources : [],
+                            suggestionCount: typeof ((_319 = (_318 = this.embedOptions.settings) === null || _318 === void 0 ? void 0 : _318.aiAssistant) === null || _319 === void 0 ? void 0 : _319.queryDisplayLimit) === 'number' ? this.embedOptions.settings.aiAssistant.queryDisplayLimit : 6,
+                            customizedAITitle: !this._isEmptyOrSpaces(this.embedOptions.embedAiAssistant.name) ? this.embedOptions.embedAiAssistant.name : (_322 = (_321 = (_320 = this.embedOptions.settings) === null || _320 === void 0 ? void 0 : _320.aiAssistant) === null || _321 === void 0 ? void 0 : _321.name) !== null && _322 !== void 0 ? _322 : '',
+                            summarization: {},
                         };
+                        if (this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
+                            dashboardOptions.customBrandSettings = Object.assign(Object.assign({}, dashboardOptions.customBrandSettings), { hideHelpLink: typeof ((_325 = (_324 = (_323 = this.embedOptions.settings) === null || _323 === void 0 ? void 0 : _323.aiAssistant) === null || _324 === void 0 ? void 0 : _324.hideIcons) === null || _325 === void 0 ? void 0 : _325.helpLink) === 'boolean' ? (_327 = (_326 = this.embedOptions.settings) === null || _326 === void 0 ? void 0 : _326.aiAssistant.hideIcons) === null || _327 === void 0 ? void 0 : _327.helpLink : false });
+                        }
                         if (dashboardOptions.isAiSummariesEnabledGlobally) {
-                            dashboardOptions.embedAiAssistant.summarization.enableWidgetSummary = typeof ((_289 = (_288 = this.embedOptions.embedAiAssistant) === null || _288 === void 0 ? void 0 : _288.summary) === null || _289 === void 0 ? void 0 : _289.includeWidgetSummary) === 'boolean' ? (_291 = (_290 = this.embedOptions.embedAiAssistant) === null || _290 === void 0 ? void 0 : _290.summary) === null || _291 === void 0 ? void 0 : _291.includeWidgetSummary : (_294 = (_293 = (_292 = this.embedOptions.settings.aiAssistant) === null || _292 === void 0 ? void 0 : _292.summary) === null || _293 === void 0 ? void 0 : _293.widget) !== null && _294 !== void 0 ? _294 : false;
-                            dashboardOptions.embedAiAssistant.summarization.enableDashboardSummary = typeof ((_296 = (_295 = this.embedOptions.embedAiAssistant) === null || _295 === void 0 ? void 0 : _295.summary) === null || _296 === void 0 ? void 0 : _296.includeDashboardSummary) === 'boolean' ? (_298 = (_297 = this.embedOptions.embedAiAssistant) === null || _297 === void 0 ? void 0 : _297.summary) === null || _298 === void 0 ? void 0 : _298.includeDashboardSummary : (_302 = (_301 = (_300 = (_299 = this.embedOptions.settings) === null || _299 === void 0 ? void 0 : _299.aiAssistant) === null || _300 === void 0 ? void 0 : _300.summary) === null || _301 === void 0 ? void 0 : _301.dashboard) !== null && _302 !== void 0 ? _302 : false;
+                            dashboardOptions.embedAiAssistant.summarization.enableWidgetSummary = typeof ((_329 = (_328 = this.embedOptions.embedAiAssistant) === null || _328 === void 0 ? void 0 : _328.summary) === null || _329 === void 0 ? void 0 : _329.includeWidgetSummary) === 'boolean' ? (_331 = (_330 = this.embedOptions.embedAiAssistant) === null || _330 === void 0 ? void 0 : _330.summary) === null || _331 === void 0 ? void 0 : _331.includeWidgetSummary : (_334 = (_333 = (_332 = this.embedOptions.settings.aiAssistant) === null || _332 === void 0 ? void 0 : _332.summary) === null || _333 === void 0 ? void 0 : _333.widget) !== null && _334 !== void 0 ? _334 : false;
+                            dashboardOptions.embedAiAssistant.summarization.enableDashboardSummary = typeof ((_336 = (_335 = this.embedOptions.embedAiAssistant) === null || _335 === void 0 ? void 0 : _335.summary) === null || _336 === void 0 ? void 0 : _336.includeDashboardSummary) === 'boolean' ? (_338 = (_337 = this.embedOptions.embedAiAssistant) === null || _337 === void 0 ? void 0 : _337.summary) === null || _338 === void 0 ? void 0 : _338.includeDashboardSummary : (_342 = (_341 = (_340 = (_339 = this.embedOptions.settings) === null || _339 === void 0 ? void 0 : _339.aiAssistant) === null || _340 === void 0 ? void 0 : _340.summary) === null || _341 === void 0 ? void 0 : _341.dashboard) !== null && _342 !== void 0 ? _342 : false;
                         }
                     }
-                    if (window.bbEmbed instanceof Function) {
+                    if (that.embedOptions.mode == BoldBI.Mode.AIAssistant) {
+                        if (typeof window.BoldBIAI !== 'undefined' && window.BoldBIAI.UnifiedAIAgent) {
+                            try {
+                                let embedContainer = window.bbEmbed.call(that, '#' + embedContainerId);
+                                const aiAgentInstance = new window.BoldBIAI.UnifiedAIAgent(embedContainer, dashboardOptions);
+                                console.log("AI Assitant initialized successfully.");
+                            }
+                            catch (error) {
+                                console.error("Error initializing AI Assitant Agent:", error);
+                                // Handle AI agent initialization error if necessary
+                            }
+                        }
+                        else {
+                            throw new Error(embeddingLocalization_1.errorMessages['AIAgentInitializationFailed']);
+                        }
+                    }
+                    if (that.embedOptions.mode != BoldBI.Mode.AIAssistant && window.bbEmbed instanceof Function) {
                         let embedContainer = window.bbEmbed.call(that, '#' + (that.pinboardIds.length > 0 ? (embedContainerId + '_embeddedbi') : that.childContainer.id));
                         let embedChildId;
                         if (embedContainer.length === 0) {
@@ -866,15 +898,15 @@ class BoldBI {
                             embedResponse.WidgetList = JSON.stringify(widgetList);
                         }
                     }
-                    else {
+                    else if (this.embedOptions.mode != BoldBI.Mode.AIAssistant) {
                         throw new Error(embeddingLocalization_1.errorMessages['bbEmbedNotDefined']);
                     }
                     if (this.embedOptions.widgetList == '') {
                         this._removeElementsClass(embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
                     }
                     if (this.isMultiTab && !this.embedOptions.token && !this.embedOptions.isPublicDashboard && !this.embedOptions.embedToken && embedResponse.ItemDetail.ItemViews) {
-                        const dashboardFilterSettings = (_303 = this.embedOptions.dashboardSettings) === null || _303 === void 0 ? void 0 : _303.filterOverviewSettings;
-                        const viewerFilterOverview = (_305 = (_304 = this.embedOptions.settings) === null || _304 === void 0 ? void 0 : _304.viewer) === null || _305 === void 0 ? void 0 : _305.filterOverview;
+                        const dashboardFilterSettings = (_343 = this.embedOptions.dashboardSettings) === null || _343 === void 0 ? void 0 : _343.filterOverviewSettings;
+                        const viewerFilterOverview = (_345 = (_344 = this.embedOptions.settings) === null || _344 === void 0 ? void 0 : _344.viewer) === null || _345 === void 0 ? void 0 : _345.filterOverview;
                         if (dashboardFilterSettings) {
                             dashboardFilterSettings.viewId = null;
                             dashboardFilterSettings.viewName = null;
@@ -975,7 +1007,7 @@ class BoldBI {
                     dashboardItemDetail = JSON.parse(value.ItemDetail);
                     dashboardItemDetail.TabName = value.TabName || dashboardItemDetail.Name;
                 }
-                that.parentDbrdId = that.embedOptions.token ? that.embedOptions.dashboardId : value.parentId;
+                that.parentDbrdId = that.authToken ? that.embedOptions.dashboardId : value.parentId;
                 const dashboardId = dashboardItemDetail.Id.replaceAll('-', '');
                 that.dashboardDetails[`${dashboardId}`] = value;
                 if (!that._isNullOrUndefined(that.embedOptions.dashboardSettings.dashboardName) && typeof that.embedOptions.dashboardSettings.dashboardName != 'string') {
@@ -1024,7 +1056,7 @@ class BoldBI {
             const embedDbrdId = dashboardId ? dashboardId : this.embedOptions.dashboardId;
             const embedDbrdIds = this.embedOptions.dashboardIds.join(',');
             const embedDbrbPaths = this.embedOptions.dashboardPaths.join(',');
-            let embedQuerString = 'embed_nonce=' + this._uuidv4Generator() +
+            let embedQueryString = 'embed_nonce=' + this._uuidv4Generator() +
                 '&embed_dashboard_id=' + embedDbrdId +
                 '&embed_dashboard_ids=' + embedDbrdIds +
                 '&embed_dashboard_path=' + this.embedOptions.dashboardPath +
@@ -1035,18 +1067,18 @@ class BoldBI {
                 '&embed_expirationtime=' + this.embedOptions.expirationTime;
             if (this.embedOptions.anonymousToken.isEnabled) {
                 const { groupName, userEmail } = this.embedOptions.anonymousToken;
-                embedQuerString += `&embed_user_email=${userEmail}&embed_anonymous_token=true&embed_authorize_group=${groupName}`;
+                embedQueryString += `&embed_user_email=${userEmail}&embed_anonymous_token=true&embed_authorize_group=${groupName}`;
             }
             if (this.embedOptions.viewId) {
-                embedQuerString = embedQuerString +
+                embedQueryString = embedQueryString +
                     '&embed_dashboardview_id=' + this.embedOptions.viewId;
             }
             else if (this.embedOptions.viewName) {
-                embedQuerString = embedQuerString + '&embed_dashboardview_name=' + this.embedOptions.viewName;
+                embedQueryString = embedQueryString + '&embed_dashboardview_name=' + this.embedOptions.viewName;
             }
             if (this.isWidgetMode) {
                 if (this.isMultipleWidgetMode == false) {
-                    embedQuerString = embedQuerString +
+                    embedQueryString = embedQueryString +
                         '&embed_widget_isenabled=' + this.isWidgetMode +
                         '&embed_widget_name=' + this.widgetName;
                 }
@@ -1055,25 +1087,26 @@ class BoldBI {
                     this.embedOptions.widgetList.forEach(function (widgetDetails) {
                         multipleWidgetList.push(widgetDetails.widgetName.toLowerCase());
                     });
-                    embedQuerString = embedQuerString +
+                    embedQueryString = embedQueryString +
                         '&embed_widget_isenabled=' + this.isWidgetMode +
                         '&embed_widget_list=' + multipleWidgetList;
                 }
             }
             if (this.isMultiTab) {
-                embedQuerString = embedQuerString +
+                embedQueryString = embedQueryString +
                     '&isMultiTab=' + this.isMultiTab;
             }
             if (!this._isEmptyOrSpaces(this.embedOptions.datasourceId)) {
-                embedQuerString = embedQuerString +
+                embedQueryString = embedQueryString +
                     '&embed_datasource_id=' + this.embedOptions.datasourceId;
             }
             else if (!this._isEmptyOrSpaces(this.embedOptions.datasourceName)) {
-                embedQuerString = embedQuerString +
+                embedQueryString = embedQueryString +
                     '&embed_datasource_name=' + this.embedOptions.datasourceName;
             }
             const data = {
-                embedQuerString: encodeURI(embedQuerString),
+                embedQuerString: encodeURI(embedQueryString),
+                embedQueryString: encodeURI(embedQueryString),
                 dashboardServerApiUrl: this.dashboardServerApiUrl
             };
             if (this.embedOptions.authorizationServer.url != '') {
@@ -1090,7 +1123,7 @@ class BoldBI {
                     async: true,
                     type: 'POST',
                     url: this.dashboardServerApiUrl + this.embedAuthorizeEndPoint,
-                    data: JSON.stringify(embedQuerString),
+                    data: JSON.stringify(embedQueryString),
                     contentType: 'application/json',
                     success: bbEmbed.proxy(that._renderDashboard, that)
                 });
@@ -1141,6 +1174,9 @@ class BoldBI {
             if (this._isEmptyOrSpaces(options.serverUrl)) {
                 this.invalidDetail = true;
                 throw new Error(embeddingLocalization_1.errorMessages['EmptyServerURL']);
+            }
+            if (options.mode == BoldBI.Mode.AIAssistant) {
+                return true;
             }
             if (!this._isUrl(options.serverUrl)) {
                 this.invalidDetail = true;
@@ -1211,6 +1247,9 @@ class BoldBI {
             this.deprecationMessage('loadDashboardWidget');
             this._loadDashboardWidget(name, dashboardId);
         });
+        this.loadAIAssistant = this.Invoke(function () {
+            this._loadAIAssistant();
+        });
         this.loadWidget = this.Invoke(function (name, dashboardId) {
             this.deprecated = false;
             this._loadDashboardWidget(name, dashboardId);
@@ -1263,6 +1302,15 @@ class BoldBI {
             this.deprecationMessage('deleteFilterView');
             this._deleteFilterView(viewId, callBackFunc);
         });
+    }
+    _loadAIAssistant() {
+        if (this._isInvalidEmbed(BoldBI.Mode.AIAssistant, 'EmbedModeInvalid')) {
+            return;
+        }
+        else {
+            this._showLoader();
+            this._isAIDepdencyLoaded(this);
+        }
     }
     _loadDashboard(dashboardId) {
         if (this._isInvalidEmbed(BoldBI.Mode.View, 'EmbedModeInvalid')) {
@@ -1332,9 +1380,6 @@ class BoldBI {
         if (this.embedOptions.viewId == '' && this.embedOptions.viewName == '') {
             throw new Error(embeddingLocalization_1.errorMessages['EmptyViewDetails']);
         }
-        if (this.embedOptions.embedToken) {
-            throw new Error(embeddingLocalization_1.errorMessages['UnableViewEmbedToken']);
-        }
         if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
             this.embedOptions.dashboardIds = [];
             this.embedOptions.dashboardPaths = [];
@@ -1370,7 +1415,6 @@ class BoldBI {
                 this._createIframe(`${this.embedOptions.serverUrl}/dashboards/${this.embedOptions.dashboardId}?isembed=true`);
             }
         }
-        //  }
     }
     _loadMultipleWidgets(dashboardId) {
         if (this.embedOptions.widgetList == '') {
@@ -1485,7 +1529,7 @@ class BoldBI {
             }
             const homepageItemId = bbEmbed('#widget-container').attr('data-homepage-id');
             const that = this;
-            const embedQuerString = 'embed_nonce=' + this._uuidv4Generator() +
+            const embedQueryString = 'embed_nonce=' + this._uuidv4Generator() +
                 '&homepageId=' + homepageItemId +
                 '&isPinUpdate=' + true +
                 '&pinWidgetId=' + widgetId +
@@ -1496,7 +1540,8 @@ class BoldBI {
                 '&embed_timestamp=' + Math.round((new Date()).getTime() / 1000) +
                 '&embed_expirationtime=' + this.embedOptions.expirationTime;
             const data = {
-                embedQuerString: encodeURI(embedQuerString),
+                embedQuerString: encodeURI(embedQueryString),
+                embedQueryString: encodeURI(embedQueryString),
                 dashboardServerApiUrl: this.dashboardServerApiUrl
             };
             this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, function (result) {
@@ -1799,8 +1844,7 @@ class BoldBI {
                         const _biInstance = BoldBI._gettinstance(document.getElementById(boldBIObj.embedOptions.embedContainerId), 'embeddedBoldBI');
                         if (_biInstance != null || _biInstance != undefined) {
                             if (!boldBIObj._isNullOrUndefined(bbEmbed)) {
-                                boldBIObj.deprecated = false;
-                                _biInstance.destroy();
+                                _biInstance.dispose();
                             }
                         }
                         document.getElementById(boldBIObj.embedOptions.embedContainerId).innerHTML = '';
@@ -2745,6 +2789,11 @@ class BoldBI {
         if (this.embedOptions.pinboardName != '') {
             this._addedDependentFiles(this, this.pinBoardScriptFiles, false);
         }
+        if (this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
+            this._addedDependentFiles(this, this.AICssFiles, true);
+            this._addedDependentFiles(this, this.AIScriptFiles, false);
+            this._addedDependentFiles(this, this.applicationThemeCssFiles, true);
+        }
         this._addedDependentFiles(this, this.cssFiles, true);
         if (this.embedOptions.pinboardName != '') {
             this._addedDependentFiles(this, this.pinboardCssFiles, true);
@@ -2756,11 +2805,35 @@ class BoldBI {
         if (bingMapValue) {
             this._loadBingmapDependentFiles();
         }
-        this._loadDependentDesignerFiles(this);
+        if (this.embedOptions.settings.azureMapRequired) {
+            this._loadAzureMapDependentFiles();
+        }
+        if (this.embedOptions.mode != BoldBI.Mode.AIAssistant) {
+            this._loadDependentDesignerFiles(this);
+        }
     }
     _loadBingmapDependentFiles() {
-        const scriptTag = '<script type="text/javascript" src="https://www.bing.com/api/maps/mapcontrol" async></script>';
-        bbEmbed(scriptTag).appendTo('head');
+        const scriptTag = document.createElement('script');
+        if (this.embedOptions.nonce) {
+            scriptTag.nonce = this.embedOptions.nonce;
+        }
+        scriptTag.src = 'https://www.bing.com/api/maps/mapcontrol';
+        scriptTag.async = true;
+        document.head.appendChild(scriptTag);
+    }
+    _loadAzureMapDependentFiles() {
+        const cssTag = document.createElement('link');
+        cssTag.rel = 'stylesheet';
+        cssTag.href = 'https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.css';
+        document.head.appendChild(cssTag);
+        const scriptTag = document.createElement('script');
+        if (this.embedOptions.nonce) {
+            scriptTag.nonce = this.embedOptions.nonce;
+        }
+        scriptTag.type = 'text/javascript';
+        scriptTag.src = 'https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.js';
+        scriptTag.async = true;
+        document.head.appendChild(scriptTag);
     }
     _loadDependentDesignerFiles(that) {
         if (window.BoldBIDashboard instanceof Object &&
@@ -2820,8 +2893,14 @@ class BoldBI {
                         else if (file == 'pinboard-embed.min.css') {
                             fileUri = that.rootUrl + '/cdn/css/' + file;
                         }
+                        else if (file == 'dashboard-viewer-bundle.min.css') {
+                            fileUri = that.rootUrl + '/cdn/css/designer/' + file;
+                        }
+                        else if (file == 'dashboard-designer.min.css') {
+                            fileUri = that.rootUrl + '/cdn/css/designer/' + file;
+                        }
                         else if (file == 'boldbi.theme.definition.min.css') {
-                            if (!localTheme && themeAppearance) {
+                            if (!localTheme && themeAppearance && !that.embedOptions.enableDomainMasking) {
                                 fileUri = that.rootUrl + '/cdn/css/designer/' + themeAppearance + '/' + file;
                             }
                             else {
@@ -2895,6 +2974,12 @@ class BoldBI {
                         }
                         else if (file == 'signalr.min.js') {
                             fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/signalr/' + file;
+                        }
+                        else if (file == 'bbi-unifiedaiagent.min.js') {
+                            fileUri = that.rootUrl + '/cdn/scripts/designer/' + file;
+                        }
+                        else if (file == 'dashboard-designer-dependency.min.js') {
+                            fileUri = that.rootUrl + '/cdn/scripts/designer/' + file;
                         }
                         else {
                             fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file;
@@ -3100,12 +3185,12 @@ class BoldBI {
         });
         bbEmbed.map(that.pinboardDetails, function (value) {
             that.isWidgetMode = true;
-            that.widgetName = that.embedOptions.token ? value.Id : value.WidgetId;
+            that.widgetName = that.authToken ? value.Id : value.WidgetId;
             that.isDashboardViewMode = false;
             that.dashboardViewName = '';
             const response = {
                 Apistatus: true,
-                Data: that.embedOptions.token ? value : JSON.parse(value),
+                Data: that.authToken ? value : JSON.parse(value),
                 Status: true
             };
             that._renderDashboard(response);
@@ -3150,21 +3235,22 @@ class BoldBI {
             //that.homepageItemId = saveVirtualHomepage();
             bbEmbed('#initial-message').hide();
         }
-        const embedQuerString = 'embed_nonce=' + this._uuidv4Generator() +
+        const embedQueryString = 'embed_nonce=' + this._uuidv4Generator() +
             '&homepageId=' + that.homepageItemId +
             '&layout=' + layout +
             '&embed_mode=' + this.embedOptions.mode +
             '&embed_timestamp=' + Math.round((new Date()).getTime() / 1000) +
             '&embed_expirationtime=' + this.embedOptions.expirationTime;
-        if (!that.embedOptions.token && !that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
+        if (!that.authToken && !that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
             data = {
-                embedQuerString: encodeURI(embedQuerString),
+                embedQuerString: encodeURI(embedQueryString),
+                embedQueryString: encodeURI(embedQueryString),
                 dashboardServerApiUrl: this.dashboardServerApiUrl
             };
             this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._changeLayoutSuccess);
         }
         else {
-            var token = this._validatetoken(that.embedOptions.token);
+            const token = this._validatetoken(that.authToken);
             data = {
                 'homepageId': that.homepageItemId,
                 'layout': layout
@@ -3329,22 +3415,23 @@ class BoldBI {
         const homepageItemId = bbEmbed('#widget-container').attr('data-homepage-id');
         const from = { Column: fromColumn, Position: fromPosition };
         const to = { Column: toColumn, Position: toPosition };
-        const embedQuerString = 'embed_nonce=' + this._uuidv4Generator() +
+        const embedQueryString = 'embed_nonce=' + this._uuidv4Generator() +
             '&homepageId=' + homepageItemId +
             '&moveFrom=' + JSON.stringify(from) +
             '&moveTo=' + JSON.stringify(to) +
             '&embed_mode=' + this.embedOptions.mode +
             '&embed_timestamp=' + Math.round((new Date()).getTime() / 1000) +
             '&embed_expirationtime=' + this.embedOptions.expirationTime;
-        if (!that.embedOptions.token && !that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
+        if (!that.authToken && !that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
             data = {
-                embedQuerString: encodeURI(embedQuerString),
+                embedQuerString: encodeURI(embedQueryString),
+                embedQueryString: encodeURI(embedQueryString),
                 dashboardServerApiUrl: this.dashboardServerApiUrl
             };
             this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._dragAndDropSuccess);
         }
         else {
-            var token = this._validatetoken(that.embedOptions.token);
+            var token = this._validatetoken(that.authToken);
             data = {
                 'homepageId': homepageItemId,
                 'moveFrom': JSON.stringify(from),
@@ -3368,22 +3455,23 @@ class BoldBI {
         let data;
         const homepageItemId = bbEmbed('#widget-container').attr('data-homepage-id');
         const unpinPosition = { Column: column, Position: position };
-        const embedQuerString = 'embed_nonce=' + this._uuidv4Generator() +
+        const embedQueryString = 'embed_nonce=' + this._uuidv4Generator() +
             '&homepageId=' + homepageItemId +
             '&unpinPosition=' + JSON.stringify(unpinPosition) +
             '&isUnpin=' + true +
             '&embed_mode=' + this.embedOptions.mode +
             '&embed_timestamp=' + Math.round((new Date()).getTime() / 1000) +
             '&embed_expirationtime=' + this.embedOptions.expirationTime;
-        if (!that.embedOptions.token && !that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
+        if (!that.authToken && !that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
             data = {
-                embedQuerString: encodeURI(embedQuerString),
+                embedQuerString: encodeURI(embedQueryString),
+                embedQueryString: encodeURI(embedQueryString),
                 dashboardServerApiUrl: this.dashboardServerApiUrl
             };
             this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._unPinSuccess);
         }
         else {
-            var token = this._validatetoken(that.embedOptions.token);
+            let token = this._validatetoken(that.authToken);
             data = {
                 'homepageId': homepageItemId,
                 'unpinPosition': JSON.stringify(unpinPosition),
@@ -3564,7 +3652,7 @@ class BoldBI {
                             bbEmbed('#widget_' + (i + 1) + '_' + (j + 1)).append('<div class="pinWidget" style="height:calc(100% - 5px);width:calc(100% - 25px);overflow: hidden !important;" id="' + pinboardIdName + '"><div id="' + pinboardIdName + '_embeddedbi" class="pinBoardDbrd"></div ></div>');
                             that.pinBoardRendered = false;
                             that.pinboardIds.push({ 'widgetId': column[`${i}`].Item[`${j}`].Id, 'pinboardContainerId': pinboardIdName });
-                            that.pinboardDetails[that.pinboardDetails.length] = that.embedOptions.token ? column[`${i}`].Item[`${j}`] : column[`${i}`].Item[`${j}`].WidgetDetails;
+                            that.pinboardDetails[that.pinboardDetails.length] = that.authToken ? column[`${i}`].Item[`${j}`] : column[`${i}`].Item[`${j}`].WidgetDetails;
                             if (column[`${i}`].Item[`${j}`].IsActive && !column[`${i}`].Item[`${j}`].IsHavingPermission) {
                                 bbEmbed('#widget_' + (i + 1) + '_' + (j + 1)).find('iframe').remove();
                                 bbEmbed('#widget_' + (i + 1) + '_' + (j + 1)).append('<div class="no-permission"><span class="message">You do not have permission to view this widget.</span></div>');
@@ -3670,8 +3758,7 @@ class BoldBI {
         bbEmbed('#widget_1' + '_' + (ulElementListLength + 1)).append('<div class="pinWidget" style="height:calc(100% - 5px);width:calc(100% - 25px);overflow: hidden !important;" id="' + pinboardIdName + '"><div id="' + pinboardIdName + '_embeddedbi" class="pinBoardDbrd"></div ></div>');
         this.pinBoardRendered = false;
         this.pinboardIds.push({ 'widgetId': column.Item[0].Id, 'pinboardContainerId': pinboardIdName });
-        this.deprecated = false;
-        this.loadDashboardWidget(column.Item[0].Id, column.Item[0].ItemId);
+        this.loadWidget(column.Item[0].Id, column.Item[0].ItemId);
         this.enableSorting();
         this.setListMinimumHeight();
         this._removeElementsClass(this.embedOptions.embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
@@ -3715,6 +3802,25 @@ class BoldBI {
             this._renderDashboard(response);
         }
     }
+    _isAIDepdencyLoaded(that) {
+        if (that.embedOptions.mode == BoldBI.Mode.AIAssistant && typeof window.BoldBIAI !== 'undefined' && window.BoldBIAI.UnifiedAIAgent) {
+            if (that.embedOptions.token || that.embedOptions.embedToken) {
+                that.tokenResponse = {
+                    ItemDetail: {
+                        IsPublic: false,
+                        Name: "AIAssitant"
+                    }
+                };
+                that._renderDashboard({ Apistatus: true, Data: that.tokenResponse, Status: true });
+            }
+            else {
+                that._getAuthorizationToken();
+            }
+        }
+        else {
+            setTimeout(that._isAIDepdencyLoaded, 500, that);
+        }
+    }
     _isDependencyLoaded(that, dashboardId) {
         if (window.bbEmbed instanceof Function &&
             window.BoldBIDashboard instanceof Object && !that._isNullOrUndefined(window.BoldBIDashboard) &&
@@ -3726,7 +3832,8 @@ class BoldBI {
                 that.IsDependencyLoaded = true;
             }
             if (that.embedOptions.token || that.embedOptions.embedToken) {
-                if (that.embedOptions.token && that.embedOptions.isPublicDashboard || (that.embedOptions.embedToken && that.embedOptions.mode != BoldBI.Mode.Design && !that.embedOptions.isMultiTabDashboard && !that.widgetName)) {
+                that.authToken = that.embedOptions.token ? that.embedOptions.token : that.embedOptions.embedToken;
+                if (that.embedOptions.token && that.embedOptions.isPublicDashboard || (that.embedOptions.embedToken && that.embedOptions.mode != BoldBI.Mode.Design && !that.embedOptions.isMultiTabDashboard && !that.widgetName && !that.embedOptions.viewId && !that.embedOptions.pinboardName && !that.editIgnore)) {
                     that.tokenResponse = {
                         dashboardVersion: that.embedOptions.customDashboardVersion,
                         ItemDetail: {
@@ -3738,8 +3845,7 @@ class BoldBI {
                     that._renderDashboard({ Apistatus: true, Data: that.tokenResponse, Status: true });
                 }
                 else {
-                    const selectedToken = that.embedOptions.token ? that.embedOptions.token : that.embedOptions.embedToken;
-                    var token = that._validatetoken(selectedToken);
+                    var token = that._validatetoken(that.authToken);
                     if (that.embedOptions.dashboardPath && !that.embedOptions.dashboardId) {
                         that._throwError(embeddingLocalization_1.errorMessages['DbrdPathTokenAPIError']);
                     }
@@ -3798,7 +3904,7 @@ class BoldBI {
                                     that._throwError(embeddingLocalization_1.errorMessages['PageUnavailable']);
                                 }
                                 if (jqXHR.status == 401) {
-                                    const isJwtToken = that._isJwtFormat(that.embedOptions.token);
+                                    const isJwtToken = that._isJwtFormat(that.authToken);
                                     that._throwError(isJwtToken ? embeddingLocalization_1.errorMessages['InvalidAccessToken'] : embeddingLocalization_1.errorMessages['InvalidApiKey']);
                                 }
                                 else if (jqXHR.status == 404 && that.isDashboardRendering) {
@@ -3811,37 +3917,32 @@ class BoldBI {
                         });
                     }
                     else if (that.isDashboardRendering && that.embedOptions.mode == BoldBI.Mode.Design && (that._isEmptyOrSpaces(that.embedOptions.dashboardId)) && (that._isEmptyOrSpaces(that.embedOptions.dashboardPath))) {
-                        if (that.embedOptions.embedToken) {
-                            that._throwError(embeddingLocalization_1.errorMessages['UnableDraftWithEmbedToken']);
-                        }
-                        else {
-                            bbEmbed.ajax({
-                                async: false,
-                                type: 'POST',
-                                url: that.dashboardServerApiUrl + '/v5.0/dashboards/drafts',
-                                headers: {
-                                    'Authorization': token
-                                },
-                                contentType: 'application/json',
-                                success: function (result) {
-                                    that.embedOptions.isdesignerdraft = true;
-                                    that.tokenResponse.draftItemID = result.Id;
-                                    that.tokenResponse.ItemDetail.Name = result.Name;
-                                    that.tokenResponse.CanWrite = true;
-                                    that._authorizeResponse = { Apistatus: true, Data: that.tokenResponse, Status: true };
-                                    that._renderDashboard({ Apistatus: true, Data: that.tokenResponse, Status: true });
-                                },
-                                error: function (jqXHR) {
-                                    if (jqXHR.status == 401) {
-                                        const isJwtToken = that._isJwtFormat(that.embedOptions.token);
-                                        that._throwError(isJwtToken ? embeddingLocalization_1.errorMessages['InvalidAccessToken'] : embeddingLocalization_1.errorMessages['InvalidApiKey']);
-                                    }
-                                    else if (jqXHR.status == 403) {
-                                        that._throwError(embeddingLocalization_1.errorMessages['ProvideCreatePermission']);
-                                    }
+                        bbEmbed.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: that.dashboardServerApiUrl + '/v5.0/dashboards/drafts',
+                            headers: {
+                                'Authorization': token
+                            },
+                            contentType: 'application/json',
+                            success: function (result) {
+                                that.embedOptions.isdesignerdraft = true;
+                                that.tokenResponse.draftItemID = result.Id;
+                                that.tokenResponse.ItemDetail.Name = result.Name;
+                                that.tokenResponse.CanWrite = true;
+                                that._authorizeResponse = { Apistatus: true, Data: that.tokenResponse, Status: true };
+                                that._renderDashboard({ Apistatus: true, Data: that.tokenResponse, Status: true });
+                            },
+                            error: function (jqXHR) {
+                                if (jqXHR.status == 401) {
+                                    const isJwtToken = that._isJwtFormat(that.authToken);
+                                    that._throwError(isJwtToken ? embeddingLocalization_1.errorMessages['InvalidAccessToken'] : embeddingLocalization_1.errorMessages['InvalidApiKey']);
                                 }
-                            });
-                        }
+                                else if (jqXHR.status == 403) {
+                                    that._throwError(embeddingLocalization_1.errorMessages['ProvideCreatePermission']);
+                                }
+                            }
+                        });
                     }
                     else if (that.embedOptions.viewId && that.isDashboardViewRendering) {
                         bbEmbed.ajax({
@@ -3866,7 +3967,7 @@ class BoldBI {
                             },
                             error: function (jqXHR) {
                                 if (jqXHR.status == 401) {
-                                    const isJwtToken = that._isJwtFormat(that.embedOptions.token);
+                                    const isJwtToken = that._isJwtFormat(that.authToken);
                                     that._throwError(isJwtToken ? embeddingLocalization_1.errorMessages['InvalidAccessToken'] : embeddingLocalization_1.errorMessages['InvalidApiKey']);
                                 }
                                 else if (jqXHR.status == 400) {
@@ -4020,7 +4121,7 @@ class BoldBI {
                 this.embedOptions.datasourceId = arg.data.source.data;
                 this.embedOptions.mode = BoldBI.Mode.DataSource;
                 this.isNewConnection = true;
-                if (that.embedOptions.token) {
+                if (that.authToken) {
                     that._renderDashboard({ Apistatus: true, Data: this.tokenResponse, Status: true });
                 }
                 else if (!that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
@@ -4046,7 +4147,7 @@ class BoldBI {
             }
             if (arg.data.event == 'cancelDataSource') {
                 this.embedOptions.mode = BoldBI.Mode.Connection;
-                if (that.embedOptions.token) {
+                if (that.authToken) {
                     that._renderDashboard({ Apistatus: true, Data: this.tokenResponse, Status: true });
                 }
                 else if (!that._isEmptyOrSpaces(that.embedOptions.authorizationServer.url)) {
@@ -4133,7 +4234,7 @@ class BoldBI {
         if (arg.eventType == 'Save') {
             this._authorizeResponse.Data.ItemDetail.Name = arg.data.dashboardName;
             const itemLocation = this._authorizeResponse.Data.ItemDetail.ItemLocation;
-            if (!this.embedOptions.token) {
+            if (!this.authToken) {
                 this._authorizeResponse.Data.ItemDetail.ItemLocation = itemLocation.replace(/\/\d+$/, '/' + arg.data.version);
             }
             else {
@@ -4143,7 +4244,7 @@ class BoldBI {
         if (arg.eventType == 'SaveAs') {
             this._authorizeResponse.Data.ItemDetail.Id = arg.data.dashboardId;
             this._authorizeResponse.Data.ItemDetail.Name = arg.data.dashboardName;
-            if (!this.embedOptions.token) {
+            if (!this.authToken) {
                 this._authorizeResponse.Data.ItemDetail.ItemLocation = arg.data.dashboardId + '/' + arg.data.version;
             }
             else {
@@ -4174,7 +4275,7 @@ class BoldBI {
             this.embedOptions.settings.viewer.edit = this.editIgnore;
         }
         this._authorizeResponse.Data.ItemDetail.Name = arg.PublishName;
-        if (this.embedOptions.isdesignerdraft && this.embedOptions.token) {
+        if (this.embedOptions.isdesignerdraft && this.authToken) {
             this._authorizeResponse.Data.ItemDetail.Id = arg.PublishId;
             this._authorizeResponse.Data.dashboardVersion != "0" ? this._authorizeResponse.Data.dashboardVersion : 1;
             this.embedOptions.dashboardId = arg.PublishId;
@@ -5604,7 +5705,7 @@ class BoldBI {
         return url.protocol == 'http:' || url.protocol == 'https:';
     }
     _throwError(errorMsg, embedContainerId) {
-        var _a, _b;
+        var _a, _b, _c, _d, _e, _f, _g, _h;
         embedContainerId = this._isEmptyOrSpaces(embedContainerId) ? this.embedOptions.embedContainerId : embedContainerId;
         const hideErrorMessageValue = typeof this.embedOptions.hideErrorMessage === 'boolean' ? this.embedOptions.hideErrorMessage : (_b = (_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.hideErrorMessage) !== null && _b !== void 0 ? _b : false;
         const showErrorMessage = !hideErrorMessageValue;
@@ -5615,9 +5716,10 @@ class BoldBI {
             else if (errorMsg && typeof errorMsg.message === 'string') {
                 errorMsg = errorMsg.message.replace(/^BoldBI Embedded:\s*/, '');
             }
+            const customBrand = ((_e = (_d = (_c = this.embedOptions) === null || _c === void 0 ? void 0 : _c.settings) === null || _d === void 0 ? void 0 : _d.brand) === null || _e === void 0 ? void 0 : _e.name) ? this.embedOptions.settings.brand.name : 'BoldBI Embedded';
             this._removeElementsClass(embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
             if (showErrorMessage) {
-                const errorMessage = '<div id="embedded-bi-error" style="display:table;height:100%;width:100%;"><div style="display: table-cell;vertical-align: middle;text-align: center;"><div style="display: inline-block;"><img src=' + this.errorImage + ' style="float: left"/><div style="float: left;margin-left: 10px;line-height: 20px;">BoldBI Embedded: ' + errorMsg + '</div></div>';
+                const errorMessage = '<div id="embedded-bi-error" style="display:table;height:100%;width:100%;"><div style="display: table-cell;vertical-align: middle;text-align: center;"><div style="display: inline-block;"><img src=' + this.errorImage + ' style="float: left"/><div style="float: left;margin-left: 10px;line-height: 20px;">' + customBrand + ':' + errorMsg + '</div></div>';
                 const container = document.getElementById(embedContainerId);
                 if (container) {
                     container.innerHTML = errorMessage;
@@ -5630,7 +5732,7 @@ class BoldBI {
             }
         }
         if (!this._isNullOrUndefined(this.embedOptions.events.onError) && this.embedOptions.events.onError != '') {
-            const errormessage = new Error(embeddingLocalization_1.errorMessages['BoldBIEmbedded'] + errorMsg);
+            const errormessage = ((_h = (_g = (_f = this.embedOptions) === null || _f === void 0 ? void 0 : _f.settings) === null || _g === void 0 ? void 0 : _g.brand) === null || _h === void 0 ? void 0 : _h.name) ? new Error(this.embedOptions.settings.brand.name + ':' + errorMsg) : new Error(embeddingLocalization_1.errorMessages['BoldBIEmbedded'] + errorMsg);
             this.onErrorClient(errormessage);
         }
         else {
@@ -5963,7 +6065,7 @@ class BoldBI {
         });
     }
     _validatetoken(token) {
-        const tokenToValidate = token || this.embedOptions.token;
+        const tokenToValidate = token || this.authToken;
         const isJWTToken = this._isJwtFormat(tokenToValidate);
         return isJWTToken ? `bearer ${tokenToValidate}` : `basic ${tokenToValidate}`;
     }

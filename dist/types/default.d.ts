@@ -2,6 +2,7 @@ export declare const DefaultConstructor: {
     IsDependencyLoaded: boolean;
     deprecated: boolean;
     bingMapRequired: boolean;
+    azureMapRequired: boolean;
     disableAutoRecover: boolean;
     restrictMobileView: boolean;
     rootUrl: string;
@@ -13,6 +14,7 @@ export declare const DefaultConstructor: {
     scheduleEndpointUrl: string;
     childContainer: string;
     cdnLink: string;
+    liveHelpLink: string;
     maskedCdnUrl: string;
     beforeSaveViewDialogOpenFn: string;
     beforeSaveAsViewDialogOpenFn: string;
@@ -49,6 +51,7 @@ export declare const DefaultConstructor: {
     dashboardDetails: {};
     pinboardDetails: any[];
     accessToken: string;
+    authToken: string;
     homepageItemId: string;
     isVirtualHomepage: boolean;
     dashboardUrl: string;
@@ -100,6 +103,8 @@ export declare const DefaultConstructor: {
     ejDesignerDependentFiles: string[];
     designerScriptFiles: string[];
     cssFiles: string[];
+    AICssFiles: string[];
+    AIScriptFiles: string[];
     designerCssFiles: string[];
     applicationThemeCssFiles: string[];
     dashboardThemeCssFiles: string[];
@@ -141,6 +146,7 @@ export declare const DefaultConstructor: {
         };
         settings: {
             bingMapRequired: boolean;
+            azureMapRequired: boolean;
             hideErrorMessage: boolean;
             restrictMobileView: boolean;
             disableAutoRecover: boolean;
@@ -262,8 +268,21 @@ export declare const DefaultConstructor: {
                 enabled: boolean;
                 position: string;
                 name: string;
-                hideUsageAnalytics: boolean;
-                hideChatHelp: boolean;
+                hideBetaTag: boolean;
+                headerTextColor: string;
+                hideLogo: boolean;
+                hideIcons: {
+                    history: boolean;
+                    usageAnalytics: boolean;
+                    helpLink: boolean;
+                    newSession: boolean;
+                };
+                hideWelcomeNote: boolean;
+                hideDashboardTag: boolean;
+                hideDatasourceTag: boolean;
+                queryDisplayLimit: number;
+                dashboards: any[];
+                dataSources: any[];
                 summary: {
                     enabled: boolean;
                     widget: boolean;
