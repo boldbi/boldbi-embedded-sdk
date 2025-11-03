@@ -89,7 +89,10 @@ exports.errorMessages = {
     'UnableDraftWithEmbedToken': 'Draft dashboards is not supported when using the embed token.',
     'NotRenderDesignerForAnonymousUser': 'Anonymous users are not allowed to design dashboards',
     'InvalidWidgetID': 'The provided Widget Id appears to be a GUID but is not in a valid format.Please provide valid widget Id',
-    'EmptyDbrdOrViewIDForToken': 'Dashboard ID and view ID cannot be empty.'
+    'EmptyDbrdOrViewIDForToken': 'Dashboard ID and view ID cannot be empty.',
+    'NullResponse': 'No response was received from the authorization server or token endpoint.',
+    'InvalidResponse': 'An invalid response was received from the authorization server or the token endpoint.',
+    'AIAgentInitializationFailed': 'The essential file BoldBIAI could not be loaded. Please check the browsers developer console for network errors and ensure all required AI agent dependencies are correctly included and accessible.',
 };
 exports.successMessages = {
     'UpdateFilterViewMsg': 'and you can add custom functionalities using viewId:',

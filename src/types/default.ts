@@ -4,6 +4,7 @@ export const DefaultConstructor = {
     IsDependencyLoaded: false,
     deprecated: true,
     bingMapRequired: false,
+    azureMapRequired: false,
     disableAutoRecover: false,
     restrictMobileView: false,
     rootUrl: '',
@@ -15,6 +16,7 @@ export const DefaultConstructor = {
     scheduleEndpointUrl: '',
     childContainer: '',
     cdnLink: '',
+    liveHelpLink: 'https://help.boldbi.com/embedding-options/embedding-sdk/',
     maskedCdnUrl: 'https://cdn.boldbi.com/resources/v',
     beforeSaveViewDialogOpenFn: 'beforeSaveViewDialogRendered',
     beforeSaveAsViewDialogOpenFn: 'beforeSaveAsViewDialogRendered',
@@ -51,6 +53,7 @@ export const DefaultConstructor = {
     dashboardDetails: {},
     pinboardDetails: [],
     accessToken: '',
+    authToken:'',
     homepageItemId: '',
     isVirtualHomepage: false,
     dashboardUrl: '',
@@ -64,7 +67,7 @@ export const DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '13.2',
+    embedSDKWrapperVersion: '14.1',
     tokenResponse: {
         dashboardVersion: '0',
         draftItemID: '',
@@ -122,6 +125,19 @@ export const DefaultConstructor = {
         'ej.designerwidgets.all.min.css',
         'ej.dashboarddesigner.min.css'
     ],
+    AICssFiles: [
+        'dashboard-designer.min.css',
+        'dashboard-viewer-bundle.min.css'
+    ],
+    AIScriptFiles: [
+        'designerlocalization.js',
+        'ej1.web.all.min.js',
+        'ej2.web.all.min.js',
+        'dashboard-designer-dependency.min.js',
+        'bbi-unifiedaiagent.min.js',
+    ],
+
+    
     designerCssFiles: ['ej.codemirror.min.css'],
     applicationThemeCssFiles: [
         'boldbi.theme.definition.min.css',
@@ -166,6 +182,7 @@ export const DefaultConstructor = {
         },
         settings: {
             bingMapRequired: false,
+            azureMapRequired: false,
             hideErrorMessage: false,
             restrictMobileView: false,
             disableAutoRecover: false,
@@ -287,8 +304,21 @@ export const DefaultConstructor = {
                 enabled: false,
                 position: 'bottom',
                 name: '',
-                hideUsageAnalytics: false,
-                hideChatHelp: false,
+                hideBetaTag: false,                    
+                headerTextColor: '', 
+                hideLogo: false, 
+                hideIcons: { 
+                    history: false, 
+                    usageAnalytics: false,
+                    helpLink: false,
+                    newSession: false
+                },
+                hideWelcomeNote: false,
+                hideDashboardTag: false,
+                hideDatasourceTag: false, 
+                queryDisplayLimit: 6, 
+                dashboards:[],
+                dataSources:[],
                 summary: {
                     enabled: false,
                     widget: false,

@@ -67,6 +67,7 @@ export declare class BoldBI {
     dashboardDetails: any;
     pinboardDetails: any;
     accessToken: string;
+    authToken: string;
     homepageItemId: string;
     isVirtualHomepage: boolean;
     dashboardUrl: string;
@@ -79,6 +80,8 @@ export declare class BoldBI {
     isMultipleWidgetMode: boolean;
     invalidDetail: boolean;
     fontFamilyCssFiles: Array<string>;
+    AIScriptFiles: Array<string>;
+    AICssFiles: Array<string>;
     isDefaultView: boolean;
     embedSDKWrapperVersion: string;
     isDashboardRendering: boolean;
@@ -99,6 +102,7 @@ export declare class BoldBI {
         readonly Design: "design";
         readonly Connection: "connection";
         readonly DataSource: "datasource";
+        readonly AIAssistant: "aiassistant";
     };
     static EmbedType: {
         readonly Component: "component";
@@ -121,6 +125,7 @@ export declare class BoldBI {
     loadView: any;
     loadDashboardWidget: any;
     loadMultipleWidgets: any;
+    loadAIAssistant: any;
     loadWidgets: any;
     loadWidget: any;
     loadDesigner: any;
@@ -134,6 +139,7 @@ export declare class BoldBI {
     deleteFilterView: any;
     loadMultipleWidget: boolean;
     constructor(config?: Partial<typeof DefaultConstructor>);
+    private _loadAIAssistant;
     private _loadDashboard;
     private _loadMultitabDashboard;
     private _loadView;
@@ -334,6 +340,7 @@ export declare class BoldBI {
     _getCloudLinks(): any;
     _loadDepedentFiles(): any;
     _loadBingmapDependentFiles(): any;
+    _loadAzureMapDependentFiles(): any;
     _loadDependentDesignerFiles(that: BoldBI): any;
     _addWrapperDependentFiles(obj: BoldBI, fileUriArray: Array<string>): any;
     _addedDependentFiles(that: BoldBI, fileUriArray: Array<string>, isCSS: boolean): any;
@@ -370,6 +377,7 @@ export declare class BoldBI {
     _renderMultiTabDashboard: any;
     _tabSelected(): any;
     _handleTabSelected(containerName: any, i: any): any;
+    _isAIDepdencyLoaded(that: BoldBI): any;
     _isDependencyLoaded(that: BoldBI, dashboardId?: string): any;
     checkCompatibility(): any;
     validateServerAndWrapperVersion(): any;

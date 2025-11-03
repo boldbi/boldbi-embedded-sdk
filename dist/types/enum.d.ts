@@ -3,6 +3,7 @@ export declare const Mode: {
     readonly Design: "design";
     readonly Connection: "connection";
     readonly DataSource: "datasource";
+    readonly AIAssistant: "aiassistant";
 };
 export type Mode = typeof Mode[keyof typeof Mode];
 export declare const EmbedType: {

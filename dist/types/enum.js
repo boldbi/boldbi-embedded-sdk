@@ -6,6 +6,7 @@ exports.Mode = {
     Design: "design",
     Connection: "connection",
     DataSource: "datasource",
+    AIAssistant: "aiassistant"
 };
 exports.EmbedType = {
     Component: "component",

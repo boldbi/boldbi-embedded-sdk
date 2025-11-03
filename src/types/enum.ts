@@ -3,6 +3,7 @@ export const Mode = {
     Design: "design",
     Connection: "connection",
     DataSource: "datasource",
+    AIAssistant: "aiassistant"
   } as const;
   export type Mode = typeof Mode[keyof typeof Mode];
   
