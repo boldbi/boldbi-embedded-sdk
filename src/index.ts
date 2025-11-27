@@ -744,8 +744,10 @@ export class BoldBI {
             document.addEventListener('fullscreenchange', function (): any { boldBIObj._fullscreenExitHandler(boldBIObj); }, false);
             document.addEventListener('MSFullscreenChange', function (): any { boldBIObj._fullscreenExitHandler(boldBIObj); }, false);
             window.addEventListener('resize', function (): any {
-                boldBIObj.deprecated = false;
-                boldBIObj.resizeDashboard();
+                if (!boldBIObj._isNullOrUndefined(bbEmbed)) {
+                    boldBIObj.deprecated = false;
+                    boldBIObj.resizeDashboard();
+                }
                 if (!boldBIObj._isEmptyOrSpaces(boldBIObj.embedOptions.pinboardName) || !boldBIObj._isNullOrUndefined(boldBIObj.embedOptions.pinboardName) && !boldBIObj._isNullOrUndefined(bbEmbed)) {
                     boldBIObj.setListMinimumHeight();
                 }
@@ -2746,7 +2748,8 @@ export class BoldBI {
                             hideSampleDataSources: typeof this.embedOptions.dashboardSettings?.dataSourceConfig?.hideSampleDataSources === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideSampleDataSources : this.embedOptions.settings?.designer?.dataSourceConfig?.hideSampleDataSources ?? false,
                             hideDataSourceList: typeof this.embedOptions.dashboardSettings?.dataSourceConfig?.hideDataSourceList === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceList : this.embedOptions.settings?.designer?.dataSourceConfig?.hideDataSourceList ?? false,
                             hideExpression: typeof this.embedOptions.dashboardSettings?.dataSourceConfig?.hideExpression === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideExpression : this.embedOptions.settings?.designer?.dataSourceConfig?.hideExpression ?? false
-                        }
+                        },
+                        hidePropertySettingIcon: this.embedOptions.settings?.designer?.hideSettings
                     };
                     dashboardOptions.userSettings = {
                         hidePreviewAs: typeof this.embedOptions.dashboardSettings?.showPreviewAs === 'boolean' ? !this.embedOptions.dashboardSettings.showPreviewAs : !(this.embedOptions.settings?.designer?.previewAs ?? true)
@@ -2806,7 +2809,6 @@ export class BoldBI {
                 }
 
                 if (!this.loadMultipleWidget && ((this.embedOptions.embedAiAssistant?.enabled || this.embedOptions.settings?.aiAssistant?.enabled)) || this.embedOptions.mode == BoldBI.Mode.AIAssistant){
-                    dashboardOptions.isAiSummariesEnabledGlobally = typeof this.embedOptions.embedAiAssistant?.summary?.enabled === 'boolean' ? this.embedOptions.embedAiAssistant?.summary?.enabled : this.embedOptions.settings?.aiAssistant?.summary?.enabled ?? false;
                     dashboardOptions.embedAiAssistant = {
                         enableAiAssistant: true,
                         aiAssistantPosition: !this._isEmptyOrSpaces(this.embedOptions?.embedAiAssistant?.position) ? this.embedOptions.embedAiAssistant.position : !this._isEmptyOrSpaces(this.embedOptions?.settings?.aiAssistant?.position) ? this.embedOptions.settings.aiAssistant.position : 'bottom',
@@ -2824,7 +2826,7 @@ export class BoldBI {
                         datasourceId: Array.isArray(this.embedOptions.settings?.aiAssistant?.dataSources) && this.embedOptions.settings?.aiAssistant?.dataSources.length > 0 ? this.embedOptions.settings.aiAssistant.dataSources : [],
                         suggestionCount: typeof this.embedOptions.settings?.aiAssistant?.queryDisplayLimit === 'number' ? this.embedOptions.settings.aiAssistant.queryDisplayLimit : 6,
                         customizedAITitle: !this._isEmptyOrSpaces(this.embedOptions.embedAiAssistant.name) ? this.embedOptions.embedAiAssistant.name : this.embedOptions.settings?.aiAssistant?.name ?? '',
-                        summarization: {},
+                        customizedUserName: this.embedOptions.settings?.aiAssistant?.userName ?? '',
                     };
                     if(this.embedOptions.mode == BoldBI.Mode.AIAssistant){
                         dashboardOptions.customBrandSettings ={
@@ -2832,10 +2834,14 @@ export class BoldBI {
                             hideHelpLink: typeof this.embedOptions.settings?.aiAssistant?.hideIcons?.helpLink === 'boolean' ? this.embedOptions.settings?.aiAssistant.hideIcons?.helpLink : false,
                         }
                     }
-                    if (dashboardOptions.isAiSummariesEnabledGlobally) {
-                        dashboardOptions.embedAiAssistant.summarization.enableWidgetSummary = typeof this.embedOptions.embedAiAssistant?.summary?.includeWidgetSummary === 'boolean' ? this.embedOptions.embedAiAssistant?.summary?.includeWidgetSummary : this.embedOptions.settings.aiAssistant?.summary?.widget ?? false;
-                        dashboardOptions.embedAiAssistant.summarization.enableDashboardSummary = typeof this.embedOptions.embedAiAssistant?.summary?.includeDashboardSummary === 'boolean' ? this.embedOptions.embedAiAssistant?.summary?.includeDashboardSummary : this.embedOptions.settings?.aiAssistant?.summary?.dashboard ?? false;
-                    }
+                    
+                }
+                dashboardOptions.isAiSummariesEnabledGlobally = typeof this.embedOptions.embedAiAssistant?.summary?.enabled === 'boolean' ? this.embedOptions.embedAiAssistant?.summary?.enabled : this.embedOptions.settings?.aiAssistant?.summary?.enabled ?? false;
+                if (dashboardOptions.isAiSummariesEnabledGlobally) {
+                    dashboardOptions.embedAiAssistant = dashboardOptions.embedAiAssistant || {};
+                    dashboardOptions.embedAiAssistant.summarization = dashboardOptions.embedAiAssistant.summarization || {};
+                    dashboardOptions.embedAiAssistant.summarization.enableWidgetSummary = typeof this.embedOptions.embedAiAssistant?.summary?.includeWidgetSummary === 'boolean' ? this.embedOptions.embedAiAssistant?.summary?.includeWidgetSummary : this.embedOptions.settings.aiAssistant?.summary?.widget ?? false;
+                    dashboardOptions.embedAiAssistant.summarization.enableDashboardSummary = typeof this.embedOptions.embedAiAssistant?.summary?.includeDashboardSummary === 'boolean' ? this.embedOptions.embedAiAssistant?.summary?.includeDashboardSummary : this.embedOptions.settings?.aiAssistant?.summary?.dashboard ?? false;
                 }
 
                 if (that.embedOptions.mode == BoldBI.Mode.AIAssistant) {
@@ -3738,7 +3744,7 @@ export class BoldBI {
         const embedContainer: any = bbEmbed('#' + that.embedOptions.embedContainerId);
         embedContainer.html('');
         if (typeof ejdashboard !== 'undefined' && ejdashboard.base && typeof ejdashboard.base.registerLicense === 'function') {
-            ejdashboard.base.registerLicense('ORg4AjUWIQA/Gnt2XVhhQlBPd11dXmJWd1p/THNYflR1fV9DaUwxOX1dQl9nSH5TdUVlXHpac3VQQ2g=');
+            ejdashboard.base.registerLicense('Ngo9BigBOggjGyl/Vkd+XU9FfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH9Td0BiXH9ecnVWTmFfWkd3');
         }
         const parentContainerName: any = that.embedOptions.embedContainerId + '_parent_multi_tab_dashboard';
         const multitabParentContainer: any = bbEmbed('<div id="' + parentContainerName + '" class="bi-dashboard parent-multitab-dbrd" style="height: 100% !important"></div>');
@@ -3844,7 +3850,7 @@ export class BoldBI {
     }
 
     _isAIDepdencyLoaded(that: BoldBI): any {
-        if (that.embedOptions.mode == BoldBI.Mode.AIAssistant && typeof window.BoldBIAI !== 'undefined' && window.BoldBIAI.UnifiedAIAgent) {
+        if (that.embedOptions.mode == BoldBI.Mode.AIAssistant && window.bbEmbed instanceof Function && typeof window.BoldBIAI !== 'undefined' && window.BoldBIAI.UnifiedAIAgent) {
             if (that.embedOptions.token || that.embedOptions.embedToken) {
                 that.tokenResponse = {
                     ItemDetail: {
@@ -3877,7 +3883,7 @@ export class BoldBI {
 
             if (that.embedOptions.token || that.embedOptions.embedToken) {
                 that.authToken = that.embedOptions.token ? that.embedOptions.token : that.embedOptions.embedToken;
-                if (that.embedOptions.token && that.embedOptions.isPublicDashboard || (that.embedOptions.embedToken && that.embedOptions.mode != BoldBI.Mode.Design && !that.embedOptions.isMultiTabDashboard && !that.widgetName && !that.embedOptions.viewId && !that.embedOptions.pinboardName && !that.editIgnore)) {
+                if (that.embedOptions.token && that.embedOptions.isPublicDashboard || (that.embedOptions.embedToken && that.embedOptions.mode != BoldBI.Mode.Design && that.embedOptions.mode != BoldBI.Mode.Connection && that.embedOptions.mode != BoldBI.Mode.DataSource && !that.embedOptions.isMultiTabDashboard && !that.widgetName && !that.embedOptions.viewId && !that.embedOptions.pinboardName && !that.editIgnore)) {
                     that.tokenResponse = {
                         dashboardVersion: that.embedOptions.customDashboardVersion,
                         ItemDetail: {
@@ -5035,7 +5041,7 @@ export class BoldBI {
                 contentType: 'application/json',
                 success: function (result: { Status: boolean }): any {
                     if (result.Status) {
-                        this.deprecated = false;
+                        that.deprecated = false;
                         that.getComments('dashboard', arg, callBackFn);
                     }
                 },
@@ -5098,7 +5104,7 @@ export class BoldBI {
                 contentType: 'application/json',
                 success: function (result: { Status: boolean }): any {
                     if (result.Status) {
-                        this.deprecated = false;
+                        that.deprecated = false;
                         that.getComments('widget', arg, callBackFn);
                     }
                 },
@@ -5155,7 +5161,7 @@ export class BoldBI {
                 contentType: 'application/json',
                 success: function (result: { Status: boolean }): any {
                     if (result.Status) {
-                        this.deprecated = false;
+                        that.deprecated = false;
                         that.getComments('dashboard', arg, callBackFn);
                     }
                 },
@@ -5211,7 +5217,7 @@ export class BoldBI {
                 contentType: 'application/json',
                 success: function (result: { Status: boolean }): any {
                     if (result.Status) {
-                        this.deprecated = false;
+                        that.deprecated = false;
                         that.getComments('widget', arg, callBackFn);
                     }
                 },
@@ -5267,7 +5273,7 @@ export class BoldBI {
                 contentType: 'application/json',
                 success: function (result: { Status: boolean }): any {
                     if (result.Status) {
-                        this.deprecated = false;
+                        that.deprecated = false;
                         that.getComments('dashboard', arg, callBackFn);
                     }
                 },
@@ -5330,7 +5336,7 @@ export class BoldBI {
                 success: function (result: { Status: boolean, StatusMessage: string }): any {
                     if (result.Status) {
                         that.commentsArgs['StatusMessage'] = result.StatusMessage;
-                        this.deprecated = false;
+                        that.deprecated = false;
                         that.getComments('widget', arg, callBackFn);
                     }
                 },
@@ -6385,9 +6391,7 @@ export class BoldBI {
 
     applyStyles(): any {
         this.deprecated = false;
-        this.addStyles();
-        
-
+        this.addStyles();   
     }
 
     addStyles(): any {

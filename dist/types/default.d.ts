@@ -185,6 +185,7 @@ export declare const DefaultConstructor: {
             };
             designer: {
                 previewAs: boolean;
+                hideSettings: boolean;
                 widgetsPanel: {
                     hideDefaultWidgets: boolean;
                     hideExistingWidgets: boolean;
@@ -283,6 +284,7 @@ export declare const DefaultConstructor: {
                 queryDisplayLimit: number;
                 dashboards: any[];
                 dataSources: any[];
+                userName: string;
                 summary: {
                     enabled: boolean;
                     widget: boolean;

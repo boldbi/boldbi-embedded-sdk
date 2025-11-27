@@ -69,7 +69,7 @@ exports.DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '14.1',
+    embedSDKWrapperVersion: '14.2',
     tokenResponse: {
         dashboardVersion: '0',
         draftItemID: '',
@@ -221,6 +221,7 @@ exports.DefaultConstructor = {
             },
             designer: {
                 previewAs: true,
+                hideSettings: false,
                 widgetsPanel: {
                     hideDefaultWidgets: false,
                     hideExistingWidgets: false,
@@ -319,6 +320,7 @@ exports.DefaultConstructor = {
                 queryDisplayLimit: 6,
                 dashboards: [],
                 dataSources: [],
+                userName: '',
                 summary: {
                     enabled: false,
                     widget: false,
