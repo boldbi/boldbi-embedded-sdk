@@ -20,4 +20,5 @@ export interface IEmbedAiAssistant {
     queryDisplayLimit?: Number, 
     dashboards?:[],
     dataSources?:[],
+    userName?: string
 }
