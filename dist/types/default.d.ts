@@ -128,6 +128,7 @@ export declare const DefaultConstructor: {
         isMultiTabDashboard: boolean;
         mode: "view";
         restrictMobileView: boolean;
+        dashboardDetailList: string;
         localData: {
             loadFromData: boolean;
             layoutData: any;

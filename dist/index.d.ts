@@ -413,6 +413,7 @@ export declare class BoldBI {
     _getParametersFromQueryString(queryString: string): any;
     _onBoldBIDashboardSaveAsFilter(arg: any): any;
     _onBoldBIDashboardOpenViewSection(arg: any): any;
+    _onGetLinkedDashboardDetails(args: any): any;
     _onBoldBIDashboardBannerIconClick(arg: {
         name: string;
         selectedTheme: string;

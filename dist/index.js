@@ -304,7 +304,7 @@ class BoldBI {
             }
         });
         this._renderDashboard = this.Invoke(function (responseInfo) {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, _61, _62, _63, _64, _65, _66, _67, _68, _69, _70, _71, _72, _73, _74, _75, _76, _77, _78, _79, _80, _81, _82, _83, _84, _85, _86, _87, _88, _89, _90, _91, _92, _93, _94, _95, _96, _97, _98, _99, _100, _101, _102, _103, _104, _105, _106, _107, _108, _109, _110, _111, _112, _113, _114, _115, _116, _117, _118, _119, _120, _121, _122, _123, _124, _125, _126, _127, _128, _129, _130, _131, _132, _133, _134, _135, _136, _137, _138, _139, _140, _141, _142, _143, _144, _145, _146, _147, _148, _149, _150, _151, _152, _153, _154, _155, _156, _157, _158, _159, _160, _161, _162, _163, _164, _165, _166, _167, _168, _169, _170, _171, _172, _173, _174, _175, _176, _177, _178, _179, _180, _181, _182, _183, _184, _185, _186, _187, _188, _189, _190, _191, _192, _193, _194, _195, _196, _197, _198, _199, _200, _201, _202, _203, _204, _205, _206, _207, _208, _209, _210, _211, _212, _213, _214, _215, _216, _217, _218, _219, _220, _221, _222, _223, _224, _225, _226, _227, _228, _229, _230, _231, _232, _233, _234, _235, _236, _237, _238, _239, _240, _241, _242, _243, _244, _245, _246, _247, _248, _249, _250, _251, _252, _253, _254, _255, _256, _257, _258, _259, _260, _261, _262, _263, _264, _265, _266, _267, _268, _269, _270, _271, _272, _273, _274, _275, _276, _277, _278, _279, _280, _281, _282, _283, _284, _285, _286, _287, _288, _289, _290, _291, _292, _293, _294, _295, _296, _297, _298, _299, _300, _301, _302, _303, _304, _305, _306, _307, _308, _309, _310, _311, _312, _313, _314, _315, _316, _317, _318, _319, _320, _321, _322, _323, _324, _325, _326, _327, _328, _329, _330, _331, _332, _333, _334, _335, _336, _337, _338, _339, _340, _341, _342, _343, _344, _345, _346, _347, _348, _349, _350;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, _61, _62, _63, _64, _65, _66, _67, _68, _69, _70, _71, _72, _73, _74, _75, _76, _77, _78, _79, _80, _81, _82, _83, _84, _85, _86, _87, _88, _89, _90, _91, _92, _93, _94, _95, _96, _97, _98, _99, _100, _101, _102, _103, _104, _105, _106, _107, _108, _109, _110, _111, _112, _113, _114, _115, _116, _117, _118, _119, _120, _121, _122, _123, _124, _125, _126, _127, _128, _129, _130, _131, _132, _133, _134, _135, _136, _137, _138, _139, _140, _141, _142, _143, _144, _145, _146, _147, _148, _149, _150, _151, _152, _153, _154, _155, _156, _157, _158, _159, _160, _161, _162, _163, _164, _165, _166, _167, _168, _169, _170, _171, _172, _173, _174, _175, _176, _177, _178, _179, _180, _181, _182, _183, _184, _185, _186, _187, _188, _189, _190, _191, _192, _193, _194, _195, _196, _197, _198, _199, _200, _201, _202, _203, _204, _205, _206, _207, _208, _209, _210, _211, _212, _213, _214, _215, _216, _217, _218, _219, _220, _221, _222, _223, _224, _225, _226, _227, _228, _229, _230, _231, _232, _233, _234, _235, _236, _237, _238, _239, _240, _241, _242, _243, _244, _245, _246, _247, _248, _249, _250, _251, _252, _253, _254, _255, _256, _257, _258, _259, _260, _261, _262, _263, _264, _265, _266, _267, _268, _269, _270, _271, _272, _273, _274, _275, _276, _277, _278, _279, _280, _281, _282, _283, _284, _285, _286, _287, _288, _289, _290, _291, _292, _293, _294, _295, _296, _297, _298, _299, _300, _301, _302, _303, _304, _305, _306, _307, _308, _309, _310, _311, _312, _313, _314, _315, _316, _317, _318, _319, _320, _321, _322, _323, _324, _325, _326, _327, _328, _329, _330, _331, _332, _333, _334, _335, _336, _337, _338, _339, _340, _341, _342, _343, _344, _345, _346, _347, _348, _349, _350, _351, _352, _353, _354, _355, _356, _357, _358, _359, _360, _361, _362, _363, _364, _365, _366, _367, _368, _369, _370, _371, _372, _373, _374, _375, _376, _377, _378;
             const that = this;
             const parameter = '';
             if (responseInfo == null) {
@@ -580,6 +580,9 @@ class BoldBI {
                         onBannerIconClick: function (arg) {
                             that._onBoldBIDashboardBannerIconClick(arg);
                         },
+                        getModelDataForDashboard: function (arg) {
+                            that._onGetLinkedDashboardDetails(arg);
+                        },
                         beforeWidgetIconRendered: function (arg) {
                             that._onBoldBIDashboardBeforeWidgetIconRendered(arg);
                         },
@@ -693,6 +696,10 @@ class BoldBI {
                     if (this.embedOptions.mode == BoldBI.Mode.Design) {
                         if ((this.authToken && !this.embedOptions.dashboardId) || (!this.authToken && !this.embedOptions.enableDomainMasking && !this._isNullOrUndefined(embedResponse) && embedResponse.ItemDetail.IsDraft)) {
                             dashboardOptions.dashboardPath = '';
+                            if (typeof this.embedOptions.datasourceId === 'string' &&
+                                !this._isEmptyOrSpaces(this.embedOptions.datasourceId)) {
+                                dashboardOptions.datasource = this.embedOptions.datasourceId;
+                            }
                         }
                         const datasourceId = !this._isNullOrUndefined(embedResponse) && !this.embedOptions.enableDomainMasking && !this._isEmptyOrSpaces(embedResponse.DatasourceId) ? embedResponse.DatasourceId : '';
                         if (!this._isEmptyOrSpaces(datasourceId)) {
@@ -827,17 +834,33 @@ class BoldBI {
                             suggestionCount: typeof ((_313 = (_312 = this.embedOptions.settings) === null || _312 === void 0 ? void 0 : _312.aiAssistant) === null || _313 === void 0 ? void 0 : _313.queryDisplayLimit) === 'number' ? this.embedOptions.settings.aiAssistant.queryDisplayLimit : 6,
                             customizedAITitle: !this._isEmptyOrSpaces(this.embedOptions.embedAiAssistant.name) ? this.embedOptions.embedAiAssistant.name : (_316 = (_315 = (_314 = this.embedOptions.settings) === null || _314 === void 0 ? void 0 : _314.aiAssistant) === null || _315 === void 0 ? void 0 : _315.name) !== null && _316 !== void 0 ? _316 : '',
                             customizedUserName: (_319 = (_318 = (_317 = this.embedOptions.settings) === null || _317 === void 0 ? void 0 : _317.aiAssistant) === null || _318 === void 0 ? void 0 : _318.userName) !== null && _319 !== void 0 ? _319 : '',
+                            aiAssistantCustomPrompt: {
+                                welcomeMessage: (_322 = (_321 = (_320 = this.embedOptions.settings) === null || _320 === void 0 ? void 0 : _320.aiAssistant) === null || _321 === void 0 ? void 0 : _321.welcomeMessage) !== null && _322 !== void 0 ? _322 : '',
+                                exploreMessage: (_325 = (_324 = (_323 = this.embedOptions.settings) === null || _323 === void 0 ? void 0 : _323.aiAssistant) === null || _324 === void 0 ? void 0 : _324.exploreMessage) !== null && _325 !== void 0 ? _325 : '',
+                            },
+                            dashboardAiAssistantCustomPrompt: {
+                                welcomeMessage: (_328 = (_327 = (_326 = this.embedOptions.settings) === null || _326 === void 0 ? void 0 : _326.aiAssistant) === null || _327 === void 0 ? void 0 : _327.welcomeMessage) !== null && _328 !== void 0 ? _328 : '',
+                                exploreMessage: (_331 = (_330 = (_329 = this.embedOptions.settings) === null || _329 === void 0 ? void 0 : _329.aiAssistant) === null || _330 === void 0 ? void 0 : _330.exploreMessage) !== null && _331 !== void 0 ? _331 : '',
+                                widgetSuggestions: {
+                                    title: (_335 = (_334 = (_333 = (_332 = this.embedOptions.settings) === null || _332 === void 0 ? void 0 : _332.aiAssistant) === null || _333 === void 0 ? void 0 : _333.widgetSuggestions) === null || _334 === void 0 ? void 0 : _334.title) !== null && _335 !== void 0 ? _335 : '',
+                                    suggestionPrompt: (_339 = (_338 = (_337 = (_336 = this.embedOptions.settings) === null || _336 === void 0 ? void 0 : _336.aiAssistant) === null || _337 === void 0 ? void 0 : _337.widgetSuggestions) === null || _338 === void 0 ? void 0 : _338.prompt) !== null && _339 !== void 0 ? _339 : ''
+                                },
+                                dashboardSuggestions: {
+                                    title: (_343 = (_342 = (_341 = (_340 = this.embedOptions.settings) === null || _340 === void 0 ? void 0 : _340.aiAssistant) === null || _341 === void 0 ? void 0 : _341.dashboardSuggestions) === null || _342 === void 0 ? void 0 : _342.title) !== null && _343 !== void 0 ? _343 : '',
+                                    suggestionPrompt: (_347 = (_346 = (_345 = (_344 = this.embedOptions.settings) === null || _344 === void 0 ? void 0 : _344.aiAssistant) === null || _345 === void 0 ? void 0 : _345.dashboardSuggestions) === null || _346 === void 0 ? void 0 : _346.prompt) !== null && _347 !== void 0 ? _347 : ''
+                                }
+                            }
                         };
                         if (this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
-                            dashboardOptions.customBrandSettings = Object.assign(Object.assign({}, dashboardOptions.customBrandSettings), { hideHelpLink: typeof ((_322 = (_321 = (_320 = this.embedOptions.settings) === null || _320 === void 0 ? void 0 : _320.aiAssistant) === null || _321 === void 0 ? void 0 : _321.hideIcons) === null || _322 === void 0 ? void 0 : _322.helpLink) === 'boolean' ? (_324 = (_323 = this.embedOptions.settings) === null || _323 === void 0 ? void 0 : _323.aiAssistant.hideIcons) === null || _324 === void 0 ? void 0 : _324.helpLink : false });
+                            dashboardOptions.customBrandSettings = Object.assign(Object.assign({}, dashboardOptions.customBrandSettings), { hideHelpLink: typeof ((_350 = (_349 = (_348 = this.embedOptions.settings) === null || _348 === void 0 ? void 0 : _348.aiAssistant) === null || _349 === void 0 ? void 0 : _349.hideIcons) === null || _350 === void 0 ? void 0 : _350.helpLink) === 'boolean' ? (_352 = (_351 = this.embedOptions.settings) === null || _351 === void 0 ? void 0 : _351.aiAssistant.hideIcons) === null || _352 === void 0 ? void 0 : _352.helpLink : false });
                         }
                     }
-                    dashboardOptions.isAiSummariesEnabledGlobally = typeof ((_326 = (_325 = this.embedOptions.embedAiAssistant) === null || _325 === void 0 ? void 0 : _325.summary) === null || _326 === void 0 ? void 0 : _326.enabled) === 'boolean' ? (_328 = (_327 = this.embedOptions.embedAiAssistant) === null || _327 === void 0 ? void 0 : _327.summary) === null || _328 === void 0 ? void 0 : _328.enabled : (_332 = (_331 = (_330 = (_329 = this.embedOptions.settings) === null || _329 === void 0 ? void 0 : _329.aiAssistant) === null || _330 === void 0 ? void 0 : _330.summary) === null || _331 === void 0 ? void 0 : _331.enabled) !== null && _332 !== void 0 ? _332 : false;
+                    dashboardOptions.isAiSummariesEnabledGlobally = typeof ((_354 = (_353 = this.embedOptions.embedAiAssistant) === null || _353 === void 0 ? void 0 : _353.summary) === null || _354 === void 0 ? void 0 : _354.enabled) === 'boolean' ? (_356 = (_355 = this.embedOptions.embedAiAssistant) === null || _355 === void 0 ? void 0 : _355.summary) === null || _356 === void 0 ? void 0 : _356.enabled : (_360 = (_359 = (_358 = (_357 = this.embedOptions.settings) === null || _357 === void 0 ? void 0 : _357.aiAssistant) === null || _358 === void 0 ? void 0 : _358.summary) === null || _359 === void 0 ? void 0 : _359.enabled) !== null && _360 !== void 0 ? _360 : false;
                     if (dashboardOptions.isAiSummariesEnabledGlobally) {
                         dashboardOptions.embedAiAssistant = dashboardOptions.embedAiAssistant || {};
                         dashboardOptions.embedAiAssistant.summarization = dashboardOptions.embedAiAssistant.summarization || {};
-                        dashboardOptions.embedAiAssistant.summarization.enableWidgetSummary = typeof ((_334 = (_333 = this.embedOptions.embedAiAssistant) === null || _333 === void 0 ? void 0 : _333.summary) === null || _334 === void 0 ? void 0 : _334.includeWidgetSummary) === 'boolean' ? (_336 = (_335 = this.embedOptions.embedAiAssistant) === null || _335 === void 0 ? void 0 : _335.summary) === null || _336 === void 0 ? void 0 : _336.includeWidgetSummary : (_339 = (_338 = (_337 = this.embedOptions.settings.aiAssistant) === null || _337 === void 0 ? void 0 : _337.summary) === null || _338 === void 0 ? void 0 : _338.widget) !== null && _339 !== void 0 ? _339 : false;
-                        dashboardOptions.embedAiAssistant.summarization.enableDashboardSummary = typeof ((_341 = (_340 = this.embedOptions.embedAiAssistant) === null || _340 === void 0 ? void 0 : _340.summary) === null || _341 === void 0 ? void 0 : _341.includeDashboardSummary) === 'boolean' ? (_343 = (_342 = this.embedOptions.embedAiAssistant) === null || _342 === void 0 ? void 0 : _342.summary) === null || _343 === void 0 ? void 0 : _343.includeDashboardSummary : (_347 = (_346 = (_345 = (_344 = this.embedOptions.settings) === null || _344 === void 0 ? void 0 : _344.aiAssistant) === null || _345 === void 0 ? void 0 : _345.summary) === null || _346 === void 0 ? void 0 : _346.dashboard) !== null && _347 !== void 0 ? _347 : false;
+                        dashboardOptions.embedAiAssistant.summarization.enableWidgetSummary = typeof ((_362 = (_361 = this.embedOptions.embedAiAssistant) === null || _361 === void 0 ? void 0 : _361.summary) === null || _362 === void 0 ? void 0 : _362.includeWidgetSummary) === 'boolean' ? (_364 = (_363 = this.embedOptions.embedAiAssistant) === null || _363 === void 0 ? void 0 : _363.summary) === null || _364 === void 0 ? void 0 : _364.includeWidgetSummary : (_367 = (_366 = (_365 = this.embedOptions.settings.aiAssistant) === null || _365 === void 0 ? void 0 : _365.summary) === null || _366 === void 0 ? void 0 : _366.widget) !== null && _367 !== void 0 ? _367 : false;
+                        dashboardOptions.embedAiAssistant.summarization.enableDashboardSummary = typeof ((_369 = (_368 = this.embedOptions.embedAiAssistant) === null || _368 === void 0 ? void 0 : _368.summary) === null || _369 === void 0 ? void 0 : _369.includeDashboardSummary) === 'boolean' ? (_371 = (_370 = this.embedOptions.embedAiAssistant) === null || _370 === void 0 ? void 0 : _370.summary) === null || _371 === void 0 ? void 0 : _371.includeDashboardSummary : (_375 = (_374 = (_373 = (_372 = this.embedOptions.settings) === null || _372 === void 0 ? void 0 : _372.aiAssistant) === null || _373 === void 0 ? void 0 : _373.summary) === null || _374 === void 0 ? void 0 : _374.dashboard) !== null && _375 !== void 0 ? _375 : false;
                     }
                     if (that.embedOptions.mode == BoldBI.Mode.AIAssistant) {
                         if (typeof window.BoldBIAI !== 'undefined' && window.BoldBIAI.UnifiedAIAgent) {
@@ -908,8 +931,8 @@ class BoldBI {
                         this._removeElementsClass(embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
                     }
                     if (this.isMultiTab && !this.embedOptions.token && !this.embedOptions.isPublicDashboard && !this.embedOptions.embedToken && embedResponse.ItemDetail.ItemViews) {
-                        const dashboardFilterSettings = (_348 = this.embedOptions.dashboardSettings) === null || _348 === void 0 ? void 0 : _348.filterOverviewSettings;
-                        const viewerFilterOverview = (_350 = (_349 = this.embedOptions.settings) === null || _349 === void 0 ? void 0 : _349.viewer) === null || _350 === void 0 ? void 0 : _350.filterOverview;
+                        const dashboardFilterSettings = (_376 = this.embedOptions.dashboardSettings) === null || _376 === void 0 ? void 0 : _376.filterOverviewSettings;
+                        const viewerFilterOverview = (_378 = (_377 = this.embedOptions.settings) === null || _377 === void 0 ? void 0 : _377.viewer) === null || _378 === void 0 ? void 0 : _378.filterOverview;
                         if (dashboardFilterSettings) {
                             dashboardFilterSettings.viewId = null;
                             dashboardFilterSettings.viewName = null;
@@ -4768,6 +4791,51 @@ class BoldBI {
         }
         if (viewSavedEvent instanceof Function) {
             viewSavedEvent.call(that, arg);
+        }
+    }
+    _onGetLinkedDashboardDetails(args) {
+        const that = this;
+        var viewerModel;
+        var argument = typeof args != "undefined" && args != null ? args : "";
+        var requestType = !this._isNullOrUndefined(argument) && typeof argument.itemType != "undefined" && argument.itemType != null ? argument.itemType : null;
+        if (!this._isNullOrUndefined(requestType)) {
+            if (requestType.toLowerCase() == "set") {
+                var dashboardRenderData = {
+                    itemIdList: args.itemCollection
+                };
+                const token = this._validatetoken(that.accessToken);
+                bbEmbed.ajax({
+                    type: "POST",
+                    url: this.dashboardServerApiUrl + "/embed/linked-dashboard-details",
+                    headers: {
+                        'Authorization': token
+                    },
+                    contentType: "application/json",
+                    data: JSON.stringify(dashboardRenderData),
+                    success: function (data) {
+                        that.embedOptions.dashboardDetailList = data.Data;
+                    }
+                });
+            }
+            else if (requestType.toLowerCase() == "get") {
+                if (!this._isNullOrUndefined(that.embedOptions.dashboardDetailList)) {
+                    var filteredDetail = that.embedOptions.dashboardDetailList.filter(item => item.Id === args.itemId);
+                    var updatedCategoryName = filteredDetail[0].CategoryName;
+                    bbEmbed("#favorite_Item").attr("data-item-id", filteredDetail[0].Id);
+                    bbEmbed("#dashboard_Comment").attr({
+                        "data-item-id": filteredDetail[0].Id,
+                        "data-category-name": updatedCategoryName,
+                        "data-item-name": filteredDetail[0].Name
+                    });
+                    bbEmbed("#isMultiDashboard").attr("data-item-id", args.itemId);
+                    viewerModel = {
+                        itemId: args.itemId,
+                        dashboardPath: args.itemId + "/" + filteredDetail[0].Version,
+                        dashboardName: filteredDetail[0].Name,
+                    };
+                    args.modelInfo = viewerModel;
+                }
+            }
         }
     }
     _onBoldBIDashboardBannerIconClick(arg) {

@@ -67,7 +67,7 @@ export const DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '14.2',
+    embedSDKWrapperVersion: '15.1',
     tokenResponse: {
         dashboardVersion: '0',
         draftItemID: '',
@@ -164,6 +164,7 @@ export const DefaultConstructor = {
         isMultiTabDashboard: false,
         mode: Mode.View,
         restrictMobileView: false,
+        dashboardDetailList:'',
         localData: {
             loadFromData: false,
             layoutData: null,

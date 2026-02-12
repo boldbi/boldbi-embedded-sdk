@@ -1,5 +1,6 @@
 import { IEmbedAiIcons } from './embed-ai-icons';
 import { IEmbedAiSummary } from './embed-ai-summary';
+import { IEmbedAiSuggestions } from './embed-ai-suggestions';
 export interface IEmbedAiAssistant {
     enabled?: boolean;
     name?: string;
@@ -20,4 +21,8 @@ export interface IEmbedAiAssistant {
     dashboards?: [];
     dataSources?: [];
     userName?: string;
+    welcomeMessage?: string;
+    exploreMessage?: string;
+    widgetSuggestions?: IEmbedAiSuggestions;
+    dashboardSuggestions?: IEmbedAiSuggestions;
 }
