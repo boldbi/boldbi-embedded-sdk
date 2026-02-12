@@ -36,19 +36,6 @@ Download our Bold BI Platform installer from [here](https://www.boldbi.com/accou
 
 In case of any questions regarding the use of `Bold BI Embedding`, please [contact us](mailto:support@boldbi.com) by sending your queries.
 
-## Release Notes
-
-Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/?utm_source=github&utm_medium=backlinks) page.
-
-### Improvement
-* The dashboard ID property is no longer mandatory in the object model implementation for token generation in SDK-based embedding.
-* `#778361` – Provided support to customize the user name in AI assistant and enable the dashboard or widget summary without enabling the AI assistant in SDK embedding.
-* `#725595` – Provided support to hide settings icons in widgets and designer panel in SDK-based embedding.
-
-### Bug
-
-* Fixed a console error in SDK embedding that occurred when the browser was resized before the dashboard rendering process began.
-
 ## License Information
 
 For licensing information about `Bold BI Embedding`, Take a look at the Bold BI License Agreements from [here](https://www.boldbi.com/terms-of-use?utm_source=github&utm_medium=backlinks).

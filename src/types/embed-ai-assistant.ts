@@ -1,5 +1,6 @@
 import { IEmbedAiIcons } from './embed-ai-icons';
 import { IEmbedAiSummary } from './embed-ai-summary';
+import { IEmbedAiSuggestions } from './embed-ai-suggestions';
 
 export interface IEmbedAiAssistant {
     enabled?: boolean;
@@ -10,15 +11,19 @@ export interface IEmbedAiAssistant {
     hideAiDataUsage?: boolean;
     hideAiChatHelp?: boolean;
     summary?: IEmbedAiSummary;
-    hideBetaTag?: boolean,                         
-    headerTextColor?: string, 
-    hideLogo?: boolean, 
-    hideIcons?: IEmbedAiIcons,
-    hideWelcomeNote?: boolean,
-    hideDashboardTag?: boolean,
-    hideDatasourceTag?: boolean, 
-    queryDisplayLimit?: Number, 
-    dashboards?:[],
-    dataSources?:[],
-    userName?: string
+    hideBetaTag?: boolean;                    
+    headerTextColor?: string;
+    hideLogo?: boolean;
+    hideIcons?: IEmbedAiIcons;
+    hideWelcomeNote?: boolean;
+    hideDashboardTag?: boolean;
+    hideDatasourceTag?: boolean;
+    queryDisplayLimit?: Number;
+    dashboards?:[];
+    dataSources?:[];
+    userName?: string;
+    welcomeMessage?: string;
+    exploreMessage?: string;
+    widgetSuggestions?: IEmbedAiSuggestions;
+    dashboardSuggestions?: IEmbedAiSuggestions;
 }

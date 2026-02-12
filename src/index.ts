@@ -2571,6 +2571,9 @@ export class BoldBI {
                     onBannerIconClick: function (arg: { name: string, selectedTheme: string }): any {
                         that._onBoldBIDashboardBannerIconClick(arg);
                     },
+                    getModelDataForDashboard: function (arg: object): any {
+                        that._onGetLinkedDashboardDetails(arg);
+                    },
                     beforeWidgetIconRendered: function (arg: any): any {
                         that._onBoldBIDashboardBeforeWidgetIconRendered(arg);
                     },
@@ -2687,6 +2690,12 @@ export class BoldBI {
                 if (this.embedOptions.mode == BoldBI.Mode.Design) {
                     if ((this.authToken && !this.embedOptions.dashboardId) || (!this.authToken && !this.embedOptions.enableDomainMasking && !this._isNullOrUndefined(embedResponse) && embedResponse.ItemDetail.IsDraft)) {
                         dashboardOptions.dashboardPath = '';
+                        if (
+                            typeof this.embedOptions.datasourceId === 'string' &&
+                            !this._isEmptyOrSpaces(this.embedOptions.datasourceId)
+                        ) {
+                            dashboardOptions.datasource = this.embedOptions.datasourceId;
+                        }
                     }
                     const datasourceId = !this._isNullOrUndefined(embedResponse) && !this.embedOptions.enableDomainMasking && !this._isEmptyOrSpaces(embedResponse.DatasourceId) ? embedResponse.DatasourceId : '';
                     if (!this._isEmptyOrSpaces(datasourceId)) {
@@ -2827,6 +2836,23 @@ export class BoldBI {
                         suggestionCount: typeof this.embedOptions.settings?.aiAssistant?.queryDisplayLimit === 'number' ? this.embedOptions.settings.aiAssistant.queryDisplayLimit : 6,
                         customizedAITitle: !this._isEmptyOrSpaces(this.embedOptions.embedAiAssistant.name) ? this.embedOptions.embedAiAssistant.name : this.embedOptions.settings?.aiAssistant?.name ?? '',
                         customizedUserName: this.embedOptions.settings?.aiAssistant?.userName ?? '',
+                        aiAssistantCustomPrompt: {
+                            welcomeMessage: this.embedOptions.settings?.aiAssistant?.welcomeMessage ?? '',
+                            exploreMessage: this.embedOptions.settings?.aiAssistant?.exploreMessage ?? '',
+                        },
+                        dashboardAiAssistantCustomPrompt: {
+                            welcomeMessage: this.embedOptions.settings?.aiAssistant?.welcomeMessage ?? '',
+                            exploreMessage: this.embedOptions.settings?.aiAssistant?.exploreMessage ?? '',
+                            widgetSuggestions: {
+                                title: this.embedOptions.settings?.aiAssistant?.widgetSuggestions?.title ?? '',
+                                suggestionPrompt: this.embedOptions.settings?.aiAssistant?.widgetSuggestions?.prompt ?? ''
+                            },
+                            dashboardSuggestions: {
+                                title: this.embedOptions.settings?.aiAssistant?.dashboardSuggestions?.title ?? '',
+                                suggestionPrompt: this.embedOptions.settings?.aiAssistant?.dashboardSuggestions?.prompt ?? ''
+                            }
+                        }
+
                     };
                     if(this.embedOptions.mode == BoldBI.Mode.AIAssistant){
                         dashboardOptions.customBrandSettings ={
@@ -4865,6 +4891,58 @@ export class BoldBI {
         }
         if (viewSavedEvent instanceof Function) {
             viewSavedEvent.call(that, arg);
+        }
+    }
+
+    _onGetLinkedDashboardDetails(args: any): any {
+        const that: BoldBI = this;
+        var viewerModel
+        var argument = typeof args != "undefined" && args != null ? args : "";
+        var requestType = !this._isNullOrUndefined(argument) && typeof argument.itemType != "undefined" && argument.itemType != null ? argument.itemType : null;
+
+        if (!this._isNullOrUndefined(requestType)) {
+            if (requestType.toLowerCase() == "set") {
+                var dashboardRenderData = {
+                    itemIdList: args.itemCollection
+                };
+                const token: any = this._validatetoken(that.accessToken);
+
+                bbEmbed.ajax({
+                    type: "POST",
+                    url: this.dashboardServerApiUrl + "/embed/linked-dashboard-details",
+                    headers: {
+                        'Authorization': token
+                    },
+                    contentType: "application/json",
+                    data: JSON.stringify(dashboardRenderData),
+                    success: function (data) {
+                        that.embedOptions.dashboardDetailList = data.Data;
+                    }
+                });
+            }
+            else if (requestType.toLowerCase() == "get") {
+                if (!this._isNullOrUndefined(that.embedOptions.dashboardDetailList)) {
+                    var filteredDetail = that.embedOptions.dashboardDetailList.filter(item => item.Id === args.itemId);
+                    var updatedCategoryName = filteredDetail[0].CategoryName;
+                    bbEmbed("#favorite_Item").attr("data-item-id", filteredDetail[0].Id);
+
+                    bbEmbed("#dashboard_Comment").attr({
+                        "data-item-id": filteredDetail[0].Id,
+                        "data-category-name": updatedCategoryName,
+                        "data-item-name": filteredDetail[0].Name
+                    });
+
+                    bbEmbed("#isMultiDashboard").attr("data-item-id", args.itemId);
+
+                    viewerModel = {
+                        itemId: args.itemId,
+                        dashboardPath: args.itemId + "/" + filteredDetail[0].Version,
+                        dashboardName: filteredDetail[0].Name,
+                    }
+
+                    args.modelInfo = viewerModel;
+                }
+            }
         }
     }
 
