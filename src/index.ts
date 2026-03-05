@@ -2836,6 +2836,7 @@ export class BoldBI {
                         suggestionCount: typeof this.embedOptions.settings?.aiAssistant?.queryDisplayLimit === 'number' ? this.embedOptions.settings.aiAssistant.queryDisplayLimit : 6,
                         customizedAITitle: !this._isEmptyOrSpaces(this.embedOptions.embedAiAssistant.name) ? this.embedOptions.embedAiAssistant.name : this.embedOptions.settings?.aiAssistant?.name ?? '',
                         customizedUserName: this.embedOptions.settings?.aiAssistant?.userName ?? '',
+                        customDashboardSummaryIntroText: this.embedOptions.settings?.aiAssistant?.aiSummaryIntroMessage ?? '',
                         aiAssistantCustomPrompt: {
                             welcomeMessage: this.embedOptions.settings?.aiAssistant?.welcomeMessage ?? '',
                             exploreMessage: this.embedOptions.settings?.aiAssistant?.exploreMessage ?? '',
