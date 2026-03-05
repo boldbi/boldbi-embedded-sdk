@@ -69,7 +69,7 @@ exports.DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '15.1',
+    embedSDKWrapperVersion: '15.2',
     tokenResponse: {
         dashboardVersion: '0',
         draftItemID: '',

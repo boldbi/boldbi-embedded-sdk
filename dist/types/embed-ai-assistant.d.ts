@@ -21,6 +21,7 @@ export interface IEmbedAiAssistant {
     dashboards?: [];
     dataSources?: [];
     userName?: string;
+    aiSummaryIntroMessage?: string;
     welcomeMessage?: string;
     exploreMessage?: string;
     widgetSuggestions?: IEmbedAiSuggestions;
