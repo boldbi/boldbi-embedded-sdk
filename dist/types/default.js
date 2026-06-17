@@ -69,7 +69,7 @@ exports.DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '15.2',
+    embedSDKWrapperVersion: '16.1',
     tokenResponse: {
         dashboardVersion: '0',
         draftItemID: '',
@@ -188,6 +188,14 @@ exports.DefaultConstructor = {
             restrictMobileView: false,
             disableAutoRecover: false,
             datasources: [],
+            dashboardExperience: {
+                enableSkeletonLoading: true,
+                widgetProgress: {
+                    showInBanner: true,
+                    showInDetailsView: true,
+                    showInWidgets: true
+                }
+            },
             viewer: {
                 dashboardName: '',
                 header: true,
@@ -231,6 +239,8 @@ exports.DefaultConstructor = {
                     defaultPanelSearchPlaceholder: '',
                     existingPanelSearchPlaceholder: '',
                     existingDashboards: [],
+                    enableModernLayout: true,
+                    displayMode: enum_1.WidgetPanelDisplayMode.Both,
                     dragAndDropSettings: {
                         rowSpan: null,
                         columnSpan: null,

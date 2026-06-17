@@ -152,6 +152,14 @@ export declare const DefaultConstructor: {
             restrictMobileView: boolean;
             disableAutoRecover: boolean;
             datasources: any[];
+            dashboardExperience: {
+                enableSkeletonLoading: boolean;
+                widgetProgress: {
+                    showInBanner: boolean;
+                    showInDetailsView: boolean;
+                    showInWidgets: boolean;
+                };
+            };
             viewer: {
                 dashboardName: string;
                 header: boolean;
@@ -195,6 +203,8 @@ export declare const DefaultConstructor: {
                     defaultPanelSearchPlaceholder: string;
                     existingPanelSearchPlaceholder: string;
                     existingDashboards: any[];
+                    enableModernLayout: boolean;
+                    displayMode: "Both";
                     dragAndDropSettings: {
                         rowSpan: any;
                         columnSpan: any;

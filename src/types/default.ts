@@ -1,4 +1,4 @@
-import { EmbedType, Environment, Mode, Theme } from './enum';
+import { EmbedType, Environment, Mode, Theme, WidgetPanelDisplayMode } from './enum';
 
 export const DefaultConstructor = {
     IsDependencyLoaded: false,
@@ -67,7 +67,7 @@ export const DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '15.2',
+    embedSDKWrapperVersion: '16.1',
     tokenResponse: {
         dashboardVersion: '0',
         draftItemID: '',
@@ -188,6 +188,14 @@ export const DefaultConstructor = {
             restrictMobileView: false,
             disableAutoRecover: false,
             datasources: [],
+            dashboardExperience: {
+                enableSkeletonLoading: true,
+                widgetProgress: {
+                    showInBanner: true,
+                    showInDetailsView: true,
+                    showInWidgets: true
+                }
+            },
             viewer: {
                 dashboardName: '',
                 header: true,
@@ -231,6 +239,8 @@ export const DefaultConstructor = {
                     defaultPanelSearchPlaceholder: '',
                     existingPanelSearchPlaceholder: '',
                     existingDashboards: [],
+                    enableModernLayout: true,
+                    displayMode: WidgetPanelDisplayMode.Both,
                     dragAndDropSettings: {
                         rowSpan: null,
                         columnSpan: null,

@@ -12,6 +12,7 @@ import { IViewDataSettings } from './view-data-settings';
 import { IViewerSettings } from './viewer-settings';
 import { IWidgetSettings } from './widget-settings';
 import { IDesignCanvasSettings } from './design-canvas-settings';
+import { IDashboardExperienceSettings } from './dashboard-experience';
 
 export interface ISettings {
     bingMapRequired?: boolean,
@@ -21,6 +22,7 @@ export interface ISettings {
     disableAutoRecover?: boolean,
     datasources?: IDatasources[];
     designCanvas?: IDesignCanvasSettings;
+    dashboardExperience?: IDashboardExperienceSettings;
     viewer?: IViewerSettings,
     designer?: IDesignerSettings,
     viewData?: IViewDataSettings,

@@ -117,6 +117,11 @@ export declare class BoldBI {
         readonly Light: "light";
         readonly Dark: "dark";
     };
+    static WidgetPanelDisplayMode: {
+        readonly Classic: "Classic";
+        readonly Modern: "Modern";
+        readonly Both: "Both";
+    };
     static _storage: any;
     static _widgetsCollection: any;
     loadDashboard: any;

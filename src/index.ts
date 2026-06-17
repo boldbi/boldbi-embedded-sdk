@@ -2,7 +2,7 @@
 
 import { errorMessages, successMessages } from './types/embeddingLocalization';
 import { IDashboardOptions } from './types/dashboard-options';
-import { Mode, EmbedType, Environment, Theme } from './types/enum';
+import { Mode, EmbedType, Environment, Theme, WidgetPanelDisplayMode} from './types/enum';
 import { DefaultConstructor } from './types/default';
 import { migrateDeprecatedEventKeys, checkDeprecatedEmbedOptions, deprecatedMethod} from './utils/sdk_deprecation_utils';
 import { CommentArgs, ExportInformation, ViewerMethods } from './types/viewer-methods';
@@ -120,6 +120,7 @@ export class BoldBI {
     static EmbedType = EmbedType;
     static Environment = Environment;
     static Theme = Theme;
+    static WidgetPanelDisplayMode = WidgetPanelDisplayMode;
     static _storage: any = new WeakMap();
     static _widgetsCollection: any = [];
     loadDashboard: any;
@@ -2632,6 +2633,39 @@ export class BoldBI {
                         viewId: !this._isNullOrUndefined(this.embedOptions.dashboardSettings?.filterOverviewSettings) && !this._isEmptyOrSpaces(this.embedOptions.dashboardSettings.filterOverviewSettings.viewId) ? this.embedOptions.dashboardSettings.filterOverviewSettings.viewId : !this._isNullOrUndefined(this.embedOptions.settings?.viewer?.filterOverview) && !this._isEmptyOrSpaces(this.embedOptions.settings.viewer.filterOverview.viewId) ? this.embedOptions.settings.viewer.filterOverview.viewId : null,
                         viewName: !this._isNullOrUndefined(this.embedOptions.dashboardSettings?.filterOverviewSettings) && !this._isEmptyOrSpaces(this.embedOptions.dashboardSettings.filterOverviewSettings.viewName) ? this.embedOptions.dashboardSettings.filterOverviewSettings.viewName : !this._isNullOrUndefined(this.embedOptions.settings?.viewer?.filterOverview) && !this._isEmptyOrSpaces(this.embedOptions.settings.viewer.filterOverview.viewName) ? this.embedOptions.settings.viewer.filterOverview.viewName : null
                     }
+                }
+
+                const hasSingleDashboardId: boolean = isDesignMode || (isViewMode &&
+                    !this._isEmptyOrSpaces(this.embedOptions.dashboardId) &&
+                    (!Array.isArray(this.embedOptions.dashboardIds) || this.embedOptions.dashboardIds.length === 0) &&
+                    this._isEmptyOrSpaces(this.embedOptions.pinboardName) &&
+                    (!Array.isArray(this.pinboardIds) || this.pinboardIds.length === 0));
+                if (isViewMode || isDesignMode) {
+                    const dashboardExperienceSettings: any = this.embedOptions.settings?.dashboardExperience;
+                    const widgetProgressSettings: any = dashboardExperienceSettings?.widgetProgress;
+                    const widgetsPanelSettings: any = this.embedOptions.settings?.designer?.widgetsPanel;
+                    const displayMode: WidgetPanelDisplayMode = typeof widgetsPanelSettings?.displayMode === 'string' && !this._isEmptyOrSpaces(widgetsPanelSettings.displayMode) ? widgetsPanelSettings.displayMode : WidgetPanelDisplayMode.Both;
+                    const getBooleanSetting: any = function (value: any): boolean {
+                        return hasSingleDashboardId ? typeof value === 'boolean' ? value : true : false;
+                    };
+                    dashboardOptions.configInfo = {
+                        ...dashboardOptions.configInfo,
+                        Designer: {
+                            ...dashboardOptions.configInfo?.Designer,
+                            DashboardExperience: {
+                                EnableSkeletonLoading: getBooleanSetting(dashboardExperienceSettings?.enableSkeletonLoading),
+                                WidgetProgress: {
+                                    ShowInBanner: getBooleanSetting(widgetProgressSettings?.showInBanner),
+                                    ShowInDetailsView: getBooleanSetting(widgetProgressSettings?.showInDetailsView),
+                                    ShowInWidgets: getBooleanSetting(widgetProgressSettings?.showInWidgets)
+                                },
+                                WidgetPanel: {
+                                    EnableModernLayout: getBooleanSetting(widgetsPanelSettings?.enableModernLayout),
+                                    DisplayMode: displayMode
+                                }
+                            }
+                        }
+                    };
                 }
 
                 if (this.loadMultipleWidget) {

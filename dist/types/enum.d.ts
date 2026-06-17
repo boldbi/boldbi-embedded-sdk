@@ -22,3 +22,9 @@ export declare const Theme: {
     readonly Dark: "dark";
 };
 export type Theme = typeof Theme[keyof typeof Theme];
+export declare const WidgetPanelDisplayMode: {
+    readonly Classic: "Classic";
+    readonly Modern: "Modern";
+    readonly Both: "Both";
+};
+export type WidgetPanelDisplayMode = typeof WidgetPanelDisplayMode[keyof typeof WidgetPanelDisplayMode];
