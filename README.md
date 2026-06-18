@@ -36,6 +36,15 @@ Download our Bold BI Platform installer from [here](https://www.boldbi.com/accou
 
 In case of any questions regarding the use of `Bold BI Embedding`, please [contact us](mailto:support@boldbi.com) by sending your queries.
 
+## Release Notes
+
+Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/?utm_source=github&utm_medium=backlinks) page.
+
+### Bug
+
+* `#810673` – Resolved an issue in the embed application where passing multiple values for custom attributes caused a data‑retrieval error when the data source was configured with a custom attribute in Table Mode.
+* `#810210` - Corrected the object model structure to properly handle the exclude widget property.
+
 ## License Information
 
 For licensing information about `Bold BI Embedding`, Take a look at the Bold BI License Agreements from [here](https://www.boldbi.com/terms-of-use?utm_source=github&utm_medium=backlinks).

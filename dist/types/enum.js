@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Theme = exports.Environment = exports.EmbedType = exports.Mode = void 0;
+exports.WidgetPanelDisplayMode = exports.Theme = exports.Environment = exports.EmbedType = exports.Mode = void 0;
 exports.Mode = {
     View: "view",
     Design: "design",
@@ -20,4 +20,9 @@ exports.Theme = {
     Off: "off",
     Light: "light",
     Dark: "dark",
+};
+exports.WidgetPanelDisplayMode = {
+    Classic: 'Classic',
+    Modern: 'Modern',
+    Both: 'Both'
 };

@@ -1,9 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deprecatedMemberMap = exports.deprecatedEventMap = void 0;
-exports.migrateDeprecatedEventKeys = migrateDeprecatedEventKeys;
-exports.checkDeprecatedEmbedOptions = checkDeprecatedEmbedOptions;
-exports.deprecatedMethod = deprecatedMethod;
+exports.deprecatedMethod = exports.checkDeprecatedEmbedOptions = exports.migrateDeprecatedEventKeys = exports.deprecatedMemberMap = exports.deprecatedEventMap = void 0;
 // src/utils/sdk_deprecation_utils.ts
 const default_1 = require("../types/default");
 const helplink = default_1.DefaultConstructor.liveHelpLink;
@@ -673,6 +670,7 @@ function migrateDeprecatedEventKeys(embedOptions) {
     });
     return normalized;
 }
+exports.migrateDeprecatedEventKeys = migrateDeprecatedEventKeys;
 // Check deprecated nested config members
 function checkDeprecatedEmbedOptions(options) {
     Object.keys(exports.deprecatedMemberMap).forEach((oldKey) => {
@@ -699,6 +697,7 @@ function checkDeprecatedEmbedOptions(options) {
         }
     });
 }
+exports.checkDeprecatedEmbedOptions = checkDeprecatedEmbedOptions;
 function deprecatedMethod(methodName) {
     const { newKey, url } = deprecatedMethodMap[methodName];
     if (newKey) {
@@ -710,3 +709,4 @@ function deprecatedMethod(methodName) {
         }
     }
 }
+exports.deprecatedMethod = deprecatedMethod;
