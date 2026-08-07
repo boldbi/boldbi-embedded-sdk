@@ -59,6 +59,7 @@ exports.errorMessages = {
     'InvalidEmbedContainerID': 'Please provide the valid embed container Id.',
     'EmptyServerURL': 'The server URL cannot be empty.',
     'InvalidServerURL': 'Please provide a valid server URL.',
+    'InvalidResourceVersion': 'Please provide a valid resource version.',
     'InvalidDashboardPath': 'Invalid dashboard path: ',
     'EmptyDbrdOrViewID': 'Dashboard ID, path, and view ID cannot be empty.',
     'EmptyDatasourceDetails': 'Data source ID and name cannot be empty.',

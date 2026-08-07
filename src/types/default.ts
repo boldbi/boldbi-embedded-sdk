@@ -1,4 +1,5 @@
 import { EmbedType, Environment, Mode, Theme, WidgetPanelDisplayMode } from './enum';
+import { embedSDKWrapperVersion, packageVersion } from '../version';
 
 export const DefaultConstructor = {
     IsDependencyLoaded: false,
@@ -67,7 +68,8 @@ export const DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '16.1',
+    embedSDKWrapperVersion,
+    resourceVersion: packageVersion,
     tokenResponse: {
         dashboardVersion: '0',
         draftItemID: '',
@@ -195,6 +197,9 @@ export const DefaultConstructor = {
                     showInDetailsView: true,
                     showInWidgets: true
                 }
+            },
+			customErrorMessage: {
+                customMessage: ''
             },
             viewer: {
                 dashboardName: '',

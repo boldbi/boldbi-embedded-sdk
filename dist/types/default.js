@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DefaultConstructor = void 0;
 const enum_1 = require("./enum");
+const version_1 = require("../version");
 exports.DefaultConstructor = {
     IsDependencyLoaded: false,
     deprecated: true,
@@ -69,7 +70,8 @@ exports.DefaultConstructor = {
     isMultipleWidgetMode: false,
     invalidDetail: false,
     isDefaultView: false,
-    embedSDKWrapperVersion: '16.1',
+    embedSDKWrapperVersion: version_1.embedSDKWrapperVersion,
+    resourceVersion: version_1.packageVersion,
     tokenResponse: {
         dashboardVersion: '0',
         draftItemID: '',
@@ -195,6 +197,9 @@ exports.DefaultConstructor = {
                     showInDetailsView: true,
                     showInWidgets: true
                 }
+            },
+            customErrorMessage: {
+                customMessage: ''
             },
             viewer: {
                 dashboardName: '',

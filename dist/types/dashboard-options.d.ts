@@ -35,6 +35,7 @@ export interface IDashboardOptions {
     height?: string;
     width?: string;
     customDashboardVersion?: string;
+    resourceVersion?: string;
     token?: string;
     embedToken?: string;
     pinboardName?: string;
