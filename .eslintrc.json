@@ -1,0 +1,277 @@
+{
+	"env": {
+		"browser": true,
+		"es2021": true
+	},
+	"extends": [
+		"eslint:recommended",
+		"plugin:@typescript-eslint/recommended",
+		"plugin:jsdoc/recommended",
+		"plugin:security/recommended"
+	],
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"ecmaFeatures": {
+			"js": true
+		},
+		"ecmaVersion": 2018,
+		"project": "./tsconfig.json",
+		"sourceType": "module"
+	},
+	"plugins": [
+		"@typescript-eslint",
+		"@typescript-eslint/tslint",
+		"eslint-plugin-security",
+		"jsdoc"
+	],
+	"rules": {
+		"curly": "error",
+		"guard-for-in": "error",
+		"no-case-declarations": "error",
+		"no-constant-condition": "error",
+		"no-control-regex": "error",
+		"no-debugger": "error",
+		"no-dupe-else-if": "error",
+		"no-empty": "error",
+		"no-fallthrough": "error",
+		"no-invalid-regexp": "error",
+		"no-labels": "error",
+		"no-mixed-spaces-and-tabs": "error",
+		"no-prototype-builtins": "error",
+		"no-self-assign": "error",
+		"no-throw-literal": "error",
+		"no-trailing-spaces": "error",
+		"no-undef": "off",
+		"no-unexpected-multiline": "error",
+		"no-useless-escape": "error",
+		"no-var": "error",
+		"no-duplicate-case": "error",
+		"no-dupe-args": "error",
+		"prefer-const": "error",
+		"prefer-spread": "error",
+		"radix": "error",
+		"use-isnan": "error",
+		"max-lines-per-function": ["error", { "max": 120 }],
+		"camelcase": [
+			"error",
+			{
+				"properties": "always",
+				"ignoreDestructuring": true,
+				"ignoreImports": true
+			}
+		],
+		"comma-dangle": [
+			"error",
+			"never"
+		],
+		"eqeqeq": [
+			"error",
+			"smart"
+		],
+		"eol-last": [
+			"error",
+			"always"
+		],
+		"max-len": [
+			"error",
+			{
+				"code": 140,
+				"tabWidth": 4,
+				"ignoreComments": true,
+				"ignoreStrings": true,
+				"ignoreTemplateLiterals": true,
+				"ignoreRegExpLiterals": true
+			}
+		],
+		"no-console": [
+			"error",
+			{
+				"allow": [
+					"warn",
+					"dir",
+					"timeLog",
+					"assert",
+					"clear",
+					"count",
+					"countReset",
+					"group",
+					"groupEnd",
+					"table",
+					"dirxml",
+					"error",
+					"groupCollapsed",
+					"Console",
+					"profile",
+					"profileEnd",
+					"timeStamp",
+					"context"
+				]
+			}
+		],
+		"no-irregular-whitespace": [
+			"error",
+			{
+				"skipStrings": true,
+				"skipComments": true,
+				"skipRegExps": true,
+				"skipTemplates": true
+			}
+		],
+		"@typescript-eslint/no-redeclare": ["error", { "ignoreDeclarationMerge": true }],
+		"no-cond-assign": [
+			"error",
+			"always"
+		],
+		"one-var": [
+			"error",
+			"never"
+		],
+		"quotes": [
+			"error",
+			"single"
+		],
+		"semi": [
+			"error",
+			"always"
+		],
+		"valid-jsdoc": [
+			"error",
+			{
+				"prefer": {
+					"arg": "param",
+					"argument": "param",
+					"class": "constructor",
+					"return": "returns",
+					"virtual": "abstract"
+				}
+			}
+		],
+		"valid-typeof": [
+			"error",
+			{
+				"requireStringLiterals": true
+			}
+		],
+		"jsdoc/check-alignment": "error",
+		"jsdoc/check-tag-names": "error",
+		"jsdoc/check-types": "error",
+		"jsdoc/check-param-names": "error",
+		"jsdoc/multiline-blocks": "error",
+		"jsdoc/newline-after-description": "error",
+		"jsdoc/no-multi-asterisks": "error",
+		"jsdoc/no-undefined-types": "off",
+		"jsdoc/require-jsdoc": "error",
+		"jsdoc/require-param": "error",
+		"jsdoc/require-param-description": "error",
+		"jsdoc/require-param-name": "error",
+		"jsdoc/require-param-type": "error",
+		"jsdoc/require-returns": "error",
+		"jsdoc/require-returns-check": "error",
+		"jsdoc/require-returns-description": "error",
+		"jsdoc/require-returns-type": "error",
+		"jsdoc/tag-lines": "error",
+		"jsdoc/valid-types": "error",
+		"security/detect-bidi-characters": "error",
+		"security/detect-buffer-noassert": "error",
+		"security/detect-child-process": "error",
+		"security/detect-disable-mustache-escape": "error",
+		"security/detect-eval-with-expression": "error",
+		"security/detect-new-buffer": "error",
+		"security/detect-no-csrf-before-method-override": "error",
+		"security/detect-non-literal-fs-filename": "error",
+		"security/detect-non-literal-regexp": "error",
+		"security/detect-non-literal-require": "error",
+		"security/detect-object-injection": "off",
+		"security/detect-possible-timing-attacks": "error",
+		"security/detect-pseudoRandomBytes": "error",
+		"security/detect-unsafe-regex": "error",
+		"@typescript-eslint/adjacent-overload-signatures": "error",
+		"@typescript-eslint/consistent-type-assertions": "error",
+		"@typescript-eslint/no-empty-function": "error",
+		"@typescript-eslint/no-array-constructor": "error",
+		"@typescript-eslint/no-explicit-any": "error",
+		"@typescript-eslint/no-extra-semi": "error",
+		"@typescript-eslint/no-inferrable-types": "off",
+		"@typescript-eslint/no-namespace": "off",
+		"@typescript-eslint/no-parameter-properties": "error",
+		"@typescript-eslint/no-this-alias": "error",
+		"@typescript-eslint/no-unused-expressions": "error",
+		"@typescript-eslint/no-unused-vars": ["error", {"varsIgnorePattern": "ej|BoldBIDashboard" }],
+		"@typescript-eslint/no-var-requires": "error",
+		"@typescript-eslint/prefer-namespace-keyword": "off",
+		"@typescript-eslint/triple-slash-reference": "error",
+		"@typescript-eslint/ban-types": [
+			"error",
+			{
+				"types": {
+					"Object": false,
+					"object": false,
+					"{}": false,
+					"Function": false
+				}
+			}
+		],
+		"@typescript-eslint/indent": [
+			"error",
+			4,
+			{
+				"CallExpression": {
+					"arguments": "first"
+				},
+				"FunctionDeclaration": {
+					"parameters": "first"
+				},
+				"FunctionExpression": {
+					"parameters": "first"
+				}
+			}
+		],
+		"@typescript-eslint/tslint/config": [
+			"error",
+			{
+				"rules": {
+					"ban": true,
+					"no-backbone-get-set-outside-model": false,
+					"no-cookies": false,
+					"no-delete-expression": false,
+					"no-empty-interfaces": false,
+					"no-function-expression": false,
+					"no-multiple-var-decl": false,
+					"no-string-based-set-immediate": false,
+					"no-string-based-set-interval": false,
+					"no-unnecessary-bind": false,
+					"no-with-statement": false,
+					"prefer-array-literal": false,
+					"typedef": [
+						true,
+						"call-signature",
+						"parameter",
+						"property-declaration",
+						"variable-declaration",
+						"arrow-parameter",
+						"member-variable-declaration"
+					],
+					"use-named-parameter": false,
+					"whitespace": [
+						true,
+						"check-branch",
+						"check-decl",
+						"check-operator",
+						"check-separator",
+						"check-type"
+					]
+				}
+			}
+		]
+	},
+	"reportUnusedDisableDirectives": false,
+  //"overrides": [
+  //  {
+  //  }
+  //],
+	"ignorePatterns": [
+		"src/**/*.js",
+		"src/**/*.d.ts",
+		"src/**/*.js.map"
+	]
+}
