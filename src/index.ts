@@ -103,6 +103,7 @@ export class BoldBI {
     public AICssFiles: Array<string>;
     public isDefaultView: boolean;
     public embedSDKWrapperVersion: string;
+    public resourceVersion: string;
     public isDashboardRendering: boolean;
     public isPinboardRendering: boolean;
     public isDashboardViewRendering: boolean;
@@ -1935,13 +1936,14 @@ export class BoldBI {
     _addJquerydependentFiles: any = this.Invoke(function (): any {
         if (!this._checkDepedentFileExists(this.jQueryDepedentFile, false) && !(window.jQuery != undefined && window.jQuery().jquery == '3.5.0')) {
             const script: any = document.createElement('script');
+            let url: string;
             if (this.embedOptions.environment == BoldBI.Environment.Enterprise) {
-                var URL = this.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + this.jQueryDepedentFile : this.rootUrl + '/cdn/scripts/designer/' + this.jQueryDepedentFile;
-
-                script.setAttribute('src', URL);
+                url = this.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + this.jQueryDepedentFile : this.rootUrl + '/cdn/scripts/designer/' + this.jQueryDepedentFile;
             } else {
-                script.setAttribute('src', this.cdnLink + '/scripts/designer/' + this.jQueryDepedentFile);
+                url = this.cdnLink + '/scripts/designer/' + this.jQueryDepedentFile;
             }
+
+            script.setAttribute('src', this._appendEmbedResourceVersion(url));
 
             if (this.embedOptions.nonce) {
                 script.nonce = this.embedOptions.nonce;
@@ -2108,19 +2110,63 @@ export class BoldBI {
                     scriptTag.nonce = this.embedOptions.nonce;
                 }
                 if (file == 'jquery.easing.1.3.min.js') {
-                    scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
+                    scriptTag.src = this._appendEmbedResourceVersion((that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file);
                 }
-                if (file == 'jquery-ui.min.js') {
+                else if (file == 'jquery-ui.min.js') {
                     //scriptTag.src = this.maskedCdnUrl.slice(0, -1) + 'jquery-ui.min.js';
-                    scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/' + file : that.cdnLink + '/scripts/' + file;
+                    scriptTag.src = this._appendEmbedResourceVersion((that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/' + file : that.cdnLink + '/scripts/' + file);
                 }
                 else if (file == 'jsrender.min.js') {
-                    scriptTag.src = (that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file;
+                    scriptTag.src = this._appendEmbedResourceVersion((that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file);
                 }
                 document.head.appendChild(scriptTag);
                 scriptTag.onerror = (arg: any) => this._handleEnvironmentError(arg);
             }
         }.bind(that));
+    }
+
+    _getEmbedResourceVersion(): string {
+        const version: string = this.resourceVersion || this.embedSDKWrapperVersion || '';
+        return this._isValidResourceVersion(version) ? version : this.embedSDKWrapperVersion || '';
+    }
+
+    _isValidResourceVersion(version: string): boolean {
+        return typeof version === 'string' && /^[0-9A-Za-z.-]{1,30}$/.test(version);
+    }
+
+    _isBoldBIStaticResource(url: string): boolean {
+        return url.indexOf('/cdn/scripts/') >= 0 ||
+            url.indexOf('/cdn/css/') >= 0 ||
+            url.indexOf('/designer/localization/') >= 0 ||
+            url.indexOf('/webdesignerservice/themes/') >= 0 ||
+            url.indexOf('/scripts/designer/') >= 0 ||
+            url.indexOf('/css/designer/') >= 0 ||
+            url.indexOf('/localization/') >= 0;
+    }
+
+    _appendEmbedResourceVersion(url: string): string {
+        const version = this._getEmbedResourceVersion();
+        if (this._isEmptyOrSpaces(url) || this._isEmptyOrSpaces(version) || !this._isBoldBIStaticResource(url)) {
+            return url;
+        }
+
+        const excludedVersionedFiles: Array<string> = [
+            '/cdn/scripts/designer/jquery-3.5.0.min.js',
+            '/cdn/scripts/designer/jquery.easing.1.3.min.js',
+            '/cdn/scripts/jquery-ui.min.js',
+            '/cdn/scripts/designer/jsrender.min.js'
+        ];
+
+        if (excludedVersionedFiles.some((file: string) => url.indexOf(file) >= 0)) {
+            return url;
+        }
+
+        if (url.indexOf('v=') >= 0) {
+            return url;
+        }
+
+        const separator = url.indexOf('?') === -1 ? '?' : '&';
+        return url + separator + 'v=' + encodeURIComponent(version);
     }
 
     _addedDependentFiles(that: BoldBI, fileUriArray: Array<string>, isCSS: boolean): any {
@@ -2208,6 +2254,7 @@ export class BoldBI {
                         }
                     }
 
+                    fileUri = that._appendEmbedResourceVersion(fileUri);
                     const cssTag: any = document.createElement('link');
                     cssTag.rel = 'stylesheet';
                     cssTag.href = fileUri;
@@ -2253,6 +2300,7 @@ export class BoldBI {
                         }
                     }
 
+                    fileUri = that._appendEmbedResourceVersion(fileUri);
                     const scriptTag: any = document.createElement('script');
                     scriptTag.type = 'text/javascript';
                     scriptTag.src = fileUri;
@@ -2486,6 +2534,7 @@ export class BoldBI {
                     },
                     environment: this.embedOptions.environment,
                     IsEmbed: true,
+                    siteIdentifier: (!this._isNullOrUndefined(this.siteIdentifier) && !this._isEmptyOrSpaces(this.siteIdentifier)) ? this.siteIdentifier.replace(/^site\//i, '') : '',
                     _isPublic: this.embedOptions.mode != BoldBI.Mode.Connection ? this.embedOptions.enableDomainMasking || !(this._isNullOrUndefined(this.embedOptions.embedToken) || this._isEmptyOrSpaces(this.embedOptions.embedToken)) ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : embedResponse.ItemDetail.IsPublic : '',
                     itemId: this.embedOptions.mode != BoldBI.Mode.Connection ? this.embedOptions.enableDomainMasking ? this.embedOptions.dashboardId : (this._isNullOrUndefined( this.authToken) || this._isEmptyOrSpaces( this.authToken)) ? embedResponse.ItemDetail.Id : that.embedOptions.isdesignerdraft ? embedResponse.draftItemID : childDashboardId ? childDashboardId : this.embedOptions.dashboardId : '',
                     dashboardPath: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : this.embedOptions.enableDomainMasking ? this.embedOptions.dashboardId + '/0' : (this._isNullOrUndefined( this.authToken) || this._isEmptyOrSpaces( this.authToken)) ? embedResponse.ItemDetail.ItemLocation : childDashboardId ? childDashboardId + '/0' : this.embedOptions.dashboardId + '/' + embedResponse.dashboardVersion,
@@ -2648,6 +2697,7 @@ export class BoldBI {
                     const getBooleanSetting: any = function (value: any): boolean {
                         return hasSingleDashboardId ? typeof value === 'boolean' ? value : true : false;
                     };
+					const customErrorMessage: any = this.embedOptions.settings?.customErrorMessage;
                     dashboardOptions.configInfo = {
                         ...dashboardOptions.configInfo,
                         Designer: {
@@ -2663,6 +2713,9 @@ export class BoldBI {
                                     EnableModernLayout: getBooleanSetting(widgetsPanelSettings?.enableModernLayout),
                                     DisplayMode: displayMode
                                 }
+                            },
+							CustomErrorMessage:{
+                                CustomMessage: customErrorMessage?.customMessage ?? ''
                             }
                         }
                     };
@@ -6024,7 +6077,7 @@ export class BoldBI {
 
     _validateOptions: any = this.Invoke(function (options: {
         embedContainerId?: string, viewId?: string, viewName?: string, serverUrl?: string, pinboardName?: string, mode?: any, dashboardIds?: string[], dashboardId?: string, dashboardPath?: string, dashboardPaths?: string[], environment?: any,
-        datasourceId?: string, datasourceName?: string, onError?: any, widgetList?: any, enableDomainMasking?: boolean, hideErrorMessage?: boolean, token?: string, embedToken?: string
+        datasourceId?: string, datasourceName?: string, onError?: any, widgetList?: any, enableDomainMasking?: boolean, hideErrorMessage?: boolean, token?: string, embedToken?: string, resourceVersion?: string
     }): any {
         const initialOptions : any = options as any;
 
@@ -6075,6 +6128,10 @@ export class BoldBI {
             pdf: typeof exportSettings?.showPDF === 'boolean' ? exportSettings.showPDF : settings?.export?.pdf ?? true,
             image: typeof exportSettings?.showImage === 'boolean' ? exportSettings.showImage : settings?.export?.image ?? true,
             csv: typeof exportSettings?.showCSV === 'boolean' ? exportSettings.showCSV : settings?.export?.csv ?? true
+        }
+        if (!this._isEmptyOrSpaces(options.resourceVersion) && !this._isValidResourceVersion(options.resourceVersion)) {
+            this.invalidDetail = true;
+            throw new Error(errorMessages['InvalidResourceVersion']);
         }
         if (options.enableDomainMasking) {
             return true;

@@ -84,6 +84,7 @@ export declare class BoldBI {
     AICssFiles: Array<string>;
     isDefaultView: boolean;
     embedSDKWrapperVersion: string;
+    resourceVersion: string;
     isDashboardRendering: boolean;
     isPinboardRendering: boolean;
     isDashboardViewRendering: boolean;
@@ -348,6 +349,10 @@ export declare class BoldBI {
     _loadAzureMapDependentFiles(): any;
     _loadDependentDesignerFiles(that: BoldBI): any;
     _addWrapperDependentFiles(obj: BoldBI, fileUriArray: Array<string>): any;
+    _getEmbedResourceVersion(): string;
+    _isValidResourceVersion(version: string): boolean;
+    _isBoldBIStaticResource(url: string): boolean;
+    _appendEmbedResourceVersion(url: string): string;
     _addedDependentFiles(that: BoldBI, fileUriArray: Array<string>, isCSS: boolean): any;
     _checkDepedentFileExists(file: string, isCSS: boolean): any;
     getDashboardData(): any;

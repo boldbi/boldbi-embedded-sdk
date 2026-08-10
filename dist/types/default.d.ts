@@ -66,6 +66,7 @@ export declare const DefaultConstructor: {
     invalidDetail: boolean;
     isDefaultView: boolean;
     embedSDKWrapperVersion: string;
+    resourceVersion: string;
     tokenResponse: {
         dashboardVersion: string;
         draftItemID: string;
@@ -159,6 +160,9 @@ export declare const DefaultConstructor: {
                     showInDetailsView: boolean;
                     showInWidgets: boolean;
                 };
+            };
+            customErrorMessage: {
+                customMessage: string;
             };
             viewer: {
                 dashboardName: string;

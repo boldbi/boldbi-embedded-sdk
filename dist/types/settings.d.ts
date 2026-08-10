@@ -13,6 +13,7 @@ import { IViewerSettings } from './viewer-settings';
 import { IWidgetSettings } from './widget-settings';
 import { IDesignCanvasSettings } from './design-canvas-settings';
 import { IDashboardExperienceSettings } from './dashboard-experience';
+import { ICustomErrorMessage } from './customerrormessage';
 export interface ISettings {
     bingMapRequired?: boolean;
     azureMapRequired?: boolean;
@@ -22,6 +23,7 @@ export interface ISettings {
     datasources?: IDatasources[];
     designCanvas?: IDesignCanvasSettings;
     dashboardExperience?: IDashboardExperienceSettings;
+    customErrorMessage?: ICustomErrorMessage;
     viewer?: IViewerSettings;
     designer?: IDesignerSettings;
     viewData?: IViewDataSettings;
