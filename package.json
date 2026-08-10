@@ -5,12 +5,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-     "test": "echo \"Error: no test specified\" && exit 1",
-    "prebuild": "gulp generate-version",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "es-lint": "eslint -c .eslintrc.json --ext .ts ./src/** -f html -o ./cireports/eslint/eslint.html",
-    "prebuild-webpack": "npm run build",
-    "build-webpack": "webpack --config webpack/webpack.config.js"
+    "es-lint": "eslint -c .eslintrc.json --ext .ts ./src/** -f html -o ./cireports/eslint/eslint.html"
   },
   "prepublish": "tsc",
   "repository": {
