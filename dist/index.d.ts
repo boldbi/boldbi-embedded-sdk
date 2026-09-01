@@ -353,6 +353,8 @@ export declare class BoldBI {
     _isValidResourceVersion(version: string): boolean;
     _isBoldBIStaticResource(url: string): boolean;
     _appendEmbedResourceVersion(url: string): string;
+    _resolveThemeString(newValue: any, oldValue: any, defaultValue?: any): any;
+    _resolveThemeBoolean(newValue: any, oldValue: any, defaultValue?: boolean): boolean;
     _addedDependentFiles(that: BoldBI, fileUriArray: Array<string>, isCSS: boolean): any;
     _checkDepedentFileExists(file: string, isCSS: boolean): any;
     getDashboardData(): any;

@@ -1999,18 +1999,14 @@ export class BoldBI {
     _loadDepedentFiles(): any {
         const dashboardSettings = this.embedOptions?.dashboardSettings?.themeSettings;
         const globalSettings = this.embedOptions?.settings?.theme;
-        const isLocalTheme = typeof dashboardSettings?.isLocalTheme === 'boolean'
-            ? dashboardSettings.isLocalTheme
-            : typeof globalSettings?.localTheme === 'boolean'
-                ? globalSettings.localTheme
-                : false;
-        const dashboardTheme = dashboardSettings?.dashboard?.trim() || globalSettings?.dashboard?.trim() || '';
-        const applicationTheme = dashboardSettings?.application?.trim() || globalSettings?.application?.trim() || '';
+        const isLocalTheme = this._resolveThemeBoolean(globalSettings?.localTheme, dashboardSettings?.isLocalTheme);
+        const dashboardTheme = this._resolveThemeString(globalSettings?.dashboard, dashboardSettings?.dashboard);
+        const applicationTheme = this._resolveThemeString(globalSettings?.application, dashboardSettings?.application);
 
-        if (dashboardSettings && !isLocalTheme && dashboardTheme !== '') {
+        if (!isLocalTheme && dashboardTheme !== '') {
             this._addedDependentFiles(this, this.dashboardThemeCssFiles, true);
         }
-        else if (dashboardSettings && !isLocalTheme && applicationTheme !== '') {
+        else if (!isLocalTheme && applicationTheme !== '') {
             this._addedDependentFiles(this, this.applicationThemeCssFiles, true);
         }
         else if (!dashboardSettings || !globalSettings) {
@@ -2023,7 +2019,7 @@ export class BoldBI {
             this._addedDependentFiles(this, this.viewerScriptFiles, false);
         }
 
-        const fontFamilyValue = !this._isEmptyOrSpaces(this.embedOptions.dashboardSettings?.fontFamily) ? this.embedOptions.dashboardSettings.fontFamily : !this._isEmptyOrSpaces(this.embedOptions?.settings?.theme?.fontFamily) ? this.embedOptions.settings.theme.fontFamily : '';
+        const fontFamilyValue = this._resolveThemeString(this.embedOptions?.settings?.theme?.fontFamily, this.embedOptions.dashboardSettings?.fontFamily);
         if (fontFamilyValue !== '') {
             this._addedDependentFiles(this, this.fontFamilyCssFiles, true);
         }
@@ -2169,17 +2165,41 @@ export class BoldBI {
         return url + separator + 'v=' + encodeURIComponent(version);
     }
 
+    _resolveThemeString(newValue: any, oldValue: any, defaultValue: any = ''): any {
+        if (!this._isEmptyOrSpaces(newValue)) {
+            return newValue.trim();
+        }
+
+        if (!this._isEmptyOrSpaces(oldValue)) {
+            return oldValue.trim();
+        }
+
+        return defaultValue;
+    }
+
+    _resolveThemeBoolean(newValue: any, oldValue: any, defaultValue: boolean = false): boolean {
+        if (typeof newValue === 'boolean') {
+            return newValue;
+        }
+
+        if (typeof oldValue === 'boolean') {
+            return oldValue;
+        }
+
+        return defaultValue;
+    }
+
     _addedDependentFiles(that: BoldBI, fileUriArray: Array<string>, isCSS: boolean): any {
         let fileUri: any = '';
-        const localTheme = typeof this.embedOptions.dashboardSettings?.themeSettings?.isLocalTheme === 'boolean' ? this.embedOptions.dashboardSettings?.themeSettings?.isLocalTheme : this.embedOptions.settings?.theme?.localTheme ?? false;
-        const themeAppearance = !this._isEmptyOrSpaces(this.embedOptions?.dashboardSettings?.themeSettings?.appearance) ? this.embedOptions.dashboardSettings.themeSettings.appearance : !this._isEmptyOrSpaces(this.embedOptions?.settings?.theme?.appearance) ? this.embedOptions.settings.theme.appearance : 'light';
-        const themeApplication = !this._isEmptyOrSpaces(this.embedOptions?.dashboardSettings?.themeSettings?.application) ? this.embedOptions.dashboardSettings.themeSettings.application : !this._isEmptyOrSpaces(this.embedOptions?.settings?.theme?.application) ? this.embedOptions.settings.theme.application : '';
-        const themeDashboard = !this._isEmptyOrSpaces(this.embedOptions?.dashboardSettings?.themeSettings?.dashboard) ? this.embedOptions.dashboardSettings.themeSettings.dashboard : !this._isEmptyOrSpaces(this.embedOptions?.settings?.theme?.dashboard) ? this.embedOptions.settings.theme.dashboard : '';
+        const localTheme = this._resolveThemeBoolean(this.embedOptions.settings?.theme?.localTheme, this.embedOptions.dashboardSettings?.themeSettings?.isLocalTheme);
+        const themeAppearance = this._resolveThemeString(this.embedOptions?.settings?.theme?.appearance, this.embedOptions?.dashboardSettings?.themeSettings?.appearance, 'light');
+        const themeApplication = this._resolveThemeString(this.embedOptions?.settings?.theme?.application, this.embedOptions?.dashboardSettings?.themeSettings?.application);
+        const themeDashboard = this._resolveThemeString(this.embedOptions?.settings?.theme?.dashboard, this.embedOptions?.dashboardSettings?.themeSettings?.dashboard);
 
         fileUriArray.forEach(function (file: string): any {
             if (!that._checkDepedentFileExists(file, isCSS)) {
                 if (isCSS) {
-                    const fontFamilyValue = !this._isEmptyOrSpaces(this.embedOptions.dashboardSettings?.fontFamily) ? this.embedOptions.dashboardSettings.fontFamily : !this._isEmptyOrSpaces(this.embedOptions?.settings?.theme?.fontFamily) ? this.embedOptions.settings.theme.fontFamily : '';
+                    const fontFamilyValue = this._resolveThemeString(this.embedOptions?.settings?.theme?.fontFamily, this.embedOptions.dashboardSettings?.fontFamily);
                     if (that.embedOptions.environment == BoldBI.Environment.Enterprise) {
                         if (file == 'font-server.min.css') {
                             fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/" + file : that.rootUrl + '/cdn/css/' + file;
@@ -2508,7 +2528,8 @@ export class BoldBI {
                 }
 
                 let dashboardOptions: any;
-                const fontFamilyValue = !this._isEmptyOrSpaces(this.embedOptions.dashboardSettings?.fontFamily) ? this.embedOptions.dashboardSettings.fontFamily : !this._isEmptyOrSpaces(this.embedOptions?.settings?.theme?.fontFamily) ? this.embedOptions.settings.theme.fontFamily : '';
+                const fontFamilyValue = this._resolveThemeString(this.embedOptions?.settings?.theme?.fontFamily, this.embedOptions.dashboardSettings?.fontFamily);
+                const localTheme = this._resolveThemeBoolean(this.embedOptions.settings?.theme?.localTheme, this.embedOptions.dashboardSettings?.themeSettings?.isLocalTheme);
                 const fontFamilyUrl: any = this.embedOptions.environment === BoldBI.Environment.Enterprise ? this.rootUrl.replace(/\/bi(?!.*\/bi)/, '/ums/user-interface/fonts') + '?family=' + fontFamilyValue : `${this.rootUrl + '/user-interface/fonts?family=' + fontFamilyValue}`;
                 // eslint-disable-next-line
                 dashboardOptions = {
@@ -2582,14 +2603,9 @@ export class BoldBI {
                         allowColumnSelection: typeof this.embedOptions.dashboardSettings?.viewDataSettings?.enableColumnSelection === 'boolean' ? this.embedOptions.dashboardSettings.viewDataSettings.enableColumnSelection : this.embedOptions.settings?.viewData?.columnSelection ?? true
                     },
                     dashboardThemeSettings: {
-                        appearance: !this._isEmptyOrSpaces(this.embedOptions?.dashboardSettings?.themeSettings?.appearance) ? this.embedOptions.dashboardSettings.themeSettings.appearance : !this._isEmptyOrSpaces(this.embedOptions?.settings?.theme?.appearance) ? this.embedOptions.settings.theme.appearance : 'light',
-                        applicationTheme: !this._isEmptyOrSpaces(this.embedOptions?.dashboardSettings?.themeSettings?.application) ? this.embedOptions.dashboardSettings.themeSettings.application : !this._isEmptyOrSpaces(this.embedOptions?.settings?.theme?.application) ? this.embedOptions.settings.theme.application : null,
-                        dashboardTheme:
-                            this.embedOptions.dashboardSettings?.themeSettings?.dashboard?.trim()
-                            ?? (this.embedOptions.dashboardSettings?.themeSettings?.isLocalTheme ? 'boldBITheme' : null)
-                            ?? this.embedOptions.settings?.theme?.dashboard?.trim()
-                            ?? (this.embedOptions.settings?.theme?.localTheme ? 'boldBITheme' : null)
-                            ?? null
+                        appearance: this._resolveThemeString(this.embedOptions?.settings?.theme?.appearance, this.embedOptions?.dashboardSettings?.themeSettings?.appearance, 'light'),
+                        applicationTheme: this._resolveThemeString(this.embedOptions?.settings?.theme?.application, this.embedOptions?.dashboardSettings?.themeSettings?.application, null),
+                        dashboardTheme: this._resolveThemeString(this.embedOptions?.settings?.theme?.dashboard, this.embedOptions.dashboardSettings?.themeSettings?.dashboard, localTheme ? 'boldBITheme' : null)
                     },
                     hideMetrics: typeof this.embedOptions.dashboardSettings?.showMetrics === 'boolean' ? !this.embedOptions.dashboardSettings.showMetrics : typeof this.embedOptions.settings?.viewer?.metrics === 'boolean' ? !this.embedOptions.settings.viewer.metrics : false,
                     widgets: this._getWidgetFilterInfo(),
@@ -4221,7 +4237,9 @@ export class BoldBI {
     _onBoldBIDashboardInstaceActionBegin(arg: { eventType: string }, embedContainerId: string): any {
         if (this.isMultiTab && parseInt(bbEmbed('.e-content .e-active')?.attr('id')?.split('_')?.pop() ?? '', 10) === 0) {
             const dashboardInstance: any = bbEmbed('.e-content .e-active').find('.bbembed-multitab-dbrd').data('BoldBIDashboardDesigner');
-            this.setDefaultTheme(dashboardInstance.modules.themeHelper.getBannerBackground(), dashboardInstance.modules.themeHelper.getBannerTextColor(), dashboardInstance.modules.themeHelper.getBannerIconColor());
+            if (dashboardInstance?.modules?.themeHelper) {
+                this.setDefaultTheme(dashboardInstance.modules.themeHelper.getBannerBackground(), dashboardInstance.modules.themeHelper.getBannerTextColor(), dashboardInstance.modules.themeHelper.getBannerIconColor());
+            }
         }
 
         if (typeof (arg) != 'undefined') {
