@@ -40,10 +40,10 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/?utm_source=github&utm_medium=backlinks) page.
 
-### Improvement
+### Bugs
 
-* `#823230` – Improved internal communication during embedded dashboard rendering for better reliability.
-* Implemented version-based URL suffixing for embedding dependency files to prevent browser caching issues and ensure the latest files are loaded after upgrades.
+* `#839348` – Fixed a dashboard theme rendering issue in embedded dashboards.
+* `#867779` – Fixed a blank first tab issue in embedded multi-tab dashboards when selecting Initial View from Filter Overview.
 
 ## License Information
 

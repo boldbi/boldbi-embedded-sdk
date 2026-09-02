@@ -1,2 +1,2 @@
-export const packageVersion = "16.2.5";
-export const embedSDKWrapperVersion = "16.2";
+export const packageVersion = "16.3.5";
+export const embedSDKWrapperVersion = "16.3";
