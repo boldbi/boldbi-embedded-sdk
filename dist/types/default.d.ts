@@ -5,6 +5,7 @@ export declare const DefaultConstructor: {
     azureMapRequired: boolean;
     disableAutoRecover: boolean;
     restrictMobileView: boolean;
+    useIframeForStrictCsp: boolean;
     rootUrl: string;
     baseUrl: string;
     siteIdentifier: string;
@@ -125,6 +126,8 @@ export declare const DefaultConstructor: {
         cloudCdnTimeStamp: string;
         customDashboardVersion: string;
         embedToken: string;
+        iframeUrl: string;
+        useIframeForStrictCsp: boolean;
         isPublicDashboard: boolean;
         isMultiTabDashboard: boolean;
         mode: "view";
@@ -152,6 +155,8 @@ export declare const DefaultConstructor: {
             hideErrorMessage: boolean;
             restrictMobileView: boolean;
             disableAutoRecover: boolean;
+            useIframeForStrictCsp: boolean;
+            iframeUrl: string;
             datasources: any[];
             dashboardExperience: {
                 enableSkeletonLoading: boolean;

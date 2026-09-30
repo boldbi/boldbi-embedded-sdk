@@ -5,7 +5,7 @@ import { IDashboardOptions } from './types/dashboard-options';
 import { Mode, EmbedType, Environment, Theme, WidgetPanelDisplayMode} from './types/enum';
 import { DefaultConstructor } from './types/default';
 import { migrateDeprecatedEventKeys, checkDeprecatedEmbedOptions, deprecatedMethod} from './utils/sdk_deprecation_utils';
-import { CommentArgs, ExportInformation, ViewerMethods } from './types/viewer-methods';
+import { CommentArgs, ExportInformation, ViewerMethods, ViewDataDialogOptions } from './types/viewer-methods';
 import { PinboardMethods } from './types/pinboard-methods';
 import { DatasourceMethods } from './types/datasource-methods';
 import { DesignerMethods } from './types/designer-methods';
@@ -112,8 +112,10 @@ export class BoldBI {
     public bingMapRequired: boolean;
     public restrictMobileView: boolean;
     public disableAutoRecover: boolean;
+    public useIframeForStrictCsp: boolean;
     public tokenResponse: any;
     public dashboardWidgetExports: any;
+    public viewDataWidgetContext: any;
     public maskedCdnUrl: any;
     private _authorizeResponse: any = null;
     public storeObj!: BoldBI;
@@ -273,15 +275,15 @@ export class BoldBI {
             }
         }
         if (!this._checkWidgetList()) {
-            if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+            if (this._shouldRenderComponent()) {
                 this.embedOptions.dashboardIds = [];
                 this.embedOptions.dashboardPaths = [];
                 this.isDashboardRendering = true;
                 this._setEmbedDefaults();
                 this._showLoader();
                 this._isDependencyLoaded(this);
-            } else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                this._createIframe(`${this.embedOptions.serverUrl}/dashboards/${this.embedOptions.dashboardId}?isembed=true`);
+            } else if (this._shouldRenderIframe()) {
+                this._createIframe(this._getDashboardIframeUrl());
             }
         }
     }
@@ -301,12 +303,14 @@ export class BoldBI {
             this.embedOptions.dashboardPaths = Array.from(new Set(this.embedOptions.dashboardPaths));
         }
 
-        if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+        if (this._shouldRenderComponent()) {
             this.embedOptions.viewId = '';
             this.embedOptions.viewName = '';
             this._setEmbedDefaults();
             this._showLoader();
             this._isDependencyLoaded(this);
+        } else if (this._isStrictCspIframeFallbackEnabled()) {
+            this._throwError(errorMessages['StrictCspIframeFallbackUnsupported']);
         }
     }
     private _loadView(): void {
@@ -314,13 +318,15 @@ export class BoldBI {
         if (this.embedOptions.viewId == '' && this.embedOptions.viewName == '') {
             throw new Error(errorMessages['EmptyViewDetails']);
         }
-        if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+        if (this._shouldRenderComponent()) {
             this.embedOptions.dashboardIds = [];
             this.embedOptions.dashboardPaths = [];
             this.isDashboardViewRendering = true;
             this._setEmbedDefaults();
             this._showLoader();
             this._isDependencyLoaded(this);
+        } else if (this._isStrictCspIframeFallbackEnabled()) {
+            this._throwError(errorMessages['StrictCspIframeFallbackUnsupported']);
         }
     }
     private _loadDashboardWidget(name: string, dashboardId?: string): void {
@@ -332,7 +338,7 @@ export class BoldBI {
             this.embedOptions.pinboardName = '';
         }
         if (!this._checkWidgetList()) {
-            if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+            if (this._shouldRenderComponent()) {
                 this.embedOptions.viewId = '';
                 this.embedOptions.viewName = '';
                 this.embedOptions.dashboardIds = [];
@@ -342,8 +348,10 @@ export class BoldBI {
                 this.widgetName = name;
                 this._showLoader();
                 this._isDependencyLoaded(this, dashboardId);
-            } else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                this._createIframe(`${this.embedOptions.serverUrl}/dashboards/${this.embedOptions.dashboardId}?isembed=true`);
+            } else if (this._isStrictCspIframeFallbackEnabled()) {
+                this._throwError(errorMessages['StrictCspIframeFallbackUnsupported']);
+            } else if (this._shouldRenderIframe()) {
+                this._createIframe(this._getDashboardIframeUrl());
             }
         }
     }
@@ -358,7 +366,7 @@ export class BoldBI {
         if (this.embedOptions.embedToken || this.embedOptions.token) {
             throw new Error(errorMessages['UnableMultipleWidgetsToken']);
         }
-        if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+        if (this._shouldRenderComponent()) {
             this._setEmbedDefaults();
             this.isWidgetMode = true;
             this.isMultipleWidgetMode = true;
@@ -371,6 +379,8 @@ export class BoldBI {
                     }
                 }
             }, 1000);
+        } else if (this._isStrictCspIframeFallbackEnabled()) {
+            this._throwError(errorMessages['StrictCspIframeFallbackUnsupported']);
         }
     }
     private _loadDesigner(dashboardId?: string): void {
@@ -379,22 +389,89 @@ export class BoldBI {
             this.embedOptions.dashboardId = dashboardId;
         }
         if (!this._checkWidgetList()) {
-            if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+            if (this._shouldRenderComponent()) {
                 this.isDashboardRendering = true;
                 this._setEmbedDefaults();
                 this._showLoader();
                 this._isDependencyLoaded(this);
-            } else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                this._createIframe(`${this.embedOptions.serverUrl}/dashboard-designer/${this.embedOptions.dashboardId}?isembed=true`);
+            } else if (this._shouldRenderIframe()) {
+                this._createIframe(this._getDesignerIframeUrl());
             }
         }
     }
+
+    private _shouldRenderComponent(): boolean {
+        return this.embedOptions.embedType == BoldBI.EmbedType.Component && !this._isStrictCspIframeFallbackEnabled();
+    }
+
+    private _shouldRenderIframe(): boolean {
+        return this.embedOptions.embedType == BoldBI.EmbedType.IFrame || this._isStrictCspIframeFallbackEnabled();
+    }
+
+    private _isStrictCspIframeFallbackEnabled(): boolean {
+        return this.embedOptions.embedType == BoldBI.EmbedType.Component &&
+            (this.useIframeForStrictCsp === true ||
+                this.embedOptions.useIframeForStrictCsp === true ||
+                this.embedOptions.settings?.useIframeForStrictCsp === true);
+    }
+
+    private _getDashboardIframeUrl(): string {
+        if (this._isStrictCspIframeFallbackEnabled() && this._isEmptyOrSpaces(this.embedOptions.dashboardId) && !this._hasConfiguredIframeUrl()) {
+            this._throwError(errorMessages['StrictCspIframeFallbackUnsupported']);
+        }
+
+        return this._getConfiguredIframeUrl(`${this.embedOptions.serverUrl}/dashboards/${this.embedOptions.dashboardId}`);
+    }
+
+    private _getDesignerIframeUrl(): string {
+        if (this._isStrictCspIframeFallbackEnabled() && this._isEmptyOrSpaces(this.embedOptions.dashboardId) && !this._hasConfiguredIframeUrl()) {
+            this._throwError(errorMessages['StrictCspIframeFallbackUnsupported']);
+        }
+
+        return this._getConfiguredIframeUrl(`${this.embedOptions.serverUrl}/dashboard-designer/${this.embedOptions.dashboardId}`);
+    }
+
+    private _getDatasourceIframeUrl(): string {
+        if (this._isStrictCspIframeFallbackEnabled() && this._isEmptyOrSpaces(this.embedOptions.datasourceId) && !this._hasConfiguredIframeUrl()) {
+            this._throwError(errorMessages['StrictCspIframeFallbackUnsupported']);
+        }
+
+        return this._getConfiguredIframeUrl(`${this.embedOptions.serverUrl}/datasource-designer/${this.embedOptions.datasourceId}`);
+    }
+
+    private _hasConfiguredIframeUrl(): boolean {
+        return !this._isEmptyOrSpaces(this.embedOptions.iframeUrl) ||
+            !this._isEmptyOrSpaces(this.embedOptions.settings?.iframeUrl);
+    }
+
+    private _getConfiguredIframeUrl(defaultUrl: string): string {
+        const iframeUrl = !this._isEmptyOrSpaces(this.embedOptions.iframeUrl)
+            ? this.embedOptions.iframeUrl
+            : !this._isEmptyOrSpaces(this.embedOptions.settings?.iframeUrl)
+                ? this.embedOptions.settings.iframeUrl
+                : defaultUrl;
+
+        return this._appendIframeEmbedQuery(iframeUrl);
+    }
+
+    private _appendIframeEmbedQuery(url: string): string {
+        try {
+            const parsedUrl = new URL(url, window.location.href);
+            if (!parsedUrl.searchParams.has('isembed')) {
+                parsedUrl.searchParams.set('isembed', 'true');
+            }
+            return parsedUrl.toString();
+        } catch {
+            return url.indexOf('?') >= 0 ? `${url}&isembed=true` : `${url}?isembed=true`;
+        }
+    }
+
     private _createIframe(url: string): void {
         const iframe: any = document.createElement('iframe');
         iframe.frameBorder = 0;
         iframe.width = this.embedOptions.width;
         iframe.height = this.embedOptions.height;
-        iframe.id = `${this.embedOptions.embedContainerId}_${this.embedOptions.dashboardId}`;
+        iframe.id = `${this.embedOptions.embedContainerId}_${this.embedOptions.dashboardId || this.embedOptions.datasourceId || 'iframe'}`;
         iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
         iframe.setAttribute('src', url);
         document.getElementById(this.embedOptions.embedContainerId)?.appendChild(iframe);
@@ -758,7 +835,7 @@ export class BoldBI {
 
         if (boldBIObj._validateOptions(options)) {
             boldBIObj._initializeEmbedOptions(options);
-            if (boldBIObj.embedOptions.embedType == BoldBI.EmbedType.Component) {
+            if (boldBIObj._shouldRenderComponent()) {
                 try {
                     if (boldBIObj.embedOptions.widgetList == '' || boldBIObj.embedOptions.embedContainerId) {
                         boldBIObj.childContainer = document.createElement('div');
@@ -801,6 +878,35 @@ export class BoldBI {
                         boldBIObj.invalidDetail = true;
                         const retObj: BoldBI = Object.assign(boldBIObj);
                         boldBIObj.storeObj = retObj; // storeObj for reuse
+                        return retObj;
+                    }
+                }
+            } else if (boldBIObj._shouldRenderIframe()) {
+                try {
+                    const container = document.getElementById(boldBIObj.embedOptions.embedContainerId);
+                    if (container) {
+                        container.innerHTML = '';
+                    }
+                    if (boldBIObj._initializeUrls()) {
+                        if (!boldBIObj.embedOptions.width && !boldBIObj.embedOptions.height) {
+                            boldBIObj._setDimensions();
+                        }
+                    } else {
+                        boldBIObj.invalidDetail = true;
+                        const retObj: BoldBI = Object.assign(boldBIObj);
+                        boldBIObj.storeObj = retObj;
+                        return retObj;
+                    }
+                } catch (ex) {
+                    if (ex.message == errorMessages['CantReadNull']) {
+                        alert(errorMessages['InvalidEmbedContainerID']);
+                        return false;
+                    }
+                    else {
+                        boldBIObj._throwError(ex.message, boldBIObj.embedOptions.embedContainerId);
+                        boldBIObj.invalidDetail = true;
+                        const retObj: BoldBI = Object.assign(boldBIObj);
+                        boldBIObj.storeObj = retObj;
                         return retObj;
                     }
                 }
@@ -916,20 +1022,15 @@ export class BoldBI {
             this.embedOptions.dashboardIds = [];
             this.embedOptions.dashboardPaths = [];
             if (!this._checkWidgetList()) {
-                if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+                if (this._shouldRenderComponent()) {
                     this._setEmbedDefaults();
                     this.isPinboardRendering = true;
                     this._showLoader();
                     this._isDependencyLoaded(this);
-                } else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                    const iframe: any = document.createElement('iframe');
-                    iframe.frameBorder = 0;
-                    iframe.width = this.embedOptions.width;
-                    iframe.height = this.embedOptions.height;
-                    iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.dashboardId;
-                    iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
-                    iframe.setAttribute('src', this.embedOptions.serverUrl + '/dashboards/' + this.embedOptions.dashboardId + '?isembed=true');
-                    document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                } else if (this._isStrictCspIframeFallbackEnabled()) {
+                    this._throwError(errorMessages['StrictCspIframeFallbackUnsupported']);
+                } else if (this._shouldRenderIframe()) {
+                    this._createIframe(this._getDashboardIframeUrl());
                 }
             }
         }
@@ -950,22 +1051,15 @@ export class BoldBI {
             }
             if (!this._checkWidgetList()) {
                 if (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) {
-                    if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+                    if (this._shouldRenderComponent()) {
                         this.isWidgetMode = false;
                         this.widgetName = '';
                         this.isDashboardViewMode = false;
                         this.dashboardViewName = '';
                         this._showLoader();
                         this._isDependencyLoaded(this);
-                    } else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                        const iframe: any = document.createElement('iframe');
-                        iframe.frameBorder = 0;
-                        iframe.width = this.embedOptions.width;
-                        iframe.height = this.embedOptions.height;
-                        iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.datasourceId;
-                        iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
-                        iframe.setAttribute('src', this.embedOptions.serverUrl + '/datasource-designer/' + this.embedOptions.datasourceId + '?isembed=true');
-                        document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                    } else if (this._shouldRenderIframe()) {
+                        this._createIframe(this._getDatasourceIframeUrl());
                     }
                 } else {
                     throw new Error(errorMessages['EmbedModeInvalid']);
@@ -1402,6 +1496,226 @@ export class BoldBI {
         }
     }
 
+    /**
+     * Opens the View Underlying Data dialog for the resolved widget.
+     *
+     * @param {object} options - Optional details that hold "widgetId" - Defines the unique id of the widget, "dashboardId" - Defines the unique id of the dashboard if it is present within the multitab dashboard.
+     * @param {string} options.widgetId - Defines the unique id of the widget. This can be omitted when the method is called from widget toolbar click context or single widget embedding.
+     * @param {string} options.dashboardId - Defines the unique id of the dashboard. This is optional for multitab dashboard embedding; when omitted, the SDK searches active and loaded dashboard tabs.
+     * @returns {void}
+     *
+     * @example
+     * dashboard.viewer.showViewDataDialog();
+     * dashboard.viewer.showViewDataDialog({ widgetId: 'widget-guid' });
+     * dashboard.viewer.showViewDataDialog({ dashboardId: 'dashboard-guid', widgetId: 'widget-guid' });
+     */
+    showViewDataDialog(options?: ViewDataDialogOptions): void {
+        const viewDataInfo: any = this._resolveViewDataDialogInfo(options || {});
+        const dbrdInstance: any = viewDataInfo.dashboardInstance;
+        const widgetItem: any = viewDataInfo.widgetItem;
+        if (dbrdInstance == null || widgetItem == null) {
+            throw new Error(errorMessages['ViewDataWidgetNotFound']);
+        }
+        if (this.isMultiTab && viewDataInfo.tabIndex !== undefined && !viewDataInfo.isActiveTab) {
+            this._activateViewDataDashboardTab(viewDataInfo.tabIndex);
+            setTimeout(() => {
+                this._openViewDataDialog(dbrdInstance, widgetItem);
+            }, 100);
+            this.viewDataWidgetContext = null;
+            return;
+        }
+        this._openViewDataDialog(dbrdInstance, widgetItem);
+        this.viewDataWidgetContext = null;
+    }
+
+    // Opens the internal designer view data dialog after the dashboard and widget instances are resolved.
+    _openViewDataDialog(dbrdInstance: any, widgetItem: any): void {
+        if (dbrdInstance.modules == null ||
+            dbrdInstance.modules.viewDataDialog == null ||
+            !(dbrdInstance.modules.viewDataDialog.showViewDataPopup instanceof Function)) {
+            throw new Error(errorMessages['ViewDataDialogNotAvailable']);
+        }
+        const widgetType: string = String(widgetItem.Type || widgetItem.type || '');
+        const isNotChartWidget: boolean = widgetType.toLowerCase() !== 'chart';
+        dbrdInstance.modules.viewDataDialog.showViewDataPopup(widgetItem, false, null, isNotChartWidget, true);
+    }
+
+    // Routes the lookup to the correct embedding mode before opening the dialog.
+    _resolveViewDataDialogInfo(options: ViewDataDialogOptions): any {
+        const widgetId: string = this._getViewDataWidgetId(options);
+        if (this.isMultiTab) {
+            return this._resolveMultitabViewDataInfo(options.dashboardId, widgetId);
+        }
+        if (this.isMultipleWidgetMode) {
+            return this._resolveMultipleWidgetViewDataInfo(widgetId);
+        }
+        const dbrdInstance: any = this._getDashboardInstance();
+        if (dbrdInstance == null) {
+            throw new Error(errorMessages['ViewDataInstanceNotAvailable']);
+        }
+        return this._resolveViewDataInfoFromInstance(dbrdInstance, widgetId);
+    }
+
+     // Gets widget id from method options or from the current widget toolbar click event context.
+    _getViewDataWidgetId(options: ViewDataDialogOptions): string {
+        if (options != null && !this._isEmptyOrSpaces(options.widgetId)) {
+            return options.widgetId;
+        }
+        const context: any = this.viewDataWidgetContext;
+        const widgetJson: any = context?.widgetInformation?.widgetJson || context?.widgetJson;
+        const contextWidgetId: string = widgetJson?.UniqueId || context?.widgetId || context?.dataWidgetId || '';
+        return contextWidgetId;
+    }
+
+     // Resolves a widget from one dashboard instance; if only one widget exists, widget id can be omitted.
+    _resolveViewDataInfoFromInstance(dbrdInstance: any, widgetId: string): any {
+        const widgets: any = this._getViewDataWidgets(dbrdInstance);
+        if (widgets == null) {
+            throw new Error(errorMessages['ViewDataInstanceNotAvailable']);
+        }
+        if (this._isEmptyOrSpaces(widgetId)) {
+            if (widgets.length === 1) {
+                return { dashboardInstance: dbrdInstance, widgetItem: widgets[0] };
+            }
+            throw new Error(errorMessages['InvalidViewDataWidgetID']);
+        }
+        const widgetItem: any = this._getViewDataWidgetInstanceFromList(widgets, widgetId);
+        if (widgetItem == null) {
+            throw new Error(errorMessages['ViewDataWidgetNotFound']);
+        }
+        return { dashboardInstance: dbrdInstance, widgetItem: widgetItem };
+    }
+
+    // Resolves the matching widget instance from multiple-widget embedding.
+    _resolveMultipleWidgetViewDataInfo(widgetId: string): any {
+        const existingDashboardInstance: any = this._getDashboardInstance();
+        const multipleWidgetInstance: any = existingDashboardInstance?.loadMultipleWidget?.multipleWidgetInstanceCollection;
+        if (multipleWidgetInstance == null) {
+            throw new Error(errorMessages['ViewDataInstanceNotAvailable']);
+        }
+        if (this._isEmptyOrSpaces(widgetId)) {
+            if (multipleWidgetInstance.length === 1) {
+                return this._resolveViewDataInfoFromInstance(multipleWidgetInstance[0].currentInstance, widgetId);
+            }
+            throw new Error(errorMessages['InvalidViewDataWidgetID']);
+        }
+        for (let index: number = 0; index < multipleWidgetInstance.length; index++) {
+            const currentInstance: any = multipleWidgetInstance[Number(index)].currentInstance;
+            const widgets: any = this._getViewDataWidgets(currentInstance);
+            const widgetItem: any = this._getViewDataWidgetInstanceFromList(widgets, widgetId);
+            if (widgetItem != null) {
+                return { dashboardInstance: currentInstance, widgetItem: widgetItem };
+            }
+        }
+        throw new Error(errorMessages['ViewDataWidgetNotFound']);
+    }
+
+     // Resolves the widget from multitab embedding and returns tab details so inactive tabs can be activated first.
+    _resolveMultitabViewDataInfo(dashboardId: string, widgetId: string): any {
+        if (!this._isEmptyOrSpaces(dashboardId)) {
+            const formattedDashboardId: string = dashboardId.replaceAll('-', '');
+            const tabInfo: any = this._getMultitabDashboardTabInfo('multi_' + formattedDashboardId + '_embeddedbi');
+            if (tabInfo == null) {
+                throw new Error(errorMessages['InvalidDashboardID']);
+            }
+            const dbrdInstance: any = tabInfo.dashboardInstance;
+            if (dbrdInstance == null) {
+                throw new Error(errorMessages['ViewDataDashboardInstanceNotLoaded']);
+            }
+            const viewDataInfo: any = this._resolveViewDataInfoFromInstance(dbrdInstance, widgetId);
+            viewDataInfo.tabIndex = tabInfo.tabIndex;
+            viewDataInfo.isActiveTab = tabInfo.isActiveTab;
+            return viewDataInfo;
+        }
+        const activeDashboardInstance: any = window.bbEmbed('.e-content .e-active').find('.bbembed-multitab-dbrd').data('BoldBIDashboardDesigner');
+        if (activeDashboardInstance != null) {
+            try {
+                const activeInfo: any = this._resolveViewDataInfoFromInstance(activeDashboardInstance, widgetId);
+                activeInfo.isActiveTab = true;
+                return activeInfo;
+            }
+            catch (error) {
+                if (this._isEmptyOrSpaces(widgetId)) {
+                    throw error;
+                }
+            }
+        }
+        const dashboardContainer: any = window.bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+        let hasUnloadedDashboard: boolean = false;
+        for (let index: number = 0; index < dashboardContainer.length; index++) {
+            const embedId: any = window.bbEmbed(dashboardContainer[Number(index)]).attr('id');
+            const dbrdInstance: any = this._getDashboardInstance(embedId);
+            if (dbrdInstance == null) {
+                hasUnloadedDashboard = true;
+                continue;
+            }
+            const widgets: any = this._getViewDataWidgets(dbrdInstance);
+            const widgetItem: any = this._getViewDataWidgetInstanceFromList(widgets, widgetId);
+            if (widgetItem != null) {
+                return {
+                    dashboardInstance: dbrdInstance,
+                    widgetItem: widgetItem,
+                    tabIndex: index,
+                    isActiveTab: this._isActiveMultitabDashboard(embedId)
+                };
+            }
+        }
+        throw new Error(hasUnloadedDashboard ? errorMessages['ViewDataDashboardInstanceNotLoaded'] : errorMessages['ViewDataWidgetNotFound']);
+    }
+
+    // Finds the multitab child dashboard container, rendered instance, tab index, and active state.
+    _getMultitabDashboardTabInfo(embedId: string): any {
+        const dashboardContainer: any = window.bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+        for (let index: number = 0; index < dashboardContainer.length; index++) {
+            if (window.bbEmbed(dashboardContainer[Number(index)]).attr('id') === embedId) {
+                return {
+                    dashboardInstance: this._getDashboardInstance(embedId),
+                    tabIndex: index,
+                    isActiveTab: this._isActiveMultitabDashboard(embedId)
+                };
+            }
+        }
+        return null;
+    }
+    // Checks whether the provided multitab child dashboard is currently active.
+    _isActiveMultitabDashboard(embedId: string): boolean {
+        return window.bbEmbed('.e-content .e-active').find('#' + embedId).length > 0;
+    }
+    // Activates the target multitab dashboard before opening the dialog to avoid inactive-tab layout issues.
+    _activateViewDataDashboardTab(tabIndex: number): void {
+        const containerName: any = this.embedOptions.embedContainerId + '_multi_tab_dashboard';
+        const tabObj: any = window.bbEmbed('#' + containerName)[0]?.ej2_instances?.[0] || tabInstance;
+        if (tabObj != null && tabObj.select instanceof Function) {
+            tabObj.select(tabIndex);
+            return;
+        }
+        window.bbEmbed('#' + containerName + ' .e-toolbar-item').eq(tabIndex).trigger('click');
+    }
+
+    // Reads rendered widgets from the dashboard instance using the existing widget helper.
+    _getViewDataWidgets(dbrdInstance: any): any {
+        if (dbrdInstance == null ||
+            dbrdInstance.modules == null ||
+            dbrdInstance.modules.widgetHelper == null ||
+            !(dbrdInstance.modules.widgetHelper.getAllWidgets instanceof Function)) {
+            return null;
+        }
+        return dbrdInstance.modules.widgetHelper.getAllWidgets();
+    }
+    // Matches the requested widget by widget JSON UniqueId, not by title, because titles can be duplicated.
+    _getViewDataWidgetInstanceFromList(widgets: any, widgetId: string): any {
+        if (widgets == null || this._isEmptyOrSpaces(widgetId)) {
+            return null;
+        }
+        for (let index: number = 0; index < widgets.length; index++) {
+            const widgetItem: any = widgets[Number(index)];
+            if (widgetItem?.getJson instanceof Function && widgetItem.getJson()?.UniqueId === widgetId) {
+                return widgetItem;
+            }
+        }
+        return null;
+    }
+
     viewer: ViewerMethods = {
         refresh: () => {
             this.deprecated = false;
@@ -1418,6 +1732,11 @@ export class BoldBI {
         updateFilters: (filtervalues: string) => {
             this.deprecated = false;
             this.updateFilters(filtervalues);
+        },
+        // Viewer methods delegate to class methods to follow the existing SDK public-method binding pattern.
+        showViewDataDialog: (options?: ViewDataDialogOptions) => {
+            this.deprecated = false;
+            this.showViewDataDialog(options);
         },
         exportAsExcel: (info: ExportInformation) => {
             this.deprecated = false;
@@ -2100,7 +2419,7 @@ export class BoldBI {
         const that: BoldBI = obj;
 
         fileUriArray.forEach(function (file: string): any {
-            if (!((file == 'jquery-ui.min.js' && window.jQuery.ui != undefined && window.jQuery.ui.version == '1.14.1') || (file == 'jsrender.min.js' && window.jQuery.views != undefined && window.jQuery.views.jsviews == 'v1.0.0-beta'))) {
+            if (!(file == 'jquery-ui.min.js' && window.jQuery.ui != undefined && window.jQuery.ui.version == '1.14.1')) {
                 const scriptTag: any = document.createElement('script');
                 if (this.embedOptions.nonce) {
                     scriptTag.nonce = this.embedOptions.nonce;
@@ -2111,9 +2430,6 @@ export class BoldBI {
                 else if (file == 'jquery-ui.min.js') {
                     //scriptTag.src = this.maskedCdnUrl.slice(0, -1) + 'jquery-ui.min.js';
                     scriptTag.src = this._appendEmbedResourceVersion((that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/' + file : that.cdnLink + '/scripts/' + file);
-                }
-                else if (file == 'jsrender.min.js') {
-                    scriptTag.src = this._appendEmbedResourceVersion((that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file);
                 }
                 document.head.appendChild(scriptTag);
                 scriptTag.onerror = (arg: any) => this._handleEnvironmentError(arg);
@@ -2149,8 +2465,7 @@ export class BoldBI {
         const excludedVersionedFiles: Array<string> = [
             '/cdn/scripts/designer/jquery-3.5.0.min.js',
             '/cdn/scripts/designer/jquery.easing.1.3.min.js',
-            '/cdn/scripts/jquery-ui.min.js',
-            '/cdn/scripts/designer/jsrender.min.js'
+            '/cdn/scripts/jquery-ui.min.js'
         ];
 
         if (excludedVersionedFiles.some((file: string) => url.indexOf(file) >= 0)) {
@@ -2729,8 +3044,8 @@ export class BoldBI {
                                     EnableModernLayout: getBooleanSetting(widgetsPanelSettings?.enableModernLayout),
                                     DisplayMode: displayMode
                                 }
-                            },
-							CustomErrorMessage:{
+							},
+                            CustomErrorMessage:{
                                 CustomMessage: customErrorMessage?.customMessage ?? ''
                             }
                         }
@@ -5838,6 +6153,7 @@ export class BoldBI {
     }
 
     _onBoldBIDashboardWidgetIconClick(arg: object): any {
+        this.viewDataWidgetContext = arg;
         const serverFnc: any = window[this.onWidgetIconClickFn];
         if (serverFnc instanceof Function) {
             serverFnc.call(this, arg);
@@ -5850,9 +6166,11 @@ export class BoldBI {
         if (this.embedOptions.events?.widget?.onToolbarItemClick instanceof Function) {
             this.embedOptions.events?.widget?.onToolbarItemClick.call(this, arg);
         }
+        this.viewDataWidgetContext = null;
     }
 
     _onBoldBIonControlMenuClick(arg: object): any {
+        this.viewDataWidgetContext = arg;
         const clientFnc: any = window[this.embedOptions.events?.widget?.onToolbarItemClick];
         if (clientFnc instanceof Function) {
             clientFnc.call(this, arg);
@@ -5860,6 +6178,7 @@ export class BoldBI {
         if (this.embedOptions.events?.widget?.onToolbarItemClick instanceof Function) {
             this.embedOptions.events?.widget?.onToolbarItemClick.call(this, arg);
         }
+        this.viewDataWidgetContext = null;
     }
 
     _onBoldBIDashboardUpdatefavorite(arg: object): any {
@@ -6124,6 +6443,7 @@ export class BoldBI {
         this.bingMapRequired = typeof initialOptions.isBingMapRequired === 'boolean' ? initialOptions.isBingMapRequired : initialOptions.settings?.bingMapRequired ?? false;
         this.restrictMobileView = typeof initialOptions.restrictMobileView === 'boolean' ? initialOptions.restrictMobileView : initialOptions.settings?.restrictMobileView ?? false;
         this.disableAutoRecover = typeof initialOptions.disableAutoRecover === 'boolean' ? initialOptions.disableAutoRecover : initialOptions.settings?.disableAutoRecover ?? false;
+        this.useIframeForStrictCsp = typeof initialOptions.useIframeForStrictCsp === 'boolean' ? initialOptions.useIframeForStrictCsp : initialOptions.settings?.useIframeForStrictCsp ?? false;
 
         const dashboardSettings : any = this.embedOptions.dashboardSettings;
         const widgetSettings : any = this.embedOptions.widgetSettings;

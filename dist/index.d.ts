@@ -1,6 +1,6 @@
 import { IDashboardOptions } from './types/dashboard-options';
 import { DefaultConstructor } from './types/default';
-import { ViewerMethods } from './types/viewer-methods';
+import { ViewerMethods, ViewDataDialogOptions } from './types/viewer-methods';
 import { PinboardMethods } from './types/pinboard-methods';
 import { DatasourceMethods } from './types/datasource-methods';
 import { DesignerMethods } from './types/designer-methods';
@@ -93,8 +93,10 @@ export declare class BoldBI {
     bingMapRequired: boolean;
     restrictMobileView: boolean;
     disableAutoRecover: boolean;
+    useIframeForStrictCsp: boolean;
     tokenResponse: any;
     dashboardWidgetExports: any;
+    viewDataWidgetContext: any;
     maskedCdnUrl: any;
     private _authorizeResponse;
     storeObj: BoldBI;
@@ -152,6 +154,15 @@ export declare class BoldBI {
     private _loadDashboardWidget;
     private _loadMultipleWidgets;
     private _loadDesigner;
+    private _shouldRenderComponent;
+    private _shouldRenderIframe;
+    private _isStrictCspIframeFallbackEnabled;
+    private _getDashboardIframeUrl;
+    private _getDesignerIframeUrl;
+    private _getDatasourceIframeUrl;
+    private _hasConfiguredIframeUrl;
+    private _getConfiguredIframeUrl;
+    private _appendIframeEmbedQuery;
     private _createIframe;
     private _setEmbedDefaults;
     private _isInvalidEmbed;
@@ -283,6 +294,31 @@ export declare class BoldBI {
     applyTheme(dashboardTheme: string): any;
     updateDashboardTheme(dashboardTheme: string): any;
     resizeDashboard(filterParameters?: string): any;
+    /**
+     * Opens the View Underlying Data dialog for the resolved widget.
+     *
+     * @param {object} options - Optional details that hold "widgetId" - Defines the unique id of the widget, "dashboardId" - Defines the unique id of the dashboard if it is present within the multitab dashboard.
+     * @param {string} options.widgetId - Defines the unique id of the widget. This can be omitted when the method is called from widget toolbar click context or single widget embedding.
+     * @param {string} options.dashboardId - Defines the unique id of the dashboard. This is optional for multitab dashboard embedding; when omitted, the SDK searches active and loaded dashboard tabs.
+     * @returns {void}
+     *
+     * @example
+     * dashboard.viewer.showViewDataDialog();
+     * dashboard.viewer.showViewDataDialog({ widgetId: 'widget-guid' });
+     * dashboard.viewer.showViewDataDialog({ dashboardId: 'dashboard-guid', widgetId: 'widget-guid' });
+     */
+    showViewDataDialog(options?: ViewDataDialogOptions): void;
+    _openViewDataDialog(dbrdInstance: any, widgetItem: any): void;
+    _resolveViewDataDialogInfo(options: ViewDataDialogOptions): any;
+    _getViewDataWidgetId(options: ViewDataDialogOptions): string;
+    _resolveViewDataInfoFromInstance(dbrdInstance: any, widgetId: string): any;
+    _resolveMultipleWidgetViewDataInfo(widgetId: string): any;
+    _resolveMultitabViewDataInfo(dashboardId: string, widgetId: string): any;
+    _getMultitabDashboardTabInfo(embedId: string): any;
+    _isActiveMultitabDashboard(embedId: string): boolean;
+    _activateViewDataDashboardTab(tabIndex: number): void;
+    _getViewDataWidgets(dbrdInstance: any): any;
+    _getViewDataWidgetInstanceFromList(widgets: any, widgetId: string): any;
     viewer: ViewerMethods;
     pinboard: PinboardMethods;
     dataSource: DatasourceMethods;

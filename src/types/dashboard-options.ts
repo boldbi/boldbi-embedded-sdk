@@ -41,6 +41,8 @@ export interface IDashboardOptions {
     resourceVersion?: string;
     token?: string;
     embedToken?: string;
+    iframeUrl?: string;
+    useIframeForStrictCsp?: boolean;
     pinboardName?: string;
     dashboardIds?: string[];
     dashboardPaths?: string[];

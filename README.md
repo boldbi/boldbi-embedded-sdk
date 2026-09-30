@@ -40,10 +40,9 @@ In case of any questions regarding the use of `Bold BI Embedding`, please [conta
 
 Please refer to the `Bold BI` Product Release Notes on this [Release History](https://www.boldbi.com/release-history/?utm_source=github&utm_medium=backlinks) page.
 
-### Bugs
+### Improvement
 
-* `#839348` – Fixed a dashboard theme rendering issue in embedded dashboards.
-* `#867779` – Fixed a blank first tab issue in embedded multi-tab dashboards when selecting Initial View from Filter Overview.
+* `#853212` – `View Underlying Data from Custom Actions` - Enabled the View Underlying Data dialog in embedded dashboards, making it easier to access detailed data through customized interactions.
 
 ## License Information
 
