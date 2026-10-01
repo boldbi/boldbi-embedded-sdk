@@ -21,6 +21,8 @@ export interface ISettings {
     hideErrorMessage?: boolean,
     restrictMobileView?: boolean,
     disableAutoRecover?: boolean,
+    useIframeForStrictCsp?: boolean,
+    iframeUrl?: string,
     datasources?: IDatasources[];
     designCanvas?: IDesignCanvasSettings;
     dashboardExperience?: IDashboardExperienceSettings;

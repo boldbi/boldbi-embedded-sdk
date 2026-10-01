@@ -8,7 +8,7 @@ export interface IWidgetsPanel {
     existingDashboards?: string[];
     hideDefaultWidgets?: boolean;
     hideExistingWidgets?: boolean;
-    dragAndDropSettings?: IDragAndDropSettings;
     enableModernLayout?: boolean;
-    displayMode?: WidgetPanelDisplayMode;    
+    displayMode?: WidgetPanelDisplayMode;
+    dragAndDropSettings?: IDragAndDropSettings;
 }

@@ -25,10 +25,11 @@ export const Mode = {
     Dark: "dark",
   } as const;
   export type Theme = typeof Theme[keyof typeof Theme];
-  
+
   export const WidgetPanelDisplayMode = {
     Classic: 'Classic',
     Modern: 'Modern',
     Both: 'Both'
   } as const;
   export type WidgetPanelDisplayMode = typeof WidgetPanelDisplayMode[keyof typeof WidgetPanelDisplayMode];
+  

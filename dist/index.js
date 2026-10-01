@@ -21,21 +21,17 @@ class BoldBI {
                 this.embedOptions.dashboardIds = [];
                 this.embedOptions.dashboardPaths = [];
                 if (!this._checkWidgetList()) {
-                    if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+                    if (this._shouldRenderComponent()) {
                         this._setEmbedDefaults();
                         this.isPinboardRendering = true;
                         this._showLoader();
                         this._isDependencyLoaded(this);
                     }
-                    else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                        const iframe = document.createElement('iframe');
-                        iframe.frameBorder = 0;
-                        iframe.width = this.embedOptions.width;
-                        iframe.height = this.embedOptions.height;
-                        iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.dashboardId;
-                        iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
-                        iframe.setAttribute('src', this.embedOptions.serverUrl + '/dashboards/' + this.embedOptions.dashboardId + '?isembed=true');
-                        document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                    else if (this._isStrictCspIframeFallbackEnabled()) {
+                        this._throwError(embeddingLocalization_1.errorMessages['StrictCspIframeFallbackUnsupported']);
+                    }
+                    else if (this._shouldRenderIframe()) {
+                        this._createIframe(this._getDashboardIframeUrl());
                     }
                 }
             }
@@ -50,7 +46,7 @@ class BoldBI {
                 }
                 if (!this._checkWidgetList()) {
                     if (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) {
-                        if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+                        if (this._shouldRenderComponent()) {
                             this.isWidgetMode = false;
                             this.widgetName = '';
                             this.isDashboardViewMode = false;
@@ -58,15 +54,8 @@ class BoldBI {
                             this._showLoader();
                             this._isDependencyLoaded(this);
                         }
-                        else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                            const iframe = document.createElement('iframe');
-                            iframe.frameBorder = 0;
-                            iframe.width = this.embedOptions.width;
-                            iframe.height = this.embedOptions.height;
-                            iframe.id = this.embedOptions.embedContainerId + '_' + this.embedOptions.datasourceId;
-                            iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
-                            iframe.setAttribute('src', this.embedOptions.serverUrl + '/datasource-designer/' + this.embedOptions.datasourceId + '?isembed=true');
-                            document.getElementById(this.embedOptions.embedContainerId).appendChild(iframe);
+                        else if (this._shouldRenderIframe()) {
+                            this._createIframe(this._getDatasourceIframeUrl());
                         }
                     }
                     else {
@@ -91,6 +80,11 @@ class BoldBI {
             updateFilters: (filtervalues) => {
                 this.deprecated = false;
                 this.updateFilters(filtervalues);
+            },
+            // Viewer methods delegate to class methods to follow the existing SDK public-method binding pattern.
+            showViewDataDialog: (options) => {
+                this.deprecated = false;
+                this.showViewDataDialog(options);
             },
             exportAsExcel: (info) => {
                 this.deprecated = false;
@@ -1193,7 +1187,7 @@ class BoldBI {
             this.pinBoardRendered = true;
         });
         this._validateOptions = this.Invoke(function (options) {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5;
             const initialOptions = options;
             this.embedOptions = Object.assign(Object.assign({}, this.embedOptions), { embedContainer: options.embedContainerId, hideErrorMessage: options.hideErrorMessage, widgetSettings: Object.assign({}, initialOptions.widgetSettings), exportSettings: Object.assign({}, initialOptions.exportSettings), pinboardSettings: Object.assign({}, initialOptions.pinboardtSettings), autoRefreshSettings: Object.assign({}, initialOptions.autoRefreshSettings), designCanvasSettings: Object.assign({}, initialOptions.designCanvasSettings), dashboardSettings: Object.assign({}, initialOptions.dashboardSettings), embedAiAssistant: Object.assign({}, initialOptions.embedAiAssistant), customBrandSettings: Object.assign({}, initialOptions.customBrandSettings), toolbarSettings: Object.assign({}, initialOptions.toolbarSettings), languageSettings: Object.assign({}, initialOptions.languageSettings), localeSettings: Object.assign({}, initialOptions.localeSettings), dynamicConnection: Object.assign({}, initialOptions.dynamicConnection), settings: Object.assign({}, initialOptions.settings) });
             const viewerSettings = (_a = initialOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer;
@@ -1201,24 +1195,25 @@ class BoldBI {
             this.bingMapRequired = typeof initialOptions.isBingMapRequired === 'boolean' ? initialOptions.isBingMapRequired : (_f = (_e = initialOptions.settings) === null || _e === void 0 ? void 0 : _e.bingMapRequired) !== null && _f !== void 0 ? _f : false;
             this.restrictMobileView = typeof initialOptions.restrictMobileView === 'boolean' ? initialOptions.restrictMobileView : (_h = (_g = initialOptions.settings) === null || _g === void 0 ? void 0 : _g.restrictMobileView) !== null && _h !== void 0 ? _h : false;
             this.disableAutoRecover = typeof initialOptions.disableAutoRecover === 'boolean' ? initialOptions.disableAutoRecover : (_k = (_j = initialOptions.settings) === null || _j === void 0 ? void 0 : _j.disableAutoRecover) !== null && _k !== void 0 ? _k : false;
+            this.useIframeForStrictCsp = typeof initialOptions.useIframeForStrictCsp === 'boolean' ? initialOptions.useIframeForStrictCsp : (_m = (_l = initialOptions.settings) === null || _l === void 0 ? void 0 : _l.useIframeForStrictCsp) !== null && _m !== void 0 ? _m : false;
             const dashboardSettings = this.embedOptions.dashboardSettings;
             const widgetSettings = this.embedOptions.widgetSettings;
             const exportSettings = this.embedOptions.exportSettings;
             const settings = this.embedOptions.settings;
             this.dashboardWidgetExports.dashboard = {
-                showExport: typeof (dashboardSettings === null || dashboardSettings === void 0 ? void 0 : dashboardSettings.showExport) === 'boolean' ? dashboardSettings.showExport : (_m = (_l = settings === null || settings === void 0 ? void 0 : settings.viewer) === null || _l === void 0 ? void 0 : _l.export) !== null && _m !== void 0 ? _m : true,
-                showMoreOption: typeof (dashboardSettings === null || dashboardSettings === void 0 ? void 0 : dashboardSettings.showMoreOption) === 'boolean' ? dashboardSettings.showMoreOption : (_p = (_o = settings === null || settings === void 0 ? void 0 : settings.viewer) === null || _o === void 0 ? void 0 : _o.moreOption) !== null && _p !== void 0 ? _p : true,
-                showMetrics: typeof (dashboardSettings === null || dashboardSettings === void 0 ? void 0 : dashboardSettings.showMetrics) === 'boolean' ? dashboardSettings.showMetrics : (_r = (_q = settings === null || settings === void 0 ? void 0 : settings.viewer) === null || _q === void 0 ? void 0 : _q.metrics) !== null && _r !== void 0 ? _r : true
+                showExport: typeof (dashboardSettings === null || dashboardSettings === void 0 ? void 0 : dashboardSettings.showExport) === 'boolean' ? dashboardSettings.showExport : (_p = (_o = settings === null || settings === void 0 ? void 0 : settings.viewer) === null || _o === void 0 ? void 0 : _o.export) !== null && _p !== void 0 ? _p : true,
+                showMoreOption: typeof (dashboardSettings === null || dashboardSettings === void 0 ? void 0 : dashboardSettings.showMoreOption) === 'boolean' ? dashboardSettings.showMoreOption : (_r = (_q = settings === null || settings === void 0 ? void 0 : settings.viewer) === null || _q === void 0 ? void 0 : _q.moreOption) !== null && _r !== void 0 ? _r : true,
+                showMetrics: typeof (dashboardSettings === null || dashboardSettings === void 0 ? void 0 : dashboardSettings.showMetrics) === 'boolean' ? dashboardSettings.showMetrics : (_t = (_s = settings === null || settings === void 0 ? void 0 : settings.viewer) === null || _s === void 0 ? void 0 : _s.metrics) !== null && _t !== void 0 ? _t : true
             };
             this.dashboardWidgetExports.widget = {
-                showExport: typeof (widgetSettings === null || widgetSettings === void 0 ? void 0 : widgetSettings.showExport) === 'boolean' ? widgetSettings.showExport : (_t = (_s = settings === null || settings === void 0 ? void 0 : settings.widget) === null || _s === void 0 ? void 0 : _s.export) !== null && _t !== void 0 ? _t : true,
-                showMoreOption: typeof (widgetSettings === null || widgetSettings === void 0 ? void 0 : widgetSettings.showMoreOption) === 'boolean' ? widgetSettings.showMoreOption : (_v = (_u = settings === null || settings === void 0 ? void 0 : settings.widget) === null || _u === void 0 ? void 0 : _u.moreOption) !== null && _v !== void 0 ? _v : true
+                showExport: typeof (widgetSettings === null || widgetSettings === void 0 ? void 0 : widgetSettings.showExport) === 'boolean' ? widgetSettings.showExport : (_v = (_u = settings === null || settings === void 0 ? void 0 : settings.widget) === null || _u === void 0 ? void 0 : _u.export) !== null && _v !== void 0 ? _v : true,
+                showMoreOption: typeof (widgetSettings === null || widgetSettings === void 0 ? void 0 : widgetSettings.showMoreOption) === 'boolean' ? widgetSettings.showMoreOption : (_x = (_w = settings === null || settings === void 0 ? void 0 : settings.widget) === null || _w === void 0 ? void 0 : _w.moreOption) !== null && _x !== void 0 ? _x : true
             };
             this.dashboardWidgetExports.export = {
-                excel: typeof (exportSettings === null || exportSettings === void 0 ? void 0 : exportSettings.showExcel) === 'boolean' ? exportSettings.showExcel : (_x = (_w = settings === null || settings === void 0 ? void 0 : settings.export) === null || _w === void 0 ? void 0 : _w.excel) !== null && _x !== void 0 ? _x : true,
-                pdf: typeof (exportSettings === null || exportSettings === void 0 ? void 0 : exportSettings.showPDF) === 'boolean' ? exportSettings.showPDF : (_z = (_y = settings === null || settings === void 0 ? void 0 : settings.export) === null || _y === void 0 ? void 0 : _y.pdf) !== null && _z !== void 0 ? _z : true,
-                image: typeof (exportSettings === null || exportSettings === void 0 ? void 0 : exportSettings.showImage) === 'boolean' ? exportSettings.showImage : (_1 = (_0 = settings === null || settings === void 0 ? void 0 : settings.export) === null || _0 === void 0 ? void 0 : _0.image) !== null && _1 !== void 0 ? _1 : true,
-                csv: typeof (exportSettings === null || exportSettings === void 0 ? void 0 : exportSettings.showCSV) === 'boolean' ? exportSettings.showCSV : (_3 = (_2 = settings === null || settings === void 0 ? void 0 : settings.export) === null || _2 === void 0 ? void 0 : _2.csv) !== null && _3 !== void 0 ? _3 : true
+                excel: typeof (exportSettings === null || exportSettings === void 0 ? void 0 : exportSettings.showExcel) === 'boolean' ? exportSettings.showExcel : (_z = (_y = settings === null || settings === void 0 ? void 0 : settings.export) === null || _y === void 0 ? void 0 : _y.excel) !== null && _z !== void 0 ? _z : true,
+                pdf: typeof (exportSettings === null || exportSettings === void 0 ? void 0 : exportSettings.showPDF) === 'boolean' ? exportSettings.showPDF : (_1 = (_0 = settings === null || settings === void 0 ? void 0 : settings.export) === null || _0 === void 0 ? void 0 : _0.pdf) !== null && _1 !== void 0 ? _1 : true,
+                image: typeof (exportSettings === null || exportSettings === void 0 ? void 0 : exportSettings.showImage) === 'boolean' ? exportSettings.showImage : (_3 = (_2 = settings === null || settings === void 0 ? void 0 : settings.export) === null || _2 === void 0 ? void 0 : _2.image) !== null && _3 !== void 0 ? _3 : true,
+                csv: typeof (exportSettings === null || exportSettings === void 0 ? void 0 : exportSettings.showCSV) === 'boolean' ? exportSettings.showCSV : (_5 = (_4 = settings === null || settings === void 0 ? void 0 : settings.export) === null || _4 === void 0 ? void 0 : _4.csv) !== null && _5 !== void 0 ? _5 : true
             };
             if (!this._isEmptyOrSpaces(options.resourceVersion) && !this._isValidResourceVersion(options.resourceVersion)) {
                 this.invalidDetail = true;
@@ -1398,7 +1393,7 @@ class BoldBI {
             }
         }
         if (!this._checkWidgetList()) {
-            if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+            if (this._shouldRenderComponent()) {
                 this.embedOptions.dashboardIds = [];
                 this.embedOptions.dashboardPaths = [];
                 this.isDashboardRendering = true;
@@ -1406,8 +1401,8 @@ class BoldBI {
                 this._showLoader();
                 this._isDependencyLoaded(this);
             }
-            else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                this._createIframe(`${this.embedOptions.serverUrl}/dashboards/${this.embedOptions.dashboardId}?isembed=true`);
+            else if (this._shouldRenderIframe()) {
+                this._createIframe(this._getDashboardIframeUrl());
             }
         }
     }
@@ -1428,12 +1423,15 @@ class BoldBI {
         if ((_b = this.embedOptions.dashboardPaths) === null || _b === void 0 ? void 0 : _b.length) {
             this.embedOptions.dashboardPaths = Array.from(new Set(this.embedOptions.dashboardPaths));
         }
-        if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+        if (this._shouldRenderComponent()) {
             this.embedOptions.viewId = '';
             this.embedOptions.viewName = '';
             this._setEmbedDefaults();
             this._showLoader();
             this._isDependencyLoaded(this);
+        }
+        else if (this._isStrictCspIframeFallbackEnabled()) {
+            this._throwError(embeddingLocalization_1.errorMessages['StrictCspIframeFallbackUnsupported']);
         }
     }
     _loadView() {
@@ -1443,13 +1441,16 @@ class BoldBI {
         if (this.embedOptions.viewId == '' && this.embedOptions.viewName == '') {
             throw new Error(embeddingLocalization_1.errorMessages['EmptyViewDetails']);
         }
-        if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+        if (this._shouldRenderComponent()) {
             this.embedOptions.dashboardIds = [];
             this.embedOptions.dashboardPaths = [];
             this.isDashboardViewRendering = true;
             this._setEmbedDefaults();
             this._showLoader();
             this._isDependencyLoaded(this);
+        }
+        else if (this._isStrictCspIframeFallbackEnabled()) {
+            this._throwError(embeddingLocalization_1.errorMessages['StrictCspIframeFallbackUnsupported']);
         }
     }
     _loadDashboardWidget(name, dashboardId) {
@@ -1463,7 +1464,7 @@ class BoldBI {
             this.embedOptions.pinboardName = '';
         }
         if (!this._checkWidgetList()) {
-            if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+            if (this._shouldRenderComponent()) {
                 this.embedOptions.viewId = '';
                 this.embedOptions.viewName = '';
                 this.embedOptions.dashboardIds = [];
@@ -1474,8 +1475,11 @@ class BoldBI {
                 this._showLoader();
                 this._isDependencyLoaded(this, dashboardId);
             }
-            else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                this._createIframe(`${this.embedOptions.serverUrl}/dashboards/${this.embedOptions.dashboardId}?isembed=true`);
+            else if (this._isStrictCspIframeFallbackEnabled()) {
+                this._throwError(embeddingLocalization_1.errorMessages['StrictCspIframeFallbackUnsupported']);
+            }
+            else if (this._shouldRenderIframe()) {
+                this._createIframe(this._getDashboardIframeUrl());
             }
         }
     }
@@ -1492,7 +1496,7 @@ class BoldBI {
         if (this.embedOptions.embedToken || this.embedOptions.token) {
             throw new Error(embeddingLocalization_1.errorMessages['UnableMultipleWidgetsToken']);
         }
-        if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+        if (this._shouldRenderComponent()) {
             this._setEmbedDefaults();
             this.isWidgetMode = true;
             this.isMultipleWidgetMode = true;
@@ -1506,6 +1510,9 @@ class BoldBI {
                 }
             }, 1000);
         }
+        else if (this._isStrictCspIframeFallbackEnabled()) {
+            this._throwError(embeddingLocalization_1.errorMessages['StrictCspIframeFallbackUnsupported']);
+        }
     }
     _loadDesigner(dashboardId) {
         if (this._isInvalidEmbed(BoldBI.Mode.Design, 'EmbedModeInvalid')) {
@@ -1515,15 +1522,72 @@ class BoldBI {
             this.embedOptions.dashboardId = dashboardId;
         }
         if (!this._checkWidgetList()) {
-            if (this.embedOptions.embedType == BoldBI.EmbedType.Component) {
+            if (this._shouldRenderComponent()) {
                 this.isDashboardRendering = true;
                 this._setEmbedDefaults();
                 this._showLoader();
                 this._isDependencyLoaded(this);
             }
-            else if (this.embedOptions.embedType == BoldBI.EmbedType.IFrame) {
-                this._createIframe(`${this.embedOptions.serverUrl}/dashboard-designer/${this.embedOptions.dashboardId}?isembed=true`);
+            else if (this._shouldRenderIframe()) {
+                this._createIframe(this._getDesignerIframeUrl());
             }
+        }
+    }
+    _shouldRenderComponent() {
+        return this.embedOptions.embedType == BoldBI.EmbedType.Component && !this._isStrictCspIframeFallbackEnabled();
+    }
+    _shouldRenderIframe() {
+        return this.embedOptions.embedType == BoldBI.EmbedType.IFrame || this._isStrictCspIframeFallbackEnabled();
+    }
+    _isStrictCspIframeFallbackEnabled() {
+        var _a;
+        return this.embedOptions.embedType == BoldBI.EmbedType.Component &&
+            (this.useIframeForStrictCsp === true ||
+                this.embedOptions.useIframeForStrictCsp === true ||
+                ((_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.useIframeForStrictCsp) === true);
+    }
+    _getDashboardIframeUrl() {
+        if (this._isStrictCspIframeFallbackEnabled() && this._isEmptyOrSpaces(this.embedOptions.dashboardId) && !this._hasConfiguredIframeUrl()) {
+            this._throwError(embeddingLocalization_1.errorMessages['StrictCspIframeFallbackUnsupported']);
+        }
+        return this._getConfiguredIframeUrl(`${this.embedOptions.serverUrl}/dashboards/${this.embedOptions.dashboardId}`);
+    }
+    _getDesignerIframeUrl() {
+        if (this._isStrictCspIframeFallbackEnabled() && this._isEmptyOrSpaces(this.embedOptions.dashboardId) && !this._hasConfiguredIframeUrl()) {
+            this._throwError(embeddingLocalization_1.errorMessages['StrictCspIframeFallbackUnsupported']);
+        }
+        return this._getConfiguredIframeUrl(`${this.embedOptions.serverUrl}/dashboard-designer/${this.embedOptions.dashboardId}`);
+    }
+    _getDatasourceIframeUrl() {
+        if (this._isStrictCspIframeFallbackEnabled() && this._isEmptyOrSpaces(this.embedOptions.datasourceId) && !this._hasConfiguredIframeUrl()) {
+            this._throwError(embeddingLocalization_1.errorMessages['StrictCspIframeFallbackUnsupported']);
+        }
+        return this._getConfiguredIframeUrl(`${this.embedOptions.serverUrl}/datasource-designer/${this.embedOptions.datasourceId}`);
+    }
+    _hasConfiguredIframeUrl() {
+        var _a;
+        return !this._isEmptyOrSpaces(this.embedOptions.iframeUrl) ||
+            !this._isEmptyOrSpaces((_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.iframeUrl);
+    }
+    _getConfiguredIframeUrl(defaultUrl) {
+        var _a;
+        const iframeUrl = !this._isEmptyOrSpaces(this.embedOptions.iframeUrl)
+            ? this.embedOptions.iframeUrl
+            : !this._isEmptyOrSpaces((_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.iframeUrl)
+                ? this.embedOptions.settings.iframeUrl
+                : defaultUrl;
+        return this._appendIframeEmbedQuery(iframeUrl);
+    }
+    _appendIframeEmbedQuery(url) {
+        try {
+            const parsedUrl = new URL(url, window.location.href);
+            if (!parsedUrl.searchParams.has('isembed')) {
+                parsedUrl.searchParams.set('isembed', 'true');
+            }
+            return parsedUrl.toString();
+        }
+        catch (_a) {
+            return url.indexOf('?') >= 0 ? `${url}&isembed=true` : `${url}?isembed=true`;
         }
     }
     _createIframe(url) {
@@ -1532,7 +1596,7 @@ class BoldBI {
         iframe.frameBorder = 0;
         iframe.width = this.embedOptions.width;
         iframe.height = this.embedOptions.height;
-        iframe.id = `${this.embedOptions.embedContainerId}_${this.embedOptions.dashboardId}`;
+        iframe.id = `${this.embedOptions.embedContainerId}_${this.embedOptions.dashboardId || this.embedOptions.datasourceId || 'iframe'}`;
         iframe.allowfullscreen = this.embedOptions.dashboardSettings.showFullScreen;
         iframe.setAttribute('src', url);
         (_a = document.getElementById(this.embedOptions.embedContainerId)) === null || _a === void 0 ? void 0 : _a.appendChild(iframe);
@@ -1901,7 +1965,7 @@ class BoldBI {
         }
         if (boldBIObj._validateOptions(options)) {
             boldBIObj._initializeEmbedOptions(options);
-            if (boldBIObj.embedOptions.embedType == BoldBI.EmbedType.Component) {
+            if (boldBIObj._shouldRenderComponent()) {
                 try {
                     if (boldBIObj.embedOptions.widgetList == '' || boldBIObj.embedOptions.embedContainerId) {
                         boldBIObj.childContainer = document.createElement('div');
@@ -1947,6 +2011,38 @@ class BoldBI {
                         boldBIObj.invalidDetail = true;
                         const retObj = Object.assign(boldBIObj);
                         boldBIObj.storeObj = retObj; // storeObj for reuse
+                        return retObj;
+                    }
+                }
+            }
+            else if (boldBIObj._shouldRenderIframe()) {
+                try {
+                    const container = document.getElementById(boldBIObj.embedOptions.embedContainerId);
+                    if (container) {
+                        container.innerHTML = '';
+                    }
+                    if (boldBIObj._initializeUrls()) {
+                        if (!boldBIObj.embedOptions.width && !boldBIObj.embedOptions.height) {
+                            boldBIObj._setDimensions();
+                        }
+                    }
+                    else {
+                        boldBIObj.invalidDetail = true;
+                        const retObj = Object.assign(boldBIObj);
+                        boldBIObj.storeObj = retObj;
+                        return retObj;
+                    }
+                }
+                catch (ex) {
+                    if (ex.message == embeddingLocalization_1.errorMessages['CantReadNull']) {
+                        alert(embeddingLocalization_1.errorMessages['InvalidEmbedContainerID']);
+                        return false;
+                    }
+                    else {
+                        boldBIObj._throwError(ex.message, boldBIObj.embedOptions.embedContainerId);
+                        boldBIObj.invalidDetail = true;
+                        const retObj = Object.assign(boldBIObj);
+                        boldBIObj.storeObj = retObj;
                         return retObj;
                     }
                 }
@@ -2474,6 +2570,221 @@ class BoldBI {
             }
         }
     }
+    /**
+     * Opens the View Underlying Data dialog for the resolved widget.
+     *
+     * @param {object} options - Optional details that hold "widgetId" - Defines the unique id of the widget, "dashboardId" - Defines the unique id of the dashboard if it is present within the multitab dashboard.
+     * @param {string} options.widgetId - Defines the unique id of the widget. This can be omitted when the method is called from widget toolbar click context or single widget embedding.
+     * @param {string} options.dashboardId - Defines the unique id of the dashboard. This is optional for multitab dashboard embedding; when omitted, the SDK searches active and loaded dashboard tabs.
+     * @returns {void}
+     *
+     * @example
+     * dashboard.viewer.showViewDataDialog();
+     * dashboard.viewer.showViewDataDialog({ widgetId: 'widget-guid' });
+     * dashboard.viewer.showViewDataDialog({ dashboardId: 'dashboard-guid', widgetId: 'widget-guid' });
+     */
+    showViewDataDialog(options) {
+        const viewDataInfo = this._resolveViewDataDialogInfo(options || {});
+        const dbrdInstance = viewDataInfo.dashboardInstance;
+        const widgetItem = viewDataInfo.widgetItem;
+        if (dbrdInstance == null || widgetItem == null) {
+            throw new Error(embeddingLocalization_1.errorMessages['ViewDataWidgetNotFound']);
+        }
+        if (this.isMultiTab && viewDataInfo.tabIndex !== undefined && !viewDataInfo.isActiveTab) {
+            this._activateViewDataDashboardTab(viewDataInfo.tabIndex);
+            setTimeout(() => {
+                this._openViewDataDialog(dbrdInstance, widgetItem);
+            }, 100);
+            this.viewDataWidgetContext = null;
+            return;
+        }
+        this._openViewDataDialog(dbrdInstance, widgetItem);
+        this.viewDataWidgetContext = null;
+    }
+    // Opens the internal designer view data dialog after the dashboard and widget instances are resolved.
+    _openViewDataDialog(dbrdInstance, widgetItem) {
+        if (dbrdInstance.modules == null ||
+            dbrdInstance.modules.viewDataDialog == null ||
+            !(dbrdInstance.modules.viewDataDialog.showViewDataPopup instanceof Function)) {
+            throw new Error(embeddingLocalization_1.errorMessages['ViewDataDialogNotAvailable']);
+        }
+        const widgetType = String(widgetItem.Type || widgetItem.type || '');
+        const isNotChartWidget = widgetType.toLowerCase() !== 'chart';
+        dbrdInstance.modules.viewDataDialog.showViewDataPopup(widgetItem, false, null, isNotChartWidget, true);
+    }
+    // Routes the lookup to the correct embedding mode before opening the dialog.
+    _resolveViewDataDialogInfo(options) {
+        const widgetId = this._getViewDataWidgetId(options);
+        if (this.isMultiTab) {
+            return this._resolveMultitabViewDataInfo(options.dashboardId, widgetId);
+        }
+        if (this.isMultipleWidgetMode) {
+            return this._resolveMultipleWidgetViewDataInfo(widgetId);
+        }
+        const dbrdInstance = this._getDashboardInstance();
+        if (dbrdInstance == null) {
+            throw new Error(embeddingLocalization_1.errorMessages['ViewDataInstanceNotAvailable']);
+        }
+        return this._resolveViewDataInfoFromInstance(dbrdInstance, widgetId);
+    }
+    // Gets widget id from method options or from the current widget toolbar click event context.
+    _getViewDataWidgetId(options) {
+        var _a;
+        if (options != null && !this._isEmptyOrSpaces(options.widgetId)) {
+            return options.widgetId;
+        }
+        const context = this.viewDataWidgetContext;
+        const widgetJson = ((_a = context === null || context === void 0 ? void 0 : context.widgetInformation) === null || _a === void 0 ? void 0 : _a.widgetJson) || (context === null || context === void 0 ? void 0 : context.widgetJson);
+        const contextWidgetId = (widgetJson === null || widgetJson === void 0 ? void 0 : widgetJson.UniqueId) || (context === null || context === void 0 ? void 0 : context.widgetId) || (context === null || context === void 0 ? void 0 : context.dataWidgetId) || '';
+        return contextWidgetId;
+    }
+    // Resolves a widget from one dashboard instance; if only one widget exists, widget id can be omitted.
+    _resolveViewDataInfoFromInstance(dbrdInstance, widgetId) {
+        const widgets = this._getViewDataWidgets(dbrdInstance);
+        if (widgets == null) {
+            throw new Error(embeddingLocalization_1.errorMessages['ViewDataInstanceNotAvailable']);
+        }
+        if (this._isEmptyOrSpaces(widgetId)) {
+            if (widgets.length === 1) {
+                return { dashboardInstance: dbrdInstance, widgetItem: widgets[0] };
+            }
+            throw new Error(embeddingLocalization_1.errorMessages['InvalidViewDataWidgetID']);
+        }
+        const widgetItem = this._getViewDataWidgetInstanceFromList(widgets, widgetId);
+        if (widgetItem == null) {
+            throw new Error(embeddingLocalization_1.errorMessages['ViewDataWidgetNotFound']);
+        }
+        return { dashboardInstance: dbrdInstance, widgetItem: widgetItem };
+    }
+    // Resolves the matching widget instance from multiple-widget embedding.
+    _resolveMultipleWidgetViewDataInfo(widgetId) {
+        var _a;
+        const existingDashboardInstance = this._getDashboardInstance();
+        const multipleWidgetInstance = (_a = existingDashboardInstance === null || existingDashboardInstance === void 0 ? void 0 : existingDashboardInstance.loadMultipleWidget) === null || _a === void 0 ? void 0 : _a.multipleWidgetInstanceCollection;
+        if (multipleWidgetInstance == null) {
+            throw new Error(embeddingLocalization_1.errorMessages['ViewDataInstanceNotAvailable']);
+        }
+        if (this._isEmptyOrSpaces(widgetId)) {
+            if (multipleWidgetInstance.length === 1) {
+                return this._resolveViewDataInfoFromInstance(multipleWidgetInstance[0].currentInstance, widgetId);
+            }
+            throw new Error(embeddingLocalization_1.errorMessages['InvalidViewDataWidgetID']);
+        }
+        for (let index = 0; index < multipleWidgetInstance.length; index++) {
+            const currentInstance = multipleWidgetInstance[Number(index)].currentInstance;
+            const widgets = this._getViewDataWidgets(currentInstance);
+            const widgetItem = this._getViewDataWidgetInstanceFromList(widgets, widgetId);
+            if (widgetItem != null) {
+                return { dashboardInstance: currentInstance, widgetItem: widgetItem };
+            }
+        }
+        throw new Error(embeddingLocalization_1.errorMessages['ViewDataWidgetNotFound']);
+    }
+    // Resolves the widget from multitab embedding and returns tab details so inactive tabs can be activated first.
+    _resolveMultitabViewDataInfo(dashboardId, widgetId) {
+        if (!this._isEmptyOrSpaces(dashboardId)) {
+            const formattedDashboardId = dashboardId.replaceAll('-', '');
+            const tabInfo = this._getMultitabDashboardTabInfo('multi_' + formattedDashboardId + '_embeddedbi');
+            if (tabInfo == null) {
+                throw new Error(embeddingLocalization_1.errorMessages['InvalidDashboardID']);
+            }
+            const dbrdInstance = tabInfo.dashboardInstance;
+            if (dbrdInstance == null) {
+                throw new Error(embeddingLocalization_1.errorMessages['ViewDataDashboardInstanceNotLoaded']);
+            }
+            const viewDataInfo = this._resolveViewDataInfoFromInstance(dbrdInstance, widgetId);
+            viewDataInfo.tabIndex = tabInfo.tabIndex;
+            viewDataInfo.isActiveTab = tabInfo.isActiveTab;
+            return viewDataInfo;
+        }
+        const activeDashboardInstance = window.bbEmbed('.e-content .e-active').find('.bbembed-multitab-dbrd').data('BoldBIDashboardDesigner');
+        if (activeDashboardInstance != null) {
+            try {
+                const activeInfo = this._resolveViewDataInfoFromInstance(activeDashboardInstance, widgetId);
+                activeInfo.isActiveTab = true;
+                return activeInfo;
+            }
+            catch (error) {
+                if (this._isEmptyOrSpaces(widgetId)) {
+                    throw error;
+                }
+            }
+        }
+        const dashboardContainer = window.bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+        let hasUnloadedDashboard = false;
+        for (let index = 0; index < dashboardContainer.length; index++) {
+            const embedId = window.bbEmbed(dashboardContainer[Number(index)]).attr('id');
+            const dbrdInstance = this._getDashboardInstance(embedId);
+            if (dbrdInstance == null) {
+                hasUnloadedDashboard = true;
+                continue;
+            }
+            const widgets = this._getViewDataWidgets(dbrdInstance);
+            const widgetItem = this._getViewDataWidgetInstanceFromList(widgets, widgetId);
+            if (widgetItem != null) {
+                return {
+                    dashboardInstance: dbrdInstance,
+                    widgetItem: widgetItem,
+                    tabIndex: index,
+                    isActiveTab: this._isActiveMultitabDashboard(embedId)
+                };
+            }
+        }
+        throw new Error(hasUnloadedDashboard ? embeddingLocalization_1.errorMessages['ViewDataDashboardInstanceNotLoaded'] : embeddingLocalization_1.errorMessages['ViewDataWidgetNotFound']);
+    }
+    // Finds the multitab child dashboard container, rendered instance, tab index, and active state.
+    _getMultitabDashboardTabInfo(embedId) {
+        const dashboardContainer = window.bbEmbed('#' + this.embedOptions.embedContainerId).find('.e-content .bbembed-multitab-dbrd');
+        for (let index = 0; index < dashboardContainer.length; index++) {
+            if (window.bbEmbed(dashboardContainer[Number(index)]).attr('id') === embedId) {
+                return {
+                    dashboardInstance: this._getDashboardInstance(embedId),
+                    tabIndex: index,
+                    isActiveTab: this._isActiveMultitabDashboard(embedId)
+                };
+            }
+        }
+        return null;
+    }
+    // Checks whether the provided multitab child dashboard is currently active.
+    _isActiveMultitabDashboard(embedId) {
+        return window.bbEmbed('.e-content .e-active').find('#' + embedId).length > 0;
+    }
+    // Activates the target multitab dashboard before opening the dialog to avoid inactive-tab layout issues.
+    _activateViewDataDashboardTab(tabIndex) {
+        var _a, _b;
+        const containerName = this.embedOptions.embedContainerId + '_multi_tab_dashboard';
+        const tabObj = ((_b = (_a = window.bbEmbed('#' + containerName)[0]) === null || _a === void 0 ? void 0 : _a.ej2_instances) === null || _b === void 0 ? void 0 : _b[0]) || tabInstance;
+        if (tabObj != null && tabObj.select instanceof Function) {
+            tabObj.select(tabIndex);
+            return;
+        }
+        window.bbEmbed('#' + containerName + ' .e-toolbar-item').eq(tabIndex).trigger('click');
+    }
+    // Reads rendered widgets from the dashboard instance using the existing widget helper.
+    _getViewDataWidgets(dbrdInstance) {
+        if (dbrdInstance == null ||
+            dbrdInstance.modules == null ||
+            dbrdInstance.modules.widgetHelper == null ||
+            !(dbrdInstance.modules.widgetHelper.getAllWidgets instanceof Function)) {
+            return null;
+        }
+        return dbrdInstance.modules.widgetHelper.getAllWidgets();
+    }
+    // Matches the requested widget by widget JSON UniqueId, not by title, because titles can be duplicated.
+    _getViewDataWidgetInstanceFromList(widgets, widgetId) {
+        var _a;
+        if (widgets == null || this._isEmptyOrSpaces(widgetId)) {
+            return null;
+        }
+        for (let index = 0; index < widgets.length; index++) {
+            const widgetItem = widgets[Number(index)];
+            if ((widgetItem === null || widgetItem === void 0 ? void 0 : widgetItem.getJson) instanceof Function && ((_a = widgetItem.getJson()) === null || _a === void 0 ? void 0 : _a.UniqueId) === widgetId) {
+                return widgetItem;
+            }
+        }
+        return null;
+    }
     deprecationMessage(methodName) {
         if (this.deprecated) {
             (0, sdk_deprecation_utils_1.deprecatedMethod)(methodName);
@@ -2912,7 +3223,7 @@ class BoldBI {
     _addWrapperDependentFiles(obj, fileUriArray) {
         const that = obj;
         fileUriArray.forEach(function (file) {
-            if (!((file == 'jquery-ui.min.js' && window.jQuery.ui != undefined && window.jQuery.ui.version == '1.14.1') || (file == 'jsrender.min.js' && window.jQuery.views != undefined && window.jQuery.views.jsviews == 'v1.0.0-beta'))) {
+            if (!(file == 'jquery-ui.min.js' && window.jQuery.ui != undefined && window.jQuery.ui.version == '1.14.1')) {
                 const scriptTag = document.createElement('script');
                 if (this.embedOptions.nonce) {
                     scriptTag.nonce = this.embedOptions.nonce;
@@ -2923,9 +3234,6 @@ class BoldBI {
                 else if (file == 'jquery-ui.min.js') {
                     //scriptTag.src = this.maskedCdnUrl.slice(0, -1) + 'jquery-ui.min.js';
                     scriptTag.src = this._appendEmbedResourceVersion((that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/' + file : that.cdnLink + '/scripts/' + file);
-                }
-                else if (file == 'jsrender.min.js') {
-                    scriptTag.src = this._appendEmbedResourceVersion((that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/designer/' + file : that.cdnLink + '/scripts/designer/' + file);
                 }
                 document.head.appendChild(scriptTag);
                 scriptTag.onerror = (arg) => this._handleEnvironmentError(arg);
@@ -2956,8 +3264,7 @@ class BoldBI {
         const excludedVersionedFiles = [
             '/cdn/scripts/designer/jquery-3.5.0.min.js',
             '/cdn/scripts/designer/jquery.easing.1.3.min.js',
-            '/cdn/scripts/jquery-ui.min.js',
-            '/cdn/scripts/designer/jsrender.min.js'
+            '/cdn/scripts/jquery-ui.min.js'
         ];
         if (excludedVersionedFiles.some((file) => url.indexOf(file) >= 0)) {
             return url;
@@ -5710,6 +6017,7 @@ class BoldBI {
     }
     _onBoldBIDashboardWidgetIconClick(arg) {
         var _a, _b, _c, _d, _e, _f;
+        this.viewDataWidgetContext = arg;
         const serverFnc = window[this.onWidgetIconClickFn];
         if (serverFnc instanceof Function) {
             serverFnc.call(this, arg);
@@ -5721,9 +6029,11 @@ class BoldBI {
         if (((_d = (_c = this.embedOptions.events) === null || _c === void 0 ? void 0 : _c.widget) === null || _d === void 0 ? void 0 : _d.onToolbarItemClick) instanceof Function) {
             (_f = (_e = this.embedOptions.events) === null || _e === void 0 ? void 0 : _e.widget) === null || _f === void 0 ? void 0 : _f.onToolbarItemClick.call(this, arg);
         }
+        this.viewDataWidgetContext = null;
     }
     _onBoldBIonControlMenuClick(arg) {
         var _a, _b, _c, _d, _e, _f;
+        this.viewDataWidgetContext = arg;
         const clientFnc = window[(_b = (_a = this.embedOptions.events) === null || _a === void 0 ? void 0 : _a.widget) === null || _b === void 0 ? void 0 : _b.onToolbarItemClick];
         if (clientFnc instanceof Function) {
             clientFnc.call(this, arg);
@@ -5731,6 +6041,7 @@ class BoldBI {
         if (((_d = (_c = this.embedOptions.events) === null || _c === void 0 ? void 0 : _c.widget) === null || _d === void 0 ? void 0 : _d.onToolbarItemClick) instanceof Function) {
             (_f = (_e = this.embedOptions.events) === null || _e === void 0 ? void 0 : _e.widget) === null || _f === void 0 ? void 0 : _f.onToolbarItemClick.call(this, arg);
         }
+        this.viewDataWidgetContext = null;
     }
     _onBoldBIDashboardUpdatefavorite(arg) {
         const serverFnc = window[this.onFavoriteStateChangeFn];

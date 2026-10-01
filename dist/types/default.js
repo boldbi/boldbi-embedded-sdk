@@ -10,6 +10,7 @@ exports.DefaultConstructor = {
     azureMapRequired: false,
     disableAutoRecover: false,
     restrictMobileView: false,
+    useIframeForStrictCsp: false,
     rootUrl: '',
     baseUrl: '',
     siteIdentifier: '',
@@ -103,8 +104,7 @@ exports.DefaultConstructor = {
     },
     wrapperDependentScriptFiles: [
         'jquery.easing.1.3.min.js',
-        'jquery-ui.min.js',
-        'jsrender.min.js'
+        'jquery-ui.min.js'
     ],
     viewerScriptFiles: [
         'ej1.web.all.min.js',
@@ -162,6 +162,8 @@ exports.DefaultConstructor = {
         cloudCdnTimeStamp: '',
         customDashboardVersion: '0',
         embedToken: '',
+        iframeUrl: '',
+        useIframeForStrictCsp: false,
         isPublicDashboard: false,
         isMultiTabDashboard: false,
         mode: enum_1.Mode.View,
@@ -189,6 +191,8 @@ exports.DefaultConstructor = {
             hideErrorMessage: false,
             restrictMobileView: false,
             disableAutoRecover: false,
+            useIframeForStrictCsp: false,
+            iframeUrl: '',
             datasources: [],
             dashboardExperience: {
                 enableSkeletonLoading: true,

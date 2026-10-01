@@ -3,6 +3,7 @@ export interface ViewerMethods {
     resize?: () => void;
     resetFilter?: () => void;
     updateFilters?: (filtervalues: string) => void;
+    showViewDataDialog?: (options?: ViewDataDialogOptions) => void;
     exportAsExcel?: (exportInformation: ExportInformation) => void;
     exportAsImage?: (exportInformation: ExportInformation) => void;
     exportAsPdf?: (exportInformation: ExportInformation) => void;
@@ -11,6 +12,10 @@ export interface ViewerMethods {
     editComment?: (comment: CommentArgs, callBackFn: Function) => void;
     deleteComment?: (comment: CommentArgs, callBackFn: Function) => void;
     fetchComments?: (commentType: string, comment: CommentArgs, callBackFn: Function) => void;
+}
+export interface ViewDataDialogOptions {
+    widgetId?: string;
+    dashboardId?: string;
 }
 export interface ExportInformation {
     dashboardId: string;
