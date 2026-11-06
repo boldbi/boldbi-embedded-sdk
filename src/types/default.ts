@@ -138,6 +138,9 @@ export const DefaultConstructor = {
         'dashboard-designer-dependency.min.js',
         'bbi-unifiedaiagent.min.js',
     ],
+    dashboardCommentScriptFiles: [
+        'dashboard-comment-shared.min.js'
+    ],
 
     
     designerCssFiles: ['ej.codemirror.min.css'],
@@ -207,6 +210,7 @@ export const DefaultConstructor = {
             },
             viewer: {
                 dashboardName: '',
+                showLoadingLogo: true,
                 header: true,
                 export: true,
                 refresh: true,

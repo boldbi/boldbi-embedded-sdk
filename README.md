@@ -42,7 +42,14 @@ Please refer to the `Bold BI` Product Release Notes on this [Release History](ht
 
 ### Improvement
 
-* `#853212` – `View Underlying Data from Custom Actions` - Enabled the View Underlying Data dialog in embedded dashboards, making it easier to access detailed data through customized interactions.
+* `#857536` - `Dashboard Comments in SDK Embedding` - Added dashboard comment support in embedded dashboards.
+* `#881732` - `Loading Screen Logo Customization in SDK Embedding` - Added support for customizing the loading screen logo in embedded dashboards.
+
+### Bug
+
+* `#880041` - Fixed an issue where dashboard header titles were truncated in multi-tabbed dashboards embedded using SDK-based embedding.
+
+
 
 ## License Information
 

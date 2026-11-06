@@ -51,6 +51,7 @@ export declare class BoldBI {
     ejDesignerDependentFiles: Array<string>;
     designerScriptFiles: Array<string>;
     cssFiles: Array<string>;
+    dashboardCommentScriptFiles: Array<string>;
     designerCssFiles: Array<string>;
     applicationThemeCssFiles: Array<string>;
     dashboardThemeCssFiles: Array<string>;
@@ -148,6 +149,29 @@ export declare class BoldBI {
     loadMultipleWidget: boolean;
     constructor(config?: Partial<typeof DefaultConstructor>);
     private _loadAIAssistant;
+    private optimizedAssetAttempted;
+    private optimizedAssetPending;
+    private optimizedAssetsActive;
+    private optimizedAssetGeneration;
+    private optimizedWrapperWait;
+    private _canOptimizeViewerAssets;
+    private _cancelOptimizedAssetWait;
+    private _startOptimizedViewerBootstrap;
+    private dependencyWait;
+    private dependencyWaitGeneration;
+    private pendingDependencyScripts;
+    private failedDependencyScript;
+    private unknownDependencyScript;
+    private dependencyScriptCleanup;
+    private _cancelDependencyWait;
+    private _trackDependencyScript;
+    private _areViewerDependenciesReady;
+    private earlyFeedbackProjection;
+    private earlyFeedbackAssets;
+    private earlyFeedbackDisplay;
+    private earlyFeedbackLoaderDeferral;
+    private _canPrefetchSuppliedEarlyFeedback;
+    private _prefetchSuppliedEarlyFeedback;
     private _loadDashboard;
     private _loadMultitabDashboard;
     private _loadView;
@@ -383,6 +407,7 @@ export declare class BoldBI {
     _loadDepedentFiles(): any;
     _loadBingmapDependentFiles(): any;
     _loadAzureMapDependentFiles(): any;
+    _isDashboardCommentEnabled(): boolean;
     _loadDependentDesignerFiles(that: BoldBI): any;
     _addWrapperDependentFiles(obj: BoldBI, fileUriArray: Array<string>): any;
     _getEmbedResourceVersion(): string;
@@ -607,6 +632,7 @@ export declare class BoldBI {
     _isUrl(str: string): any;
     _throwError(errorMsg: any, embedContainerId?: string): any;
     onErrorClient(errorMessage: any): any;
+    _removeBlueLoaderUnlessEarlyFeedbackPending(embedContainerId: string): void;
     _removeElementsClass(id: string, childElement: string, targeClass: string): any;
     _hasClass(el: {
         classList?: any;
