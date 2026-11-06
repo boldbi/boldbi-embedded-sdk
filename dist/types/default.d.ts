@@ -107,6 +107,7 @@ export declare const DefaultConstructor: {
     cssFiles: string[];
     AICssFiles: string[];
     AIScriptFiles: string[];
+    dashboardCommentScriptFiles: string[];
     designerCssFiles: string[];
     applicationThemeCssFiles: string[];
     dashboardThemeCssFiles: string[];
@@ -171,6 +172,7 @@ export declare const DefaultConstructor: {
             };
             viewer: {
                 dashboardName: string;
+                showLoadingLogo: boolean;
                 header: boolean;
                 export: boolean;
                 refresh: boolean;
