@@ -2,14 +2,38 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.widgetBI = exports.BoldBI = void 0;
 const embeddingLocalization_1 = require("./types/embeddingLocalization");
+const early_feedback_assets_1 = require("./utils/early_feedback_assets");
+const early_feedback_display_1 = require("./utils/early_feedback_display");
+const early_feedback_projection_1 = require("./utils/early_feedback_projection");
+const dependency_readiness_1 = require("./utils/dependency_readiness");
+const viewer_assets_1 = require("./utils/viewer_assets");
 const enum_1 = require("./types/enum");
 const default_1 = require("./types/default");
 const sdk_deprecation_utils_1 = require("./utils/sdk_deprecation_utils");
 let bbEmbed;
 let tabInstance;
+// Static resource state only; never stores authentication or dashboard data.
+const dependencyScriptStates = new WeakMap();
 class BoldBI {
     constructor(config) {
         this._authorizeResponse = null;
+        this.optimizedAssetAttempted = false;
+        this.optimizedAssetPending = false;
+        this.optimizedAssetsActive = false;
+        this.optimizedAssetGeneration = 0;
+        this.optimizedWrapperWait = null;
+        this.dependencyWait = null;
+        this.dependencyWaitGeneration = 0;
+        this.pendingDependencyScripts = new Set();
+        this.failedDependencyScript = false;
+        this.unknownDependencyScript = false;
+        this.dependencyScriptCleanup = [];
+        this.earlyFeedbackProjection = null;
+        this.earlyFeedbackAssets = null;
+        this.earlyFeedbackDisplay = null;
+        // While early feedback is pending, the designer start defers removing the
+        // SDK's basic loader so no blank gap precedes the early layout.
+        this.earlyFeedbackLoaderDeferral = null;
         this.loadPinboard = this.Invoke(function () {
             if (!this.invalidDetail) {
                 if (this.embedOptions.pinboardName == '') {
@@ -262,6 +286,7 @@ class BoldBI {
                 if (this.embedOptions.nonce) {
                     script.nonce = this.embedOptions.nonce;
                 }
+                this._trackDependencyScript(script, true);
                 document.head.appendChild(script);
                 // now wait for it to load...
                 script.onload = () => {
@@ -284,22 +309,31 @@ class BoldBI {
                 script.onerror = (arg) => this._handleEnvironmentError(arg);
             }
             else {
-                // Wait for jQuery to finish loading
-                const checkjQueryLoaded = setInterval(() => {
-                    if (window.jQuery) {
-                        clearInterval(checkjQueryLoaded);
-                        bbEmbed = window.bbEmbed = window.$;
-                        if (typeof window.bb$ != 'undefined') {
-                            bbEmbed = window.bbEmbed = window.bb$;
-                        }
-                        this._addWrapperDependentFiles(this, this.wrapperDependentScriptFiles);
-                        this._loadDepedentFiles();
+                // Reused jQuery is commonly already ready (second dashboard/open).
+                // Do not impose a full polling tick before loading its dependencies.
+                const continueWhenReady = () => {
+                    if (!window.jQuery) {
+                        return false;
                     }
-                }, 1000);
+                    bbEmbed = window.bbEmbed = window.$;
+                    if (typeof window.bb$ != 'undefined') {
+                        bbEmbed = window.bbEmbed = window.bb$;
+                    }
+                    this._addWrapperDependentFiles(this, this.wrapperDependentScriptFiles);
+                    this._loadDepedentFiles();
+                    return true;
+                };
+                if (!continueWhenReady()) {
+                    const checkjQueryLoaded = setInterval(() => {
+                        if (continueWhenReady()) {
+                            clearInterval(checkjQueryLoaded);
+                        }
+                    }, 1000);
+                }
             }
         });
         this._renderDashboard = this.Invoke(function (responseInfo) {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, _61, _62, _63, _64, _65, _66, _67, _68, _69, _70, _71, _72, _73, _74, _75, _76, _77, _78, _79, _80, _81, _82, _83, _84, _85, _86, _87, _88, _89, _90, _91, _92, _93, _94, _95, _96, _97, _98, _99, _100, _101, _102, _103, _104, _105, _106, _107, _108, _109, _110, _111, _112, _113, _114, _115, _116, _117, _118, _119, _120, _121, _122, _123, _124, _125, _126, _127, _128, _129, _130, _131, _132, _133, _134, _135, _136, _137, _138, _139, _140, _141, _142, _143, _144, _145, _146, _147, _148, _149, _150, _151, _152, _153, _154, _155, _156, _157, _158, _159, _160, _161, _162, _163, _164, _165, _166, _167, _168, _169, _170, _171, _172, _173, _174, _175, _176, _177, _178, _179, _180, _181, _182, _183, _184, _185, _186, _187, _188, _189, _190, _191, _192, _193, _194, _195, _196, _197, _198, _199, _200, _201, _202, _203, _204, _205, _206, _207, _208, _209, _210, _211, _212, _213, _214, _215, _216, _217, _218, _219, _220, _221, _222, _223, _224, _225, _226, _227, _228, _229, _230, _231, _232, _233, _234, _235, _236, _237, _238, _239, _240, _241, _242, _243, _244, _245, _246, _247, _248, _249, _250, _251, _252, _253, _254, _255, _256, _257, _258, _259, _260, _261, _262, _263, _264, _265, _266, _267, _268, _269, _270, _271, _272, _273, _274, _275, _276, _277, _278, _279, _280, _281, _282, _283, _284, _285, _286, _287, _288, _289, _290, _291, _292, _293, _294, _295, _296, _297, _298, _299, _300, _301, _302, _303, _304, _305, _306, _307, _308, _309, _310, _311, _312, _313, _314, _315, _316, _317, _318, _319, _320, _321, _322, _323, _324, _325, _326, _327, _328, _329, _330, _331, _332, _333, _334, _335, _336, _337, _338, _339, _340, _341, _342, _343, _344, _345, _346, _347, _348, _349, _350, _351, _352, _353, _354, _355, _356, _357, _358, _359, _360, _361, _362, _363, _364, _365, _366, _367, _368, _369, _370, _371, _372, _373, _374, _375, _376, _377, _378, _379, _380, _381, _382;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, _61, _62, _63, _64, _65, _66, _67, _68, _69, _70, _71, _72, _73, _74, _75, _76, _77, _78, _79, _80, _81, _82, _83, _84, _85, _86, _87, _88, _89, _90, _91, _92, _93, _94, _95, _96, _97, _98, _99, _100, _101, _102, _103, _104, _105, _106, _107, _108, _109, _110, _111, _112, _113, _114, _115, _116, _117, _118, _119, _120, _121, _122, _123, _124, _125, _126, _127, _128, _129, _130, _131, _132, _133, _134, _135, _136, _137, _138, _139, _140, _141, _142, _143, _144, _145, _146, _147, _148, _149, _150, _151, _152, _153, _154, _155, _156, _157, _158, _159, _160, _161, _162, _163, _164, _165, _166, _167, _168, _169, _170, _171, _172, _173, _174, _175, _176, _177, _178, _179, _180, _181, _182, _183, _184, _185, _186, _187, _188, _189, _190, _191, _192, _193, _194, _195, _196, _197, _198, _199, _200, _201, _202, _203, _204, _205, _206, _207, _208, _209, _210, _211, _212, _213, _214, _215, _216, _217, _218, _219, _220, _221, _222, _223, _224, _225, _226, _227, _228, _229, _230, _231, _232, _233, _234, _235, _236, _237, _238, _239, _240, _241, _242, _243, _244, _245, _246, _247, _248, _249, _250, _251, _252, _253, _254, _255, _256, _257, _258, _259, _260, _261, _262, _263, _264, _265, _266, _267, _268, _269, _270, _271, _272, _273, _274, _275, _276, _277, _278, _279, _280, _281, _282, _283, _284, _285, _286, _287, _288, _289, _290, _291, _292, _293, _294, _295, _296, _297, _298, _299, _300, _301, _302, _303, _304, _305, _306, _307, _308, _309, _310, _311, _312, _313, _314, _315, _316, _317, _318, _319, _320, _321, _322, _323, _324, _325, _326, _327, _328, _329, _330, _331, _332, _333, _334, _335, _336, _337, _338, _339, _340, _341, _342, _343, _344, _345, _346, _347, _348, _349, _350, _351, _352, _353, _354, _355, _356, _357, _358, _359, _360, _361, _362, _363, _364, _365, _366, _367, _368, _369, _370, _371, _372, _373, _374, _375, _376, _377, _378, _379, _380, _381, _382, _383, _384, _385, _386;
             const that = this;
             const parameter = '';
             if (responseInfo == null) {
@@ -468,12 +502,17 @@ class BoldBI {
                         }
                     }
                     let dashboardOptions;
+                    const dashboardCommentEnabled = this._isDashboardCommentEnabled();
                     const fontFamilyValue = this._resolveThemeString((_o = (_m = (_l = this.embedOptions) === null || _l === void 0 ? void 0 : _l.settings) === null || _m === void 0 ? void 0 : _m.theme) === null || _o === void 0 ? void 0 : _o.fontFamily, (_p = this.embedOptions.dashboardSettings) === null || _p === void 0 ? void 0 : _p.fontFamily);
                     const localTheme = this._resolveThemeBoolean((_r = (_q = this.embedOptions.settings) === null || _q === void 0 ? void 0 : _q.theme) === null || _r === void 0 ? void 0 : _r.localTheme, (_t = (_s = this.embedOptions.dashboardSettings) === null || _s === void 0 ? void 0 : _s.themeSettings) === null || _t === void 0 ? void 0 : _t.isLocalTheme);
                     const fontFamilyUrl = this.embedOptions.environment === BoldBI.Environment.Enterprise ? this.rootUrl.replace(/\/bi(?!.*\/bi)/, '/ums/user-interface/fonts') + '?family=' + fontFamilyValue : `${this.rootUrl + '/user-interface/fonts?family=' + fontFamilyValue}`;
                     // eslint-disable-next-line
                     dashboardOptions = {
+                        _earlyFeedbackProjection: this.earlyFeedbackProjection,
+                        enableEarlyFeedback: ((_v = (_u = this.embedOptions.settings) === null || _u === void 0 ? void 0 : _u.viewer) === null || _v === void 0 ? void 0 : _v.earlyFeedback) === true &&
+                            this.embedOptions.mode === BoldBI.Mode.View && !this.embedOptions.enableDomainMasking,
                         siteUrl: this.baseUrl,
+                        showLoadingLogo: typeof ((_x = (_w = this.embedOptions.settings) === null || _w === void 0 ? void 0 : _w.viewer) === null || _x === void 0 ? void 0 : _x.showLoadingLogo) === 'boolean' ? this.embedOptions.settings.viewer.showLoadingLogo : true,
                         serviceUrl: this.designerRootUrl,
                         dataServiceUrl: this.designerRootUrl,
                         serverUrl: this.dashboardServerApiUrl,
@@ -483,9 +522,9 @@ class BoldBI {
                         },
                         nonce: this.embedOptions.nonce,
                         localeSettings: {
-                            culture: !this._isEmptyOrSpaces((_v = (_u = this.embedOptions) === null || _u === void 0 ? void 0 : _u.localeSettings) === null || _v === void 0 ? void 0 : _v.culture) ? this.embedOptions.localeSettings.culture : !this._isEmptyOrSpaces((_y = (_x = (_w = this.embedOptions) === null || _w === void 0 ? void 0 : _w.settings) === null || _x === void 0 ? void 0 : _x.locale) === null || _y === void 0 ? void 0 : _y.culture) ? this.embedOptions.settings.locale.culture : 'en-US',
-                            dateFormat: !this._isEmptyOrSpaces((_0 = (_z = this.embedOptions) === null || _z === void 0 ? void 0 : _z.localeSettings) === null || _0 === void 0 ? void 0 : _0.dateFormat) ? this.embedOptions.localeSettings.dateFormat : !this._isEmptyOrSpaces((_3 = (_2 = (_1 = this.embedOptions) === null || _1 === void 0 ? void 0 : _1.settings) === null || _2 === void 0 ? void 0 : _2.locale) === null || _3 === void 0 ? void 0 : _3.dateFormat) ? this.embedOptions.settings.locale.dateFormat : 'M/d/yyyy',
-                            timeFormat: !this._isEmptyOrSpaces((_5 = (_4 = this.embedOptions) === null || _4 === void 0 ? void 0 : _4.localeSettings) === null || _5 === void 0 ? void 0 : _5.timeFormat) ? this.embedOptions.localeSettings.timeFormat : !this._isEmptyOrSpaces((_8 = (_7 = (_6 = this.embedOptions) === null || _6 === void 0 ? void 0 : _6.settings) === null || _7 === void 0 ? void 0 : _7.locale) === null || _8 === void 0 ? void 0 : _8.timeFormat) ? this.embedOptions.settings.locale.timeFormat : 'h:mm:ss tt'
+                            culture: !this._isEmptyOrSpaces((_z = (_y = this.embedOptions) === null || _y === void 0 ? void 0 : _y.localeSettings) === null || _z === void 0 ? void 0 : _z.culture) ? this.embedOptions.localeSettings.culture : !this._isEmptyOrSpaces((_2 = (_1 = (_0 = this.embedOptions) === null || _0 === void 0 ? void 0 : _0.settings) === null || _1 === void 0 ? void 0 : _1.locale) === null || _2 === void 0 ? void 0 : _2.culture) ? this.embedOptions.settings.locale.culture : 'en-US',
+                            dateFormat: !this._isEmptyOrSpaces((_4 = (_3 = this.embedOptions) === null || _3 === void 0 ? void 0 : _3.localeSettings) === null || _4 === void 0 ? void 0 : _4.dateFormat) ? this.embedOptions.localeSettings.dateFormat : !this._isEmptyOrSpaces((_7 = (_6 = (_5 = this.embedOptions) === null || _5 === void 0 ? void 0 : _5.settings) === null || _6 === void 0 ? void 0 : _6.locale) === null || _7 === void 0 ? void 0 : _7.dateFormat) ? this.embedOptions.settings.locale.dateFormat : 'M/d/yyyy',
+                            timeFormat: !this._isEmptyOrSpaces((_9 = (_8 = this.embedOptions) === null || _8 === void 0 ? void 0 : _8.localeSettings) === null || _9 === void 0 ? void 0 : _9.timeFormat) ? this.embedOptions.localeSettings.timeFormat : !this._isEmptyOrSpaces((_12 = (_11 = (_10 = this.embedOptions) === null || _10 === void 0 ? void 0 : _10.settings) === null || _11 === void 0 ? void 0 : _11.locale) === null || _12 === void 0 ? void 0 : _12.timeFormat) ? this.embedOptions.settings.locale.timeFormat : 'h:mm:ss tt'
                         },
                         mode: this.embedOptions.mode,
                         localData: {
@@ -496,6 +535,17 @@ class BoldBI {
                         environment: this.embedOptions.environment,
                         IsEmbed: true,
                         siteIdentifier: (!this._isNullOrUndefined(this.siteIdentifier) && !this._isEmptyOrSpaces(this.siteIdentifier)) ? this.siteIdentifier.replace(/^site\//i, '') : '',
+                        commentOptions: {
+                            dashboard: dashboardCommentEnabled,
+                            widget: false,
+                            isEmbed: true,
+                            isMultiTab: this.isMultiTab,
+                            parentItemId: this.isMultiTab ? this.parentDbrdId : '',
+                            commentPageUrl: this.baseUrl + '/comments/partial-view',
+                            serviceAuthorizationToken: this.accessToken,
+                            dashboardServerApiUrl: this.dashboardServerApiUrl,
+                            viewer: 'v2'
+                        },
                         _isPublic: this.embedOptions.mode != BoldBI.Mode.Connection ? this.embedOptions.enableDomainMasking || !(this._isNullOrUndefined(this.embedOptions.embedToken) || this._isEmptyOrSpaces(this.embedOptions.embedToken)) ? '' : (this._isNullOrUndefined(embedResponse.ItemDetail)) ? '' : embedResponse.ItemDetail.IsPublic : '',
                         itemId: this.embedOptions.mode != BoldBI.Mode.Connection ? this.embedOptions.enableDomainMasking ? this.embedOptions.dashboardId : (this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.ItemDetail.Id : that.embedOptions.isdesignerdraft ? embedResponse.draftItemID : childDashboardId ? childDashboardId : this.embedOptions.dashboardId : '',
                         dashboardPath: (this.embedOptions.mode == BoldBI.Mode.DataSource || this.embedOptions.mode == BoldBI.Mode.Connection) ? '' : this.embedOptions.enableDomainMasking ? this.embedOptions.dashboardId + '/0' : (this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.ItemDetail.ItemLocation : childDashboardId ? childDashboardId + '/0' : this.embedOptions.dashboardId + '/' + embedResponse.dashboardVersion,
@@ -505,7 +555,7 @@ class BoldBI {
                         IsProxy: this.embedOptions.enableDomainMasking ? true : false,
                         theme: this._isEmptyOrSpaces(this.multiTabTheme) ? this.embedOptions.theme : this.multiTabTheme,
                         enableTheme: false,
-                        enableFilterOverview: typeof this.embedOptions.dashboardSettings.enableFilterOverview === 'boolean' ? this.embedOptions.dashboardSettings.enableFilterOverview : (_12 = (_11 = (_10 = (_9 = this.embedOptions.settings) === null || _9 === void 0 ? void 0 : _9.viewer) === null || _10 === void 0 ? void 0 : _10.filterOverview) === null || _11 === void 0 ? void 0 : _11.enabled) !== null && _12 !== void 0 ? _12 : true,
+                        enableFilterOverview: typeof this.embedOptions.dashboardSettings.enableFilterOverview === 'boolean' ? this.embedOptions.dashboardSettings.enableFilterOverview : (_16 = (_15 = (_14 = (_13 = this.embedOptions.settings) === null || _13 === void 0 ? void 0 : _13.viewer) === null || _14 === void 0 ? void 0 : _14.filterOverview) === null || _15 === void 0 ? void 0 : _15.enabled) !== null && _16 !== void 0 ? _16 : true,
                         isPinWidget: this.pinboardIds.length > 0,
                         layoutSetting: this.embedOptions.layoutSettings,
                         export: {
@@ -529,25 +579,25 @@ class BoldBI {
                         },
                         filterParameters: parameter + (this._isEmptyOrSpaces(this.embedOptions.filterParameters) ? '' : '&') + ((this.isMultiTab && window['multiTabFilterParameter']) ? window['multiTabFilterParameter'] : this.embedOptions.filterParameters),
                         designCanvasSettings: {
-                            margin: !this._isNullOrUndefined((_14 = (_13 = this.embedOptions) === null || _13 === void 0 ? void 0 : _13.designCanvasSettings) === null || _14 === void 0 ? void 0 : _14.margin) ? this.embedOptions.designCanvasSettings.margin : !this._isNullOrUndefined((_17 = (_16 = (_15 = this.embedOptions) === null || _15 === void 0 ? void 0 : _15.settings) === null || _16 === void 0 ? void 0 : _16.designCanvas) === null || _17 === void 0 ? void 0 : _17.margin) ? (_19 = (_18 = this.embedOptions.settings) === null || _18 === void 0 ? void 0 : _18.designCanvas) === null || _19 === void 0 ? void 0 : _19.margin : null
+                            margin: !this._isNullOrUndefined((_18 = (_17 = this.embedOptions) === null || _17 === void 0 ? void 0 : _17.designCanvasSettings) === null || _18 === void 0 ? void 0 : _18.margin) ? this.embedOptions.designCanvasSettings.margin : !this._isNullOrUndefined((_21 = (_20 = (_19 = this.embedOptions) === null || _19 === void 0 ? void 0 : _19.settings) === null || _20 === void 0 ? void 0 : _20.designCanvas) === null || _21 === void 0 ? void 0 : _21.margin) ? (_23 = (_22 = this.embedOptions.settings) === null || _22 === void 0 ? void 0 : _22.designCanvas) === null || _23 === void 0 ? void 0 : _23.margin : null
                         },
                         widgetContainerSettings: {
-                            margin: !this._isNullOrUndefined((_21 = (_20 = this.embedOptions) === null || _20 === void 0 ? void 0 : _20.widgetContainerSettings) === null || _21 === void 0 ? void 0 : _21.margin) ? this.embedOptions.widgetContainerSettings.margin : !this._isNullOrUndefined((_25 = (_24 = (_23 = (_22 = this.embedOptions) === null || _22 === void 0 ? void 0 : _22.settings) === null || _23 === void 0 ? void 0 : _23.viewer) === null || _24 === void 0 ? void 0 : _24.widgetContainer) === null || _25 === void 0 ? void 0 : _25.margin) ? (_27 = (_26 = this.embedOptions.settings.viewer) === null || _26 === void 0 ? void 0 : _26.widgetContainer) === null || _27 === void 0 ? void 0 : _27.margin : null,
-                            boxShadow: !this._isEmptyOrSpaces((_29 = (_28 = this.embedOptions) === null || _28 === void 0 ? void 0 : _28.widgetContainerSettings) === null || _29 === void 0 ? void 0 : _29.boxShadow) ? this.embedOptions.widgetContainerSettings.boxShadow : !this._isEmptyOrSpaces((_33 = (_32 = (_31 = (_30 = this.embedOptions) === null || _30 === void 0 ? void 0 : _30.settings) === null || _31 === void 0 ? void 0 : _31.viewer) === null || _32 === void 0 ? void 0 : _32.widgetContainer) === null || _33 === void 0 ? void 0 : _33.boxShadow) ? (_35 = (_34 = this.embedOptions.settings.viewer) === null || _34 === void 0 ? void 0 : _34.widgetContainer) === null || _35 === void 0 ? void 0 : _35.boxShadow : null
+                            margin: !this._isNullOrUndefined((_25 = (_24 = this.embedOptions) === null || _24 === void 0 ? void 0 : _24.widgetContainerSettings) === null || _25 === void 0 ? void 0 : _25.margin) ? this.embedOptions.widgetContainerSettings.margin : !this._isNullOrUndefined((_29 = (_28 = (_27 = (_26 = this.embedOptions) === null || _26 === void 0 ? void 0 : _26.settings) === null || _27 === void 0 ? void 0 : _27.viewer) === null || _28 === void 0 ? void 0 : _28.widgetContainer) === null || _29 === void 0 ? void 0 : _29.margin) ? (_31 = (_30 = this.embedOptions.settings.viewer) === null || _30 === void 0 ? void 0 : _30.widgetContainer) === null || _31 === void 0 ? void 0 : _31.margin : null,
+                            boxShadow: !this._isEmptyOrSpaces((_33 = (_32 = this.embedOptions) === null || _32 === void 0 ? void 0 : _32.widgetContainerSettings) === null || _33 === void 0 ? void 0 : _33.boxShadow) ? this.embedOptions.widgetContainerSettings.boxShadow : !this._isEmptyOrSpaces((_37 = (_36 = (_35 = (_34 = this.embedOptions) === null || _34 === void 0 ? void 0 : _34.settings) === null || _35 === void 0 ? void 0 : _35.viewer) === null || _36 === void 0 ? void 0 : _36.widgetContainer) === null || _37 === void 0 ? void 0 : _37.boxShadow) ? (_39 = (_38 = this.embedOptions.settings.viewer) === null || _38 === void 0 ? void 0 : _38.widgetContainer) === null || _39 === void 0 ? void 0 : _39.boxShadow : null
                         },
                         viewDataSettings: {
-                            checkShowAllColumns: typeof ((_37 = (_36 = this.embedOptions.dashboardSettings) === null || _36 === void 0 ? void 0 : _36.viewDataSettings) === null || _37 === void 0 ? void 0 : _37.showAllColumns) === 'boolean' ? this.embedOptions.dashboardSettings.viewDataSettings.showAllColumns : (_40 = (_39 = (_38 = this.embedOptions.settings) === null || _38 === void 0 ? void 0 : _38.viewData) === null || _39 === void 0 ? void 0 : _39.allColumns) !== null && _40 !== void 0 ? _40 : false
+                            checkShowAllColumns: typeof ((_41 = (_40 = this.embedOptions.dashboardSettings) === null || _40 === void 0 ? void 0 : _40.viewDataSettings) === null || _41 === void 0 ? void 0 : _41.showAllColumns) === 'boolean' ? this.embedOptions.dashboardSettings.viewDataSettings.showAllColumns : (_44 = (_43 = (_42 = this.embedOptions.settings) === null || _42 === void 0 ? void 0 : _42.viewData) === null || _43 === void 0 ? void 0 : _43.allColumns) !== null && _44 !== void 0 ? _44 : false
                         },
                         viewDataActions: {
-                            allowExporting: typeof ((_42 = (_41 = this.embedOptions.dashboardSettings) === null || _41 === void 0 ? void 0 : _41.viewDataSettings) === null || _42 === void 0 ? void 0 : _42.enableExporting) === 'boolean' ? this.embedOptions.dashboardSettings.viewDataSettings.enableExporting : (_45 = (_44 = (_43 = this.embedOptions.settings) === null || _43 === void 0 ? void 0 : _43.viewData) === null || _44 === void 0 ? void 0 : _44.exporting) !== null && _45 !== void 0 ? _45 : true,
-                            allowColumnSelection: typeof ((_47 = (_46 = this.embedOptions.dashboardSettings) === null || _46 === void 0 ? void 0 : _46.viewDataSettings) === null || _47 === void 0 ? void 0 : _47.enableColumnSelection) === 'boolean' ? this.embedOptions.dashboardSettings.viewDataSettings.enableColumnSelection : (_50 = (_49 = (_48 = this.embedOptions.settings) === null || _48 === void 0 ? void 0 : _48.viewData) === null || _49 === void 0 ? void 0 : _49.columnSelection) !== null && _50 !== void 0 ? _50 : true
+                            allowExporting: typeof ((_46 = (_45 = this.embedOptions.dashboardSettings) === null || _45 === void 0 ? void 0 : _45.viewDataSettings) === null || _46 === void 0 ? void 0 : _46.enableExporting) === 'boolean' ? this.embedOptions.dashboardSettings.viewDataSettings.enableExporting : (_49 = (_48 = (_47 = this.embedOptions.settings) === null || _47 === void 0 ? void 0 : _47.viewData) === null || _48 === void 0 ? void 0 : _48.exporting) !== null && _49 !== void 0 ? _49 : true,
+                            allowColumnSelection: typeof ((_51 = (_50 = this.embedOptions.dashboardSettings) === null || _50 === void 0 ? void 0 : _50.viewDataSettings) === null || _51 === void 0 ? void 0 : _51.enableColumnSelection) === 'boolean' ? this.embedOptions.dashboardSettings.viewDataSettings.enableColumnSelection : (_54 = (_53 = (_52 = this.embedOptions.settings) === null || _52 === void 0 ? void 0 : _52.viewData) === null || _53 === void 0 ? void 0 : _53.columnSelection) !== null && _54 !== void 0 ? _54 : true
                         },
                         dashboardThemeSettings: {
-                            appearance: this._resolveThemeString((_53 = (_52 = (_51 = this.embedOptions) === null || _51 === void 0 ? void 0 : _51.settings) === null || _52 === void 0 ? void 0 : _52.theme) === null || _53 === void 0 ? void 0 : _53.appearance, (_56 = (_55 = (_54 = this.embedOptions) === null || _54 === void 0 ? void 0 : _54.dashboardSettings) === null || _55 === void 0 ? void 0 : _55.themeSettings) === null || _56 === void 0 ? void 0 : _56.appearance, 'light'),
-                            applicationTheme: this._resolveThemeString((_59 = (_58 = (_57 = this.embedOptions) === null || _57 === void 0 ? void 0 : _57.settings) === null || _58 === void 0 ? void 0 : _58.theme) === null || _59 === void 0 ? void 0 : _59.application, (_62 = (_61 = (_60 = this.embedOptions) === null || _60 === void 0 ? void 0 : _60.dashboardSettings) === null || _61 === void 0 ? void 0 : _61.themeSettings) === null || _62 === void 0 ? void 0 : _62.application, null),
-                            dashboardTheme: this._resolveThemeString((_65 = (_64 = (_63 = this.embedOptions) === null || _63 === void 0 ? void 0 : _63.settings) === null || _64 === void 0 ? void 0 : _64.theme) === null || _65 === void 0 ? void 0 : _65.dashboard, (_67 = (_66 = this.embedOptions.dashboardSettings) === null || _66 === void 0 ? void 0 : _66.themeSettings) === null || _67 === void 0 ? void 0 : _67.dashboard, localTheme ? 'boldBITheme' : null)
+                            appearance: this._resolveThemeString((_57 = (_56 = (_55 = this.embedOptions) === null || _55 === void 0 ? void 0 : _55.settings) === null || _56 === void 0 ? void 0 : _56.theme) === null || _57 === void 0 ? void 0 : _57.appearance, (_60 = (_59 = (_58 = this.embedOptions) === null || _58 === void 0 ? void 0 : _58.dashboardSettings) === null || _59 === void 0 ? void 0 : _59.themeSettings) === null || _60 === void 0 ? void 0 : _60.appearance, 'light'),
+                            applicationTheme: this._resolveThemeString((_63 = (_62 = (_61 = this.embedOptions) === null || _61 === void 0 ? void 0 : _61.settings) === null || _62 === void 0 ? void 0 : _62.theme) === null || _63 === void 0 ? void 0 : _63.application, (_66 = (_65 = (_64 = this.embedOptions) === null || _64 === void 0 ? void 0 : _64.dashboardSettings) === null || _65 === void 0 ? void 0 : _65.themeSettings) === null || _66 === void 0 ? void 0 : _66.application, null),
+                            dashboardTheme: this._resolveThemeString((_69 = (_68 = (_67 = this.embedOptions) === null || _67 === void 0 ? void 0 : _67.settings) === null || _68 === void 0 ? void 0 : _68.theme) === null || _69 === void 0 ? void 0 : _69.dashboard, (_71 = (_70 = this.embedOptions.dashboardSettings) === null || _70 === void 0 ? void 0 : _70.themeSettings) === null || _71 === void 0 ? void 0 : _71.dashboard, localTheme ? 'boldBITheme' : null)
                         },
-                        hideMetrics: typeof ((_68 = this.embedOptions.dashboardSettings) === null || _68 === void 0 ? void 0 : _68.showMetrics) === 'boolean' ? !this.embedOptions.dashboardSettings.showMetrics : typeof ((_70 = (_69 = this.embedOptions.settings) === null || _69 === void 0 ? void 0 : _69.viewer) === null || _70 === void 0 ? void 0 : _70.metrics) === 'boolean' ? !this.embedOptions.settings.viewer.metrics : false,
+                        hideMetrics: typeof ((_72 = this.embedOptions.dashboardSettings) === null || _72 === void 0 ? void 0 : _72.showMetrics) === 'boolean' ? !this.embedOptions.dashboardSettings.showMetrics : typeof ((_74 = (_73 = this.embedOptions.settings) === null || _73 === void 0 ? void 0 : _73.viewer) === null || _74 === void 0 ? void 0 : _74.metrics) === 'boolean' ? !this.embedOptions.settings.viewer.metrics : false,
                         widgets: this._getWidgetFilterInfo(),
                         showConfirmPublishPopup: true,
                         actionComplete: function (arg) {
@@ -631,11 +681,11 @@ class BoldBI {
                     };
                     if (isViewMode || this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
                         dashboardOptions.filterOverviewSettings = {
-                            showSaveIcon: typeof ((_72 = (_71 = this.embedOptions.dashboardSettings) === null || _71 === void 0 ? void 0 : _71.filterOverviewSettings) === null || _72 === void 0 ? void 0 : _72.showSaveIcon) === 'boolean' ? (_74 = (_73 = this.embedOptions.dashboardSettings) === null || _73 === void 0 ? void 0 : _73.filterOverviewSettings) === null || _74 === void 0 ? void 0 : _74.showSaveAsIcon : (_78 = (_77 = (_76 = (_75 = this.embedOptions.settings) === null || _75 === void 0 ? void 0 : _75.viewer) === null || _76 === void 0 ? void 0 : _76.filterOverview) === null || _77 === void 0 ? void 0 : _77.save) !== null && _78 !== void 0 ? _78 : false,
-                            showSaveAsIcon: typeof ((_80 = (_79 = this.embedOptions.dashboardSettings) === null || _79 === void 0 ? void 0 : _79.filterOverviewSettings) === null || _80 === void 0 ? void 0 : _80.showSaveAsIcon) === 'boolean' ? (_82 = (_81 = this.embedOptions.dashboardSettings) === null || _81 === void 0 ? void 0 : _81.filterOverviewSettings) === null || _82 === void 0 ? void 0 : _82.showSaveAsIcon : (_86 = (_85 = (_84 = (_83 = this.embedOptions.settings) === null || _83 === void 0 ? void 0 : _83.viewer) === null || _84 === void 0 ? void 0 : _84.filterOverview) === null || _85 === void 0 ? void 0 : _85.saveAs) !== null && _86 !== void 0 ? _86 : false,
-                            showViewSavedFilterIcon: typeof ((_88 = (_87 = this.embedOptions.dashboardSettings) === null || _87 === void 0 ? void 0 : _87.filterOverviewSettings) === null || _88 === void 0 ? void 0 : _88.showViewSavedFilterIcon) === 'boolean' ? (_90 = (_89 = this.embedOptions.dashboardSettings) === null || _89 === void 0 ? void 0 : _89.filterOverviewSettings) === null || _90 === void 0 ? void 0 : _90.showViewSavedFilterIcon : (_94 = (_93 = (_92 = (_91 = this.embedOptions.settings) === null || _91 === void 0 ? void 0 : _91.viewer) === null || _92 === void 0 ? void 0 : _92.filterOverview) === null || _93 === void 0 ? void 0 : _93.viewSavedFilter) !== null && _94 !== void 0 ? _94 : false,
-                            viewId: !this._isNullOrUndefined((_95 = this.embedOptions.dashboardSettings) === null || _95 === void 0 ? void 0 : _95.filterOverviewSettings) && !this._isEmptyOrSpaces(this.embedOptions.dashboardSettings.filterOverviewSettings.viewId) ? this.embedOptions.dashboardSettings.filterOverviewSettings.viewId : !this._isNullOrUndefined((_97 = (_96 = this.embedOptions.settings) === null || _96 === void 0 ? void 0 : _96.viewer) === null || _97 === void 0 ? void 0 : _97.filterOverview) && !this._isEmptyOrSpaces(this.embedOptions.settings.viewer.filterOverview.viewId) ? this.embedOptions.settings.viewer.filterOverview.viewId : null,
-                            viewName: !this._isNullOrUndefined((_98 = this.embedOptions.dashboardSettings) === null || _98 === void 0 ? void 0 : _98.filterOverviewSettings) && !this._isEmptyOrSpaces(this.embedOptions.dashboardSettings.filterOverviewSettings.viewName) ? this.embedOptions.dashboardSettings.filterOverviewSettings.viewName : !this._isNullOrUndefined((_100 = (_99 = this.embedOptions.settings) === null || _99 === void 0 ? void 0 : _99.viewer) === null || _100 === void 0 ? void 0 : _100.filterOverview) && !this._isEmptyOrSpaces(this.embedOptions.settings.viewer.filterOverview.viewName) ? this.embedOptions.settings.viewer.filterOverview.viewName : null
+                            showSaveIcon: typeof ((_76 = (_75 = this.embedOptions.dashboardSettings) === null || _75 === void 0 ? void 0 : _75.filterOverviewSettings) === null || _76 === void 0 ? void 0 : _76.showSaveIcon) === 'boolean' ? (_78 = (_77 = this.embedOptions.dashboardSettings) === null || _77 === void 0 ? void 0 : _77.filterOverviewSettings) === null || _78 === void 0 ? void 0 : _78.showSaveAsIcon : (_82 = (_81 = (_80 = (_79 = this.embedOptions.settings) === null || _79 === void 0 ? void 0 : _79.viewer) === null || _80 === void 0 ? void 0 : _80.filterOverview) === null || _81 === void 0 ? void 0 : _81.save) !== null && _82 !== void 0 ? _82 : false,
+                            showSaveAsIcon: typeof ((_84 = (_83 = this.embedOptions.dashboardSettings) === null || _83 === void 0 ? void 0 : _83.filterOverviewSettings) === null || _84 === void 0 ? void 0 : _84.showSaveAsIcon) === 'boolean' ? (_86 = (_85 = this.embedOptions.dashboardSettings) === null || _85 === void 0 ? void 0 : _85.filterOverviewSettings) === null || _86 === void 0 ? void 0 : _86.showSaveAsIcon : (_90 = (_89 = (_88 = (_87 = this.embedOptions.settings) === null || _87 === void 0 ? void 0 : _87.viewer) === null || _88 === void 0 ? void 0 : _88.filterOverview) === null || _89 === void 0 ? void 0 : _89.saveAs) !== null && _90 !== void 0 ? _90 : false,
+                            showViewSavedFilterIcon: typeof ((_92 = (_91 = this.embedOptions.dashboardSettings) === null || _91 === void 0 ? void 0 : _91.filterOverviewSettings) === null || _92 === void 0 ? void 0 : _92.showViewSavedFilterIcon) === 'boolean' ? (_94 = (_93 = this.embedOptions.dashboardSettings) === null || _93 === void 0 ? void 0 : _93.filterOverviewSettings) === null || _94 === void 0 ? void 0 : _94.showViewSavedFilterIcon : (_98 = (_97 = (_96 = (_95 = this.embedOptions.settings) === null || _95 === void 0 ? void 0 : _95.viewer) === null || _96 === void 0 ? void 0 : _96.filterOverview) === null || _97 === void 0 ? void 0 : _97.viewSavedFilter) !== null && _98 !== void 0 ? _98 : false,
+                            viewId: !this._isNullOrUndefined((_99 = this.embedOptions.dashboardSettings) === null || _99 === void 0 ? void 0 : _99.filterOverviewSettings) && !this._isEmptyOrSpaces(this.embedOptions.dashboardSettings.filterOverviewSettings.viewId) ? this.embedOptions.dashboardSettings.filterOverviewSettings.viewId : !this._isNullOrUndefined((_101 = (_100 = this.embedOptions.settings) === null || _100 === void 0 ? void 0 : _100.viewer) === null || _101 === void 0 ? void 0 : _101.filterOverview) && !this._isEmptyOrSpaces(this.embedOptions.settings.viewer.filterOverview.viewId) ? this.embedOptions.settings.viewer.filterOverview.viewId : null,
+                            viewName: !this._isNullOrUndefined((_102 = this.embedOptions.dashboardSettings) === null || _102 === void 0 ? void 0 : _102.filterOverviewSettings) && !this._isEmptyOrSpaces(this.embedOptions.dashboardSettings.filterOverviewSettings.viewName) ? this.embedOptions.dashboardSettings.filterOverviewSettings.viewName : !this._isNullOrUndefined((_104 = (_103 = this.embedOptions.settings) === null || _103 === void 0 ? void 0 : _103.viewer) === null || _104 === void 0 ? void 0 : _104.filterOverview) && !this._isEmptyOrSpaces(this.embedOptions.settings.viewer.filterOverview.viewName) ? this.embedOptions.settings.viewer.filterOverview.viewName : null
                         };
                     }
                     const hasSingleDashboardId = isDesignMode || (isViewMode &&
@@ -644,15 +694,15 @@ class BoldBI {
                         this._isEmptyOrSpaces(this.embedOptions.pinboardName) &&
                         (!Array.isArray(this.pinboardIds) || this.pinboardIds.length === 0));
                     if (isViewMode || isDesignMode) {
-                        const dashboardExperienceSettings = (_101 = this.embedOptions.settings) === null || _101 === void 0 ? void 0 : _101.dashboardExperience;
+                        const dashboardExperienceSettings = (_105 = this.embedOptions.settings) === null || _105 === void 0 ? void 0 : _105.dashboardExperience;
                         const widgetProgressSettings = dashboardExperienceSettings === null || dashboardExperienceSettings === void 0 ? void 0 : dashboardExperienceSettings.widgetProgress;
-                        const widgetsPanelSettings = (_103 = (_102 = this.embedOptions.settings) === null || _102 === void 0 ? void 0 : _102.designer) === null || _103 === void 0 ? void 0 : _103.widgetsPanel;
+                        const widgetsPanelSettings = (_107 = (_106 = this.embedOptions.settings) === null || _106 === void 0 ? void 0 : _106.designer) === null || _107 === void 0 ? void 0 : _107.widgetsPanel;
                         const displayMode = typeof (widgetsPanelSettings === null || widgetsPanelSettings === void 0 ? void 0 : widgetsPanelSettings.displayMode) === 'string' && !this._isEmptyOrSpaces(widgetsPanelSettings.displayMode) ? widgetsPanelSettings.displayMode : enum_1.WidgetPanelDisplayMode.Both;
                         const getBooleanSetting = function (value) {
                             return hasSingleDashboardId ? typeof value === 'boolean' ? value : true : false;
                         };
-                        const customErrorMessage = (_104 = this.embedOptions.settings) === null || _104 === void 0 ? void 0 : _104.customErrorMessage;
-                        dashboardOptions.configInfo = Object.assign(Object.assign({}, dashboardOptions.configInfo), { Designer: Object.assign(Object.assign({}, (_105 = dashboardOptions.configInfo) === null || _105 === void 0 ? void 0 : _105.Designer), { DashboardExperience: {
+                        const customErrorMessage = (_108 = this.embedOptions.settings) === null || _108 === void 0 ? void 0 : _108.customErrorMessage;
+                        dashboardOptions.configInfo = Object.assign(Object.assign({}, dashboardOptions.configInfo), { Designer: Object.assign(Object.assign({}, (_109 = dashboardOptions.configInfo) === null || _109 === void 0 ? void 0 : _109.Designer), { DashboardExperience: {
                                     EnableSkeletonLoading: getBooleanSetting(dashboardExperienceSettings === null || dashboardExperienceSettings === void 0 ? void 0 : dashboardExperienceSettings.enableSkeletonLoading),
                                     WidgetProgress: {
                                         ShowInBanner: getBooleanSetting(widgetProgressSettings === null || widgetProgressSettings === void 0 ? void 0 : widgetProgressSettings.showInBanner),
@@ -664,7 +714,7 @@ class BoldBI {
                                         DisplayMode: displayMode
                                     }
                                 }, CustomErrorMessage: {
-                                    CustomMessage: (_106 = customErrorMessage === null || customErrorMessage === void 0 ? void 0 : customErrorMessage.customMessage) !== null && _106 !== void 0 ? _106 : ''
+                                    CustomMessage: (_110 = customErrorMessage === null || customErrorMessage === void 0 ? void 0 : customErrorMessage.customMessage) !== null && _110 !== void 0 ? _110 : ''
                                 } }) });
                     }
                     if (this.loadMultipleWidget) {
@@ -695,6 +745,10 @@ class BoldBI {
                         dashboardOptions.loadMultipleWidget = this.loadMultipleWidget;
                         dashboardOptions.multipleWidgetsCollection = updatedWidgetList;
                     }
+                    else {
+                        dashboardOptions.loadMultipleWidget = false;
+                        dashboardOptions.multipleWidgetsCollection = [];
+                    }
                     if (this.embedOptions.widgetList == '') {
                         dashboardOptions.actionBegin = function (arg) {
                             that._onBoldBIDashboardInstaceActionBegin(arg, embedContainerId);
@@ -702,13 +756,13 @@ class BoldBI {
                     }
                     if ((this.embedOptions.mode == BoldBI.Mode.View && !this.isWidgetMode && !this.isMultipleWidgetMode && !this.isPinboardRendering) || this.embedOptions.mode == BoldBI.Mode.Design || this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
                         dashboardOptions.languageSettings = {
-                            hideLanguageDropdown: typeof ((_107 = this.embedOptions.languageSettings) === null || _107 === void 0 ? void 0 : _107.hideLanguageDropdown) === 'boolean' ? this.embedOptions.languageSettings.hideLanguageDropdown : (_110 = (_109 = (_108 = this.embedOptions.settings) === null || _108 === void 0 ? void 0 : _108.language) === null || _109 === void 0 ? void 0 : _109.hideDropdown) !== null && _110 !== void 0 ? _110 : false,
-                            languageCode: !this._isEmptyOrSpaces((_112 = (_111 = this.embedOptions) === null || _111 === void 0 ? void 0 : _111.languageSettings) === null || _112 === void 0 ? void 0 : _112.languageCode) ? this.embedOptions.languageSettings.languageCode : !this._isEmptyOrSpaces((_115 = (_114 = (_113 = this.embedOptions) === null || _113 === void 0 ? void 0 : _113.settings) === null || _114 === void 0 ? void 0 : _114.language) === null || _115 === void 0 ? void 0 : _115.code) ? this.embedOptions.settings.language.code : ''
+                            hideLanguageDropdown: typeof ((_111 = this.embedOptions.languageSettings) === null || _111 === void 0 ? void 0 : _111.hideLanguageDropdown) === 'boolean' ? this.embedOptions.languageSettings.hideLanguageDropdown : (_114 = (_113 = (_112 = this.embedOptions.settings) === null || _112 === void 0 ? void 0 : _112.language) === null || _113 === void 0 ? void 0 : _113.hideDropdown) !== null && _114 !== void 0 ? _114 : false,
+                            languageCode: !this._isEmptyOrSpaces((_116 = (_115 = this.embedOptions) === null || _115 === void 0 ? void 0 : _115.languageSettings) === null || _116 === void 0 ? void 0 : _116.languageCode) ? this.embedOptions.languageSettings.languageCode : !this._isEmptyOrSpaces((_119 = (_118 = (_117 = this.embedOptions) === null || _117 === void 0 ? void 0 : _117.settings) === null || _118 === void 0 ? void 0 : _118.language) === null || _119 === void 0 ? void 0 : _119.code) ? this.embedOptions.settings.language.code : ''
                         };
                         dashboardOptions.customBrandSettings = {
-                            hideHelpLink: typeof ((_116 = this.embedOptions.customBrandSettings) === null || _116 === void 0 ? void 0 : _116.hideHelpLink) === 'boolean' ? this.embedOptions.customBrandSettings.hideHelpLink : (_119 = (_118 = (_117 = this.embedOptions.settings) === null || _117 === void 0 ? void 0 : _117.brand) === null || _118 === void 0 ? void 0 : _118.hideHelpLink) !== null && _119 !== void 0 ? _119 : false,
-                            customBrandName: !this._isEmptyOrSpaces((_121 = (_120 = this.embedOptions) === null || _120 === void 0 ? void 0 : _120.customBrandSettings) === null || _121 === void 0 ? void 0 : _121.customBrandName) ? this.embedOptions.customBrandSettings.customBrandName : !this._isEmptyOrSpaces((_124 = (_123 = (_122 = this.embedOptions) === null || _122 === void 0 ? void 0 : _122.settings) === null || _123 === void 0 ? void 0 : _123.brand) === null || _124 === void 0 ? void 0 : _124.name) ? this.embedOptions.settings.brand.name : '',
-                            customDomain: !this._isEmptyOrSpaces((_126 = (_125 = this.embedOptions) === null || _125 === void 0 ? void 0 : _125.customBrandSettings) === null || _126 === void 0 ? void 0 : _126.customDomain) ? this.embedOptions.customBrandSettings.customDomain : !this._isEmptyOrSpaces((_129 = (_128 = (_127 = this.embedOptions) === null || _127 === void 0 ? void 0 : _127.settings) === null || _128 === void 0 ? void 0 : _128.brand) === null || _129 === void 0 ? void 0 : _129.domain) ? this.embedOptions.settings.brand.domain : ''
+                            hideHelpLink: typeof ((_120 = this.embedOptions.customBrandSettings) === null || _120 === void 0 ? void 0 : _120.hideHelpLink) === 'boolean' ? this.embedOptions.customBrandSettings.hideHelpLink : (_123 = (_122 = (_121 = this.embedOptions.settings) === null || _121 === void 0 ? void 0 : _121.brand) === null || _122 === void 0 ? void 0 : _122.hideHelpLink) !== null && _123 !== void 0 ? _123 : false,
+                            customBrandName: !this._isEmptyOrSpaces((_125 = (_124 = this.embedOptions) === null || _124 === void 0 ? void 0 : _124.customBrandSettings) === null || _125 === void 0 ? void 0 : _125.customBrandName) ? this.embedOptions.customBrandSettings.customBrandName : !this._isEmptyOrSpaces((_128 = (_127 = (_126 = this.embedOptions) === null || _126 === void 0 ? void 0 : _126.settings) === null || _127 === void 0 ? void 0 : _127.brand) === null || _128 === void 0 ? void 0 : _128.name) ? this.embedOptions.settings.brand.name : '',
+                            customDomain: !this._isEmptyOrSpaces((_130 = (_129 = this.embedOptions) === null || _129 === void 0 ? void 0 : _129.customBrandSettings) === null || _130 === void 0 ? void 0 : _130.customDomain) ? this.embedOptions.customBrandSettings.customDomain : !this._isEmptyOrSpaces((_133 = (_132 = (_131 = this.embedOptions) === null || _131 === void 0 ? void 0 : _131.settings) === null || _132 === void 0 ? void 0 : _132.brand) === null || _133 === void 0 ? void 0 : _133.domain) ? this.embedOptions.settings.brand.domain : ''
                         };
                     }
                     if (!this.embedOptions.enableDomainMasking) {
@@ -731,9 +785,9 @@ class BoldBI {
                         if (!this._isEmptyOrSpaces(datasourceId)) {
                             dashboardOptions.datasource = datasourceId;
                         }
-                        const datasourcesValue = Array.isArray((_130 = this.embedOptions) === null || _130 === void 0 ? void 0 : _130.datasources) && this.embedOptions.datasources.length > 0
+                        const datasourcesValue = Array.isArray((_134 = this.embedOptions) === null || _134 === void 0 ? void 0 : _134.datasources) && this.embedOptions.datasources.length > 0
                             ? this.embedOptions.datasources
-                            : Array.isArray((_132 = (_131 = this.embedOptions) === null || _131 === void 0 ? void 0 : _131.settings) === null || _132 === void 0 ? void 0 : _132.datasources) && this.embedOptions.settings.datasources.length > 0
+                            : Array.isArray((_136 = (_135 = this.embedOptions) === null || _135 === void 0 ? void 0 : _135.settings) === null || _136 === void 0 ? void 0 : _136.datasources) && this.embedOptions.settings.datasources.length > 0
                                 ? this.embedOptions.settings.datasources
                                 : [];
                         dashboardOptions.datasources = datasourcesValue;
@@ -753,11 +807,11 @@ class BoldBI {
                             that._onBoldBIBeforeNavigateToDashboard(arg);
                         };
                         dashboardOptions.toolbarSettings = {
-                            showToolbar: typeof ((_133 = this.embedOptions.toolbarSettings) === null || _133 === void 0 ? void 0 : _133.showToolbar) === 'boolean' ? this.embedOptions.toolbarSettings.showToolbar : (_137 = (_136 = (_135 = (_134 = this.embedOptions.settings) === null || _134 === void 0 ? void 0 : _134.designer) === null || _135 === void 0 ? void 0 : _135.toolbar) === null || _136 === void 0 ? void 0 : _136.enabled) !== null && _137 !== void 0 ? _137 : true
+                            showToolbar: typeof ((_137 = this.embedOptions.toolbarSettings) === null || _137 === void 0 ? void 0 : _137.showToolbar) === 'boolean' ? this.embedOptions.toolbarSettings.showToolbar : (_141 = (_140 = (_139 = (_138 = this.embedOptions.settings) === null || _138 === void 0 ? void 0 : _138.designer) === null || _139 === void 0 ? void 0 : _139.toolbar) === null || _140 === void 0 ? void 0 : _140.enabled) !== null && _141 !== void 0 ? _141 : true
                         };
                         dashboardOptions.predefinedWidgets = {
-                            categoryName: !this._isEmptyOrSpaces((_139 = (_138 = this.embedOptions) === null || _138 === void 0 ? void 0 : _138.preConfiguredWidgets) === null || _139 === void 0 ? void 0 : _139.categoryName) ? this.embedOptions.preConfiguredWidgets.categoryName : !this._isEmptyOrSpaces((_143 = (_142 = (_141 = (_140 = this.embedOptions) === null || _140 === void 0 ? void 0 : _140.settings) === null || _141 === void 0 ? void 0 : _141.designer) === null || _142 === void 0 ? void 0 : _142.preConfiguredWidgets) === null || _143 === void 0 ? void 0 : _143.categoryName) ? this.embedOptions.settings.designer.preConfiguredWidgets.categoryName : '',
-                            dashboardId: !this._isEmptyOrSpaces((_145 = (_144 = this.embedOptions) === null || _144 === void 0 ? void 0 : _144.preConfiguredWidgets) === null || _145 === void 0 ? void 0 : _145.dashboardId) ? this.embedOptions.preConfiguredWidgets.dashboardId : !this._isEmptyOrSpaces((_149 = (_148 = (_147 = (_146 = this.embedOptions) === null || _146 === void 0 ? void 0 : _146.settings) === null || _147 === void 0 ? void 0 : _147.designer) === null || _148 === void 0 ? void 0 : _148.preConfiguredWidgets) === null || _149 === void 0 ? void 0 : _149.dashboardId) ? this.embedOptions.settings.designer.preConfiguredWidgets.dashboardId : ''
+                            categoryName: !this._isEmptyOrSpaces((_143 = (_142 = this.embedOptions) === null || _142 === void 0 ? void 0 : _142.preConfiguredWidgets) === null || _143 === void 0 ? void 0 : _143.categoryName) ? this.embedOptions.preConfiguredWidgets.categoryName : !this._isEmptyOrSpaces((_147 = (_146 = (_145 = (_144 = this.embedOptions) === null || _144 === void 0 ? void 0 : _144.settings) === null || _145 === void 0 ? void 0 : _145.designer) === null || _146 === void 0 ? void 0 : _146.preConfiguredWidgets) === null || _147 === void 0 ? void 0 : _147.categoryName) ? this.embedOptions.settings.designer.preConfiguredWidgets.categoryName : '',
+                            dashboardId: !this._isEmptyOrSpaces((_149 = (_148 = this.embedOptions) === null || _148 === void 0 ? void 0 : _148.preConfiguredWidgets) === null || _149 === void 0 ? void 0 : _149.dashboardId) ? this.embedOptions.preConfiguredWidgets.dashboardId : !this._isEmptyOrSpaces((_153 = (_152 = (_151 = (_150 = this.embedOptions) === null || _150 === void 0 ? void 0 : _150.settings) === null || _151 === void 0 ? void 0 : _151.designer) === null || _152 === void 0 ? void 0 : _152.preConfiguredWidgets) === null || _153 === void 0 ? void 0 : _153.dashboardId) ? this.embedOptions.settings.designer.preConfiguredWidgets.dashboardId : ''
                         };
                         if (this.embedOptions.environment == BoldBI.Environment.Enterprise) {
                             dashboardOptions.configuration = this.embedOptions.enableDomainMasking ? ' ' : this.rootUrl + '/webdesignerservice/scripts/settings/' + embedResponse.Branding + '/settings.min.js';
@@ -767,29 +821,29 @@ class BoldBI {
                         }
                         dashboardOptions.designerSettings = {
                             widgetsPanel: {
-                                hideExistingWidgets: typeof ((_151 = (_150 = this.embedOptions.dashboardSettings) === null || _150 === void 0 ? void 0 : _150.widgetsPanel) === null || _151 === void 0 ? void 0 : _151.hideExistingWidgets) === 'boolean' ? this.embedOptions.dashboardSettings.widgetsPanel.hideExistingWidgets : (_155 = (_154 = (_153 = (_152 = this.embedOptions.settings) === null || _152 === void 0 ? void 0 : _152.designer) === null || _153 === void 0 ? void 0 : _153.widgetsPanel) === null || _154 === void 0 ? void 0 : _154.hideExistingWidgets) !== null && _155 !== void 0 ? _155 : false,
-                                hideDefaultWidgets: typeof ((_157 = (_156 = this.embedOptions.dashboardSettings) === null || _156 === void 0 ? void 0 : _156.widgetsPanel) === null || _157 === void 0 ? void 0 : _157.hideDefaultWidgets) === 'boolean' ? this.embedOptions.dashboardSettings.widgetsPanel.hideDefaultWidgets : (_161 = (_160 = (_159 = (_158 = this.embedOptions.settings) === null || _158 === void 0 ? void 0 : _158.designer) === null || _159 === void 0 ? void 0 : _159.widgetsPanel) === null || _160 === void 0 ? void 0 : _160.hideDefaultWidgets) !== null && _161 !== void 0 ? _161 : false,
-                                defaultPanelDisplayText: ((_163 = (_162 = this.embedOptions.settings) === null || _162 === void 0 ? void 0 : _162.designer) === null || _163 === void 0 ? void 0 : _163.widgetsPanel) ? (_165 = (_164 = this.embedOptions.settings) === null || _164 === void 0 ? void 0 : _164.designer) === null || _165 === void 0 ? void 0 : _165.widgetsPanel.defaultPanelDisplayText : '',
-                                existingPanelDisplayText: ((_167 = (_166 = this.embedOptions.settings) === null || _166 === void 0 ? void 0 : _166.designer) === null || _167 === void 0 ? void 0 : _167.widgetsPanel) ? (_169 = (_168 = this.embedOptions.settings) === null || _168 === void 0 ? void 0 : _168.designer) === null || _169 === void 0 ? void 0 : _169.widgetsPanel.existingPanelDisplayText : '',
-                                defaultPanelSearchPlaceholder: ((_171 = (_170 = this.embedOptions.settings) === null || _170 === void 0 ? void 0 : _170.designer) === null || _171 === void 0 ? void 0 : _171.widgetsPanel) ? (_173 = (_172 = this.embedOptions.settings) === null || _172 === void 0 ? void 0 : _172.designer) === null || _173 === void 0 ? void 0 : _173.widgetsPanel.defaultPanelSearchPlaceholder : '',
-                                existingPanelSearchPlaceholder: ((_175 = (_174 = this.embedOptions.settings) === null || _174 === void 0 ? void 0 : _174.designer) === null || _175 === void 0 ? void 0 : _175.widgetsPanel) ? (_177 = (_176 = this.embedOptions.settings) === null || _176 === void 0 ? void 0 : _176.designer) === null || _177 === void 0 ? void 0 : _177.widgetsPanel.existingPanelSearchPlaceholder : '',
-                                existingDashboards: Array.isArray((_179 = (_178 = this.embedOptions.dashboardSettings) === null || _178 === void 0 ? void 0 : _178.widgetsPanel) === null || _179 === void 0 ? void 0 : _179.existingDashboards) && this.embedOptions.dashboardSettings.widgetsPanel.existingDashboards.length > 0 ? this.embedOptions.dashboardSettings.widgetsPanel.existingDashboards : Array.isArray((_182 = (_181 = (_180 = this.embedOptions.settings) === null || _180 === void 0 ? void 0 : _180.designer) === null || _181 === void 0 ? void 0 : _181.widgetsPanel) === null || _182 === void 0 ? void 0 : _182.existingDashboards) && this.embedOptions.settings.designer.widgetsPanel.existingDashboards.length > 0 ? this.embedOptions.settings.designer.widgetsPanel.existingDashboards : [],
+                                hideExistingWidgets: typeof ((_155 = (_154 = this.embedOptions.dashboardSettings) === null || _154 === void 0 ? void 0 : _154.widgetsPanel) === null || _155 === void 0 ? void 0 : _155.hideExistingWidgets) === 'boolean' ? this.embedOptions.dashboardSettings.widgetsPanel.hideExistingWidgets : (_159 = (_158 = (_157 = (_156 = this.embedOptions.settings) === null || _156 === void 0 ? void 0 : _156.designer) === null || _157 === void 0 ? void 0 : _157.widgetsPanel) === null || _158 === void 0 ? void 0 : _158.hideExistingWidgets) !== null && _159 !== void 0 ? _159 : false,
+                                hideDefaultWidgets: typeof ((_161 = (_160 = this.embedOptions.dashboardSettings) === null || _160 === void 0 ? void 0 : _160.widgetsPanel) === null || _161 === void 0 ? void 0 : _161.hideDefaultWidgets) === 'boolean' ? this.embedOptions.dashboardSettings.widgetsPanel.hideDefaultWidgets : (_165 = (_164 = (_163 = (_162 = this.embedOptions.settings) === null || _162 === void 0 ? void 0 : _162.designer) === null || _163 === void 0 ? void 0 : _163.widgetsPanel) === null || _164 === void 0 ? void 0 : _164.hideDefaultWidgets) !== null && _165 !== void 0 ? _165 : false,
+                                defaultPanelDisplayText: ((_167 = (_166 = this.embedOptions.settings) === null || _166 === void 0 ? void 0 : _166.designer) === null || _167 === void 0 ? void 0 : _167.widgetsPanel) ? (_169 = (_168 = this.embedOptions.settings) === null || _168 === void 0 ? void 0 : _168.designer) === null || _169 === void 0 ? void 0 : _169.widgetsPanel.defaultPanelDisplayText : '',
+                                existingPanelDisplayText: ((_171 = (_170 = this.embedOptions.settings) === null || _170 === void 0 ? void 0 : _170.designer) === null || _171 === void 0 ? void 0 : _171.widgetsPanel) ? (_173 = (_172 = this.embedOptions.settings) === null || _172 === void 0 ? void 0 : _172.designer) === null || _173 === void 0 ? void 0 : _173.widgetsPanel.existingPanelDisplayText : '',
+                                defaultPanelSearchPlaceholder: ((_175 = (_174 = this.embedOptions.settings) === null || _174 === void 0 ? void 0 : _174.designer) === null || _175 === void 0 ? void 0 : _175.widgetsPanel) ? (_177 = (_176 = this.embedOptions.settings) === null || _176 === void 0 ? void 0 : _176.designer) === null || _177 === void 0 ? void 0 : _177.widgetsPanel.defaultPanelSearchPlaceholder : '',
+                                existingPanelSearchPlaceholder: ((_179 = (_178 = this.embedOptions.settings) === null || _178 === void 0 ? void 0 : _178.designer) === null || _179 === void 0 ? void 0 : _179.widgetsPanel) ? (_181 = (_180 = this.embedOptions.settings) === null || _180 === void 0 ? void 0 : _180.designer) === null || _181 === void 0 ? void 0 : _181.widgetsPanel.existingPanelSearchPlaceholder : '',
+                                existingDashboards: Array.isArray((_183 = (_182 = this.embedOptions.dashboardSettings) === null || _182 === void 0 ? void 0 : _182.widgetsPanel) === null || _183 === void 0 ? void 0 : _183.existingDashboards) && this.embedOptions.dashboardSettings.widgetsPanel.existingDashboards.length > 0 ? this.embedOptions.dashboardSettings.widgetsPanel.existingDashboards : Array.isArray((_186 = (_185 = (_184 = this.embedOptions.settings) === null || _184 === void 0 ? void 0 : _184.designer) === null || _185 === void 0 ? void 0 : _185.widgetsPanel) === null || _186 === void 0 ? void 0 : _186.existingDashboards) && this.embedOptions.settings.designer.widgetsPanel.existingDashboards.length > 0 ? this.embedOptions.settings.designer.widgetsPanel.existingDashboards : [],
                                 dragAndDropSettings: {
-                                    rowSpan: (_187 = (_186 = (_185 = (_184 = (_183 = this.embedOptions.settings) === null || _183 === void 0 ? void 0 : _183.designer) === null || _184 === void 0 ? void 0 : _184.widgetsPanel) === null || _185 === void 0 ? void 0 : _185.dragAndDropSettings) === null || _186 === void 0 ? void 0 : _186.rowSpan) !== null && _187 !== void 0 ? _187 : null,
-                                    columnSpan: (_192 = (_191 = (_190 = (_189 = (_188 = this.embedOptions.settings) === null || _188 === void 0 ? void 0 : _188.designer) === null || _189 === void 0 ? void 0 : _189.widgetsPanel) === null || _190 === void 0 ? void 0 : _190.dragAndDropSettings) === null || _191 === void 0 ? void 0 : _191.columnSpan) !== null && _192 !== void 0 ? _192 : null,
-                                    isWidgetMode: (_197 = (_196 = (_195 = (_194 = (_193 = this.embedOptions.settings) === null || _193 === void 0 ? void 0 : _193.designer) === null || _194 === void 0 ? void 0 : _194.widgetsPanel) === null || _195 === void 0 ? void 0 : _195.dragAndDropSettings) === null || _196 === void 0 ? void 0 : _196.isWidgetMode) !== null && _197 !== void 0 ? _197 : false
+                                    rowSpan: (_191 = (_190 = (_189 = (_188 = (_187 = this.embedOptions.settings) === null || _187 === void 0 ? void 0 : _187.designer) === null || _188 === void 0 ? void 0 : _188.widgetsPanel) === null || _189 === void 0 ? void 0 : _189.dragAndDropSettings) === null || _190 === void 0 ? void 0 : _190.rowSpan) !== null && _191 !== void 0 ? _191 : null,
+                                    columnSpan: (_196 = (_195 = (_194 = (_193 = (_192 = this.embedOptions.settings) === null || _192 === void 0 ? void 0 : _192.designer) === null || _193 === void 0 ? void 0 : _193.widgetsPanel) === null || _194 === void 0 ? void 0 : _194.dragAndDropSettings) === null || _195 === void 0 ? void 0 : _195.columnSpan) !== null && _196 !== void 0 ? _196 : null,
+                                    isWidgetMode: (_201 = (_200 = (_199 = (_198 = (_197 = this.embedOptions.settings) === null || _197 === void 0 ? void 0 : _197.designer) === null || _198 === void 0 ? void 0 : _198.widgetsPanel) === null || _199 === void 0 ? void 0 : _199.dragAndDropSettings) === null || _200 === void 0 ? void 0 : _200.isWidgetMode) !== null && _201 !== void 0 ? _201 : false
                                 }
                             },
                             dataSourceConfig: {
-                                hideDataSourceConfig: typeof ((_199 = (_198 = this.embedOptions.dashboardSettings) === null || _198 === void 0 ? void 0 : _198.dataSourceConfig) === null || _199 === void 0 ? void 0 : _199.hideDataSourceConfig) === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceConfig : (_203 = (_202 = (_201 = (_200 = this.embedOptions.settings) === null || _200 === void 0 ? void 0 : _200.designer) === null || _201 === void 0 ? void 0 : _201.dataSourceConfig) === null || _202 === void 0 ? void 0 : _202.hideDataSourceConfig) !== null && _203 !== void 0 ? _203 : false,
-                                hideSampleDataSources: typeof ((_205 = (_204 = this.embedOptions.dashboardSettings) === null || _204 === void 0 ? void 0 : _204.dataSourceConfig) === null || _205 === void 0 ? void 0 : _205.hideSampleDataSources) === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideSampleDataSources : (_209 = (_208 = (_207 = (_206 = this.embedOptions.settings) === null || _206 === void 0 ? void 0 : _206.designer) === null || _207 === void 0 ? void 0 : _207.dataSourceConfig) === null || _208 === void 0 ? void 0 : _208.hideSampleDataSources) !== null && _209 !== void 0 ? _209 : false,
-                                hideDataSourceList: typeof ((_211 = (_210 = this.embedOptions.dashboardSettings) === null || _210 === void 0 ? void 0 : _210.dataSourceConfig) === null || _211 === void 0 ? void 0 : _211.hideDataSourceList) === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceList : (_215 = (_214 = (_213 = (_212 = this.embedOptions.settings) === null || _212 === void 0 ? void 0 : _212.designer) === null || _213 === void 0 ? void 0 : _213.dataSourceConfig) === null || _214 === void 0 ? void 0 : _214.hideDataSourceList) !== null && _215 !== void 0 ? _215 : false,
-                                hideExpression: typeof ((_217 = (_216 = this.embedOptions.dashboardSettings) === null || _216 === void 0 ? void 0 : _216.dataSourceConfig) === null || _217 === void 0 ? void 0 : _217.hideExpression) === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideExpression : (_221 = (_220 = (_219 = (_218 = this.embedOptions.settings) === null || _218 === void 0 ? void 0 : _218.designer) === null || _219 === void 0 ? void 0 : _219.dataSourceConfig) === null || _220 === void 0 ? void 0 : _220.hideExpression) !== null && _221 !== void 0 ? _221 : false
+                                hideDataSourceConfig: typeof ((_203 = (_202 = this.embedOptions.dashboardSettings) === null || _202 === void 0 ? void 0 : _202.dataSourceConfig) === null || _203 === void 0 ? void 0 : _203.hideDataSourceConfig) === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceConfig : (_207 = (_206 = (_205 = (_204 = this.embedOptions.settings) === null || _204 === void 0 ? void 0 : _204.designer) === null || _205 === void 0 ? void 0 : _205.dataSourceConfig) === null || _206 === void 0 ? void 0 : _206.hideDataSourceConfig) !== null && _207 !== void 0 ? _207 : false,
+                                hideSampleDataSources: typeof ((_209 = (_208 = this.embedOptions.dashboardSettings) === null || _208 === void 0 ? void 0 : _208.dataSourceConfig) === null || _209 === void 0 ? void 0 : _209.hideSampleDataSources) === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideSampleDataSources : (_213 = (_212 = (_211 = (_210 = this.embedOptions.settings) === null || _210 === void 0 ? void 0 : _210.designer) === null || _211 === void 0 ? void 0 : _211.dataSourceConfig) === null || _212 === void 0 ? void 0 : _212.hideSampleDataSources) !== null && _213 !== void 0 ? _213 : false,
+                                hideDataSourceList: typeof ((_215 = (_214 = this.embedOptions.dashboardSettings) === null || _214 === void 0 ? void 0 : _214.dataSourceConfig) === null || _215 === void 0 ? void 0 : _215.hideDataSourceList) === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideDataSourceList : (_219 = (_218 = (_217 = (_216 = this.embedOptions.settings) === null || _216 === void 0 ? void 0 : _216.designer) === null || _217 === void 0 ? void 0 : _217.dataSourceConfig) === null || _218 === void 0 ? void 0 : _218.hideDataSourceList) !== null && _219 !== void 0 ? _219 : false,
+                                hideExpression: typeof ((_221 = (_220 = this.embedOptions.dashboardSettings) === null || _220 === void 0 ? void 0 : _220.dataSourceConfig) === null || _221 === void 0 ? void 0 : _221.hideExpression) === 'boolean' ? this.embedOptions.dashboardSettings.dataSourceConfig.hideExpression : (_225 = (_224 = (_223 = (_222 = this.embedOptions.settings) === null || _222 === void 0 ? void 0 : _222.designer) === null || _223 === void 0 ? void 0 : _223.dataSourceConfig) === null || _224 === void 0 ? void 0 : _224.hideExpression) !== null && _225 !== void 0 ? _225 : false
                             },
-                            hidePropertySettingIcon: (_223 = (_222 = this.embedOptions.settings) === null || _222 === void 0 ? void 0 : _222.designer) === null || _223 === void 0 ? void 0 : _223.hideSettings
+                            hidePropertySettingIcon: (_227 = (_226 = this.embedOptions.settings) === null || _226 === void 0 ? void 0 : _226.designer) === null || _227 === void 0 ? void 0 : _227.hideSettings
                         };
                         dashboardOptions.userSettings = {
-                            hidePreviewAs: typeof ((_224 = this.embedOptions.dashboardSettings) === null || _224 === void 0 ? void 0 : _224.showPreviewAs) === 'boolean' ? !this.embedOptions.dashboardSettings.showPreviewAs : !((_227 = (_226 = (_225 = this.embedOptions.settings) === null || _225 === void 0 ? void 0 : _225.designer) === null || _226 === void 0 ? void 0 : _226.previewAs) !== null && _227 !== void 0 ? _227 : true)
+                            hidePreviewAs: typeof ((_228 = this.embedOptions.dashboardSettings) === null || _228 === void 0 ? void 0 : _228.showPreviewAs) === 'boolean' ? !this.embedOptions.dashboardSettings.showPreviewAs : !((_231 = (_230 = (_229 = this.embedOptions.settings) === null || _229 === void 0 ? void 0 : _229.designer) === null || _230 === void 0 ? void 0 : _230.previewAs) !== null && _231 !== void 0 ? _231 : true)
                         };
                     }
                     if (this.embedOptions.mode == BoldBI.Mode.Connection) {
@@ -801,11 +855,9 @@ class BoldBI {
                         dashboardOptions.datasource = (this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.ItemDetail.Id : this.embedOptions.datasourceId;
                     }
                     this.isMultipleWidgetMode = (this.embedOptions.widgetList == '') ? false : this.isMultipleWidgetMode;
-                    if (this.isWidgetMode) {
-                        dashboardOptions.isPinWidget = this.isWidgetMode;
-                        dashboardOptions.widgetId = (this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.WidgetId : this.widgetName;
-                    }
-                    const dashboardHeader = typeof ((_228 = this.embedOptions.dashboardSettings) === null || _228 === void 0 ? void 0 : _228.showHeader) === 'boolean' ? this.embedOptions.dashboardSettings.showHeader : (_231 = (_230 = (_229 = this.embedOptions.settings) === null || _229 === void 0 ? void 0 : _229.viewer) === null || _230 === void 0 ? void 0 : _230.header) !== null && _231 !== void 0 ? _231 : true;
+                    dashboardOptions.isPinWidget = this.isWidgetMode;
+                    dashboardOptions.widgetId = this.isWidgetMode ? ((this._isNullOrUndefined(this.authToken) || this._isEmptyOrSpaces(this.authToken)) ? embedResponse.WidgetId : this.widgetName) : '';
+                    const dashboardHeader = typeof ((_232 = this.embedOptions.dashboardSettings) === null || _232 === void 0 ? void 0 : _232.showHeader) === 'boolean' ? this.embedOptions.dashboardSettings.showHeader : (_235 = (_234 = (_233 = this.embedOptions.settings) === null || _233 === void 0 ? void 0 : _233.viewer) === null || _234 === void 0 ? void 0 : _234.header) !== null && _235 !== void 0 ? _235 : true;
                     if (dashboardHeader == false) {
                         dashboardOptions.isHideHeader = true;
                     }
@@ -818,20 +870,20 @@ class BoldBI {
                             isMultiTab: this.parentDbrdId == null || this.parentDbrdId === '' ? false : true
                         };
                     }
-                    const dynamicConnectionEnabled = typeof ((_232 = this.embedOptions.dynamicConnection) === null || _232 === void 0 ? void 0 : _232.isEnabled) === 'boolean' ? this.embedOptions.dynamicConnection.isEnabled : (_235 = (_234 = (_233 = this.embedOptions.settings) === null || _233 === void 0 ? void 0 : _233.dynamicConnection) === null || _234 === void 0 ? void 0 : _234.enabled) !== null && _235 !== void 0 ? _235 : false;
+                    const dynamicConnectionEnabled = typeof ((_236 = this.embedOptions.dynamicConnection) === null || _236 === void 0 ? void 0 : _236.isEnabled) === 'boolean' ? this.embedOptions.dynamicConnection.isEnabled : (_239 = (_238 = (_237 = this.embedOptions.settings) === null || _237 === void 0 ? void 0 : _237.dynamicConnection) === null || _238 === void 0 ? void 0 : _238.enabled) !== null && _239 !== void 0 ? _239 : false;
                     if (dynamicConnectionEnabled) {
-                        dashboardOptions.customIdentity = !this._isEmptyOrSpaces((_237 = (_236 = this.embedOptions) === null || _236 === void 0 ? void 0 : _236.dynamicConnection) === null || _237 === void 0 ? void 0 : _237.identity) ? this.embedOptions.dynamicConnection.identity : !this._isEmptyOrSpaces((_240 = (_239 = (_238 = this.embedOptions) === null || _238 === void 0 ? void 0 : _238.settings) === null || _239 === void 0 ? void 0 : _239.dynamicConnection) === null || _240 === void 0 ? void 0 : _240.identity) ? this.embedOptions.settings.dynamicConnection.identity : '';
+                        dashboardOptions.customIdentity = !this._isEmptyOrSpaces((_241 = (_240 = this.embedOptions) === null || _240 === void 0 ? void 0 : _240.dynamicConnection) === null || _241 === void 0 ? void 0 : _241.identity) ? this.embedOptions.dynamicConnection.identity : !this._isEmptyOrSpaces((_244 = (_243 = (_242 = this.embedOptions) === null || _242 === void 0 ? void 0 : _242.settings) === null || _243 === void 0 ? void 0 : _243.dynamicConnection) === null || _244 === void 0 ? void 0 : _244.identity) ? this.embedOptions.settings.dynamicConnection.identity : '';
                     }
-                    const refreshSettingsEnbaled = typeof ((_241 = this.embedOptions.autoRefreshSettings) === null || _241 === void 0 ? void 0 : _241.enabled) === 'boolean' ? (_242 = this.embedOptions.autoRefreshSettings) === null || _242 === void 0 ? void 0 : _242.enabled : (_246 = (_245 = (_244 = (_243 = this.embedOptions.settings) === null || _243 === void 0 ? void 0 : _243.viewer) === null || _244 === void 0 ? void 0 : _244.autoRefresh) === null || _245 === void 0 ? void 0 : _245.enabled) !== null && _246 !== void 0 ? _246 : false;
+                    const refreshSettingsEnbaled = typeof ((_245 = this.embedOptions.autoRefreshSettings) === null || _245 === void 0 ? void 0 : _245.enabled) === 'boolean' ? (_246 = this.embedOptions.autoRefreshSettings) === null || _246 === void 0 ? void 0 : _246.enabled : (_250 = (_249 = (_248 = (_247 = this.embedOptions.settings) === null || _247 === void 0 ? void 0 : _247.viewer) === null || _248 === void 0 ? void 0 : _248.autoRefresh) === null || _249 === void 0 ? void 0 : _249.enabled) !== null && _250 !== void 0 ? _250 : false;
                     if (refreshSettingsEnbaled) {
                         dashboardOptions.enableAutoRefresh = true;
                         dashboardOptions.autoRefreshSettings = {
                             intervalSettings: {
                                 mode: 'Hourly',
                                 hourlySchedule: {
-                                    hours: typeof ((_247 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _247 === void 0 ? void 0 : _247.hours) === 'number' ? (_248 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _248 === void 0 ? void 0 : _248.hours : (_251 = (_250 = (_249 = this.embedOptions.settings.viewer) === null || _249 === void 0 ? void 0 : _249.autoRefresh) === null || _250 === void 0 ? void 0 : _250.hourlySchedule) === null || _251 === void 0 ? void 0 : _251.hours,
-                                    minutes: typeof ((_252 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _252 === void 0 ? void 0 : _252.minutes) === 'number' ? (_253 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _253 === void 0 ? void 0 : _253.minutes : (_256 = (_255 = (_254 = this.embedOptions.settings.viewer) === null || _254 === void 0 ? void 0 : _254.autoRefresh) === null || _255 === void 0 ? void 0 : _255.hourlySchedule) === null || _256 === void 0 ? void 0 : _256.minutes,
-                                    seconds: typeof ((_257 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _257 === void 0 ? void 0 : _257.seconds) === 'number' ? (_258 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _258 === void 0 ? void 0 : _258.seconds : (_261 = (_260 = (_259 = this.embedOptions.settings.viewer) === null || _259 === void 0 ? void 0 : _259.autoRefresh) === null || _260 === void 0 ? void 0 : _260.hourlySchedule) === null || _261 === void 0 ? void 0 : _261.seconds
+                                    hours: typeof ((_251 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _251 === void 0 ? void 0 : _251.hours) === 'number' ? (_252 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _252 === void 0 ? void 0 : _252.hours : (_255 = (_254 = (_253 = this.embedOptions.settings.viewer) === null || _253 === void 0 ? void 0 : _253.autoRefresh) === null || _254 === void 0 ? void 0 : _254.hourlySchedule) === null || _255 === void 0 ? void 0 : _255.hours,
+                                    minutes: typeof ((_256 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _256 === void 0 ? void 0 : _256.minutes) === 'number' ? (_257 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _257 === void 0 ? void 0 : _257.minutes : (_260 = (_259 = (_258 = this.embedOptions.settings.viewer) === null || _258 === void 0 ? void 0 : _258.autoRefresh) === null || _259 === void 0 ? void 0 : _259.hourlySchedule) === null || _260 === void 0 ? void 0 : _260.minutes,
+                                    seconds: typeof ((_261 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _261 === void 0 ? void 0 : _261.seconds) === 'number' ? (_262 = this.embedOptions.autoRefreshSettings.hourlySchedule) === null || _262 === void 0 ? void 0 : _262.seconds : (_265 = (_264 = (_263 = this.embedOptions.settings.viewer) === null || _263 === void 0 ? void 0 : _263.autoRefresh) === null || _264 === void 0 ? void 0 : _264.hourlySchedule) === null || _265 === void 0 ? void 0 : _265.seconds
                                 }
                             }
                         };
@@ -841,53 +893,53 @@ class BoldBI {
                         dashboardOptions.dataSourceId = this.embedOptions.dataSourceId;
                         dashboardOptions.dashboardApiUrl = this.dashboardServerApiUrl;
                     }
-                    if (!this.loadMultipleWidget && ((((_262 = this.embedOptions.embedAiAssistant) === null || _262 === void 0 ? void 0 : _262.enabled) || ((_264 = (_263 = this.embedOptions.settings) === null || _263 === void 0 ? void 0 : _263.aiAssistant) === null || _264 === void 0 ? void 0 : _264.enabled))) || this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
+                    if (!this.loadMultipleWidget && ((((_266 = this.embedOptions.embedAiAssistant) === null || _266 === void 0 ? void 0 : _266.enabled) || ((_268 = (_267 = this.embedOptions.settings) === null || _267 === void 0 ? void 0 : _267.aiAssistant) === null || _268 === void 0 ? void 0 : _268.enabled))) || this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
                         dashboardOptions.embedAiAssistant = {
                             enableAiAssistant: true,
-                            aiAssistantPosition: !this._isEmptyOrSpaces((_266 = (_265 = this.embedOptions) === null || _265 === void 0 ? void 0 : _265.embedAiAssistant) === null || _266 === void 0 ? void 0 : _266.position) ? this.embedOptions.embedAiAssistant.position : !this._isEmptyOrSpaces((_269 = (_268 = (_267 = this.embedOptions) === null || _267 === void 0 ? void 0 : _267.settings) === null || _268 === void 0 ? void 0 : _268.aiAssistant) === null || _269 === void 0 ? void 0 : _269.position) ? this.embedOptions.settings.aiAssistant.position : 'bottom',
-                            hideAIDataUsage: typeof ((_270 = this.embedOptions.embedAiAssistant) === null || _270 === void 0 ? void 0 : _270.hideAiDataUsage) === 'boolean' ? (_271 = this.embedOptions.embedAiAssistant) === null || _271 === void 0 ? void 0 : _271.hideAiDataUsage : typeof ((_273 = (_272 = this.embedOptions.settings) === null || _272 === void 0 ? void 0 : _272.aiAssistant) === null || _273 === void 0 ? void 0 : _273.hideUsageAnalytics) === 'boolean' ? (_275 = (_274 = this.embedOptions.settings) === null || _274 === void 0 ? void 0 : _274.aiAssistant) === null || _275 === void 0 ? void 0 : _275.hideUsageAnalytics : (_279 = (_278 = (_277 = (_276 = this.embedOptions.settings) === null || _276 === void 0 ? void 0 : _276.aiAssistant) === null || _277 === void 0 ? void 0 : _277.hideIcons) === null || _278 === void 0 ? void 0 : _278.usageAnalytics) !== null && _279 !== void 0 ? _279 : false,
-                            hideAIChatHelp: typeof ((_281 = (_280 = this.embedOptions.embedAiAssistant) === null || _280 === void 0 ? void 0 : _280.hideIcons) === null || _281 === void 0 ? void 0 : _281.helpLink) === 'boolean' ? (_283 = (_282 = this.embedOptions.embedAiAssistant) === null || _282 === void 0 ? void 0 : _282.hideIcons) === null || _283 === void 0 ? void 0 : _283.helpLink : (_286 = (_285 = (_284 = this.embedOptions.settings) === null || _284 === void 0 ? void 0 : _284.aiAssistant) === null || _285 === void 0 ? void 0 : _285.hideChatHelp) !== null && _286 !== void 0 ? _286 : false,
-                            enableChatHistory: typeof ((_289 = (_288 = (_287 = this.embedOptions.settings) === null || _287 === void 0 ? void 0 : _287.aiAssistant) === null || _288 === void 0 ? void 0 : _288.hideIcons) === null || _289 === void 0 ? void 0 : _289.history) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideIcons.history) : true,
-                            enableNewSession: typeof ((_292 = (_291 = (_290 = this.embedOptions.settings) === null || _290 === void 0 ? void 0 : _290.aiAssistant) === null || _291 === void 0 ? void 0 : _291.hideIcons) === null || _292 === void 0 ? void 0 : _292.newSession) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideIcons.newSession) : true,
-                            showBetaTag: typeof ((_294 = (_293 = this.embedOptions.settings) === null || _293 === void 0 ? void 0 : _293.aiAssistant) === null || _294 === void 0 ? void 0 : _294.hideBetaTag) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideBetaTag) : true,
-                            headerTextColorHex: !this._isEmptyOrSpaces((_296 = (_295 = this.embedOptions.settings) === null || _295 === void 0 ? void 0 : _295.aiAssistant) === null || _296 === void 0 ? void 0 : _296.headerTextColor) ? this.embedOptions.settings.aiAssistant.headerTextColor : '',
-                            showChatLogo: typeof ((_298 = (_297 = this.embedOptions.settings) === null || _297 === void 0 ? void 0 : _297.aiAssistant) === null || _298 === void 0 ? void 0 : _298.hideLogo) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideLogo) : true,
-                            showWelcomeMessage: typeof ((_300 = (_299 = this.embedOptions.settings) === null || _299 === void 0 ? void 0 : _299.aiAssistant) === null || _300 === void 0 ? void 0 : _300.hideWelcomeNote) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideWelcomeNote) : true,
-                            showDashboardCategory: typeof ((_302 = (_301 = this.embedOptions.settings) === null || _301 === void 0 ? void 0 : _301.aiAssistant) === null || _302 === void 0 ? void 0 : _302.hideDashboardTag) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideDashboardTag) : true,
-                            showDatasourceCategory: typeof ((_304 = (_303 = this.embedOptions.settings) === null || _303 === void 0 ? void 0 : _303.aiAssistant) === null || _304 === void 0 ? void 0 : _304.hideDatasourceTag) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideDatasourceTag) : true,
-                            dashboardId: Array.isArray((_306 = (_305 = this.embedOptions.settings) === null || _305 === void 0 ? void 0 : _305.aiAssistant) === null || _306 === void 0 ? void 0 : _306.dashboards) && ((_308 = (_307 = this.embedOptions.settings) === null || _307 === void 0 ? void 0 : _307.aiAssistant) === null || _308 === void 0 ? void 0 : _308.dashboards.length) > 0 ? this.embedOptions.settings.aiAssistant.dashboards : [],
-                            datasourceId: Array.isArray((_310 = (_309 = this.embedOptions.settings) === null || _309 === void 0 ? void 0 : _309.aiAssistant) === null || _310 === void 0 ? void 0 : _310.dataSources) && ((_312 = (_311 = this.embedOptions.settings) === null || _311 === void 0 ? void 0 : _311.aiAssistant) === null || _312 === void 0 ? void 0 : _312.dataSources.length) > 0 ? this.embedOptions.settings.aiAssistant.dataSources : [],
-                            suggestionCount: typeof ((_314 = (_313 = this.embedOptions.settings) === null || _313 === void 0 ? void 0 : _313.aiAssistant) === null || _314 === void 0 ? void 0 : _314.queryDisplayLimit) === 'number' ? this.embedOptions.settings.aiAssistant.queryDisplayLimit : 6,
-                            customizedAITitle: !this._isEmptyOrSpaces(this.embedOptions.embedAiAssistant.name) ? this.embedOptions.embedAiAssistant.name : (_317 = (_316 = (_315 = this.embedOptions.settings) === null || _315 === void 0 ? void 0 : _315.aiAssistant) === null || _316 === void 0 ? void 0 : _316.name) !== null && _317 !== void 0 ? _317 : '',
-                            customizedUserName: (_320 = (_319 = (_318 = this.embedOptions.settings) === null || _318 === void 0 ? void 0 : _318.aiAssistant) === null || _319 === void 0 ? void 0 : _319.userName) !== null && _320 !== void 0 ? _320 : '',
-                            customDashboardSummaryIntroText: (_323 = (_322 = (_321 = this.embedOptions.settings) === null || _321 === void 0 ? void 0 : _321.aiAssistant) === null || _322 === void 0 ? void 0 : _322.aiSummaryIntroMessage) !== null && _323 !== void 0 ? _323 : '',
+                            aiAssistantPosition: !this._isEmptyOrSpaces((_270 = (_269 = this.embedOptions) === null || _269 === void 0 ? void 0 : _269.embedAiAssistant) === null || _270 === void 0 ? void 0 : _270.position) ? this.embedOptions.embedAiAssistant.position : !this._isEmptyOrSpaces((_273 = (_272 = (_271 = this.embedOptions) === null || _271 === void 0 ? void 0 : _271.settings) === null || _272 === void 0 ? void 0 : _272.aiAssistant) === null || _273 === void 0 ? void 0 : _273.position) ? this.embedOptions.settings.aiAssistant.position : 'bottom',
+                            hideAIDataUsage: typeof ((_274 = this.embedOptions.embedAiAssistant) === null || _274 === void 0 ? void 0 : _274.hideAiDataUsage) === 'boolean' ? (_275 = this.embedOptions.embedAiAssistant) === null || _275 === void 0 ? void 0 : _275.hideAiDataUsage : typeof ((_277 = (_276 = this.embedOptions.settings) === null || _276 === void 0 ? void 0 : _276.aiAssistant) === null || _277 === void 0 ? void 0 : _277.hideUsageAnalytics) === 'boolean' ? (_279 = (_278 = this.embedOptions.settings) === null || _278 === void 0 ? void 0 : _278.aiAssistant) === null || _279 === void 0 ? void 0 : _279.hideUsageAnalytics : (_283 = (_282 = (_281 = (_280 = this.embedOptions.settings) === null || _280 === void 0 ? void 0 : _280.aiAssistant) === null || _281 === void 0 ? void 0 : _281.hideIcons) === null || _282 === void 0 ? void 0 : _282.usageAnalytics) !== null && _283 !== void 0 ? _283 : false,
+                            hideAIChatHelp: typeof ((_285 = (_284 = this.embedOptions.embedAiAssistant) === null || _284 === void 0 ? void 0 : _284.hideIcons) === null || _285 === void 0 ? void 0 : _285.helpLink) === 'boolean' ? (_287 = (_286 = this.embedOptions.embedAiAssistant) === null || _286 === void 0 ? void 0 : _286.hideIcons) === null || _287 === void 0 ? void 0 : _287.helpLink : (_290 = (_289 = (_288 = this.embedOptions.settings) === null || _288 === void 0 ? void 0 : _288.aiAssistant) === null || _289 === void 0 ? void 0 : _289.hideChatHelp) !== null && _290 !== void 0 ? _290 : false,
+                            enableChatHistory: typeof ((_293 = (_292 = (_291 = this.embedOptions.settings) === null || _291 === void 0 ? void 0 : _291.aiAssistant) === null || _292 === void 0 ? void 0 : _292.hideIcons) === null || _293 === void 0 ? void 0 : _293.history) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideIcons.history) : true,
+                            enableNewSession: typeof ((_296 = (_295 = (_294 = this.embedOptions.settings) === null || _294 === void 0 ? void 0 : _294.aiAssistant) === null || _295 === void 0 ? void 0 : _295.hideIcons) === null || _296 === void 0 ? void 0 : _296.newSession) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideIcons.newSession) : true,
+                            showBetaTag: typeof ((_298 = (_297 = this.embedOptions.settings) === null || _297 === void 0 ? void 0 : _297.aiAssistant) === null || _298 === void 0 ? void 0 : _298.hideBetaTag) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideBetaTag) : true,
+                            headerTextColorHex: !this._isEmptyOrSpaces((_300 = (_299 = this.embedOptions.settings) === null || _299 === void 0 ? void 0 : _299.aiAssistant) === null || _300 === void 0 ? void 0 : _300.headerTextColor) ? this.embedOptions.settings.aiAssistant.headerTextColor : '',
+                            showChatLogo: typeof ((_302 = (_301 = this.embedOptions.settings) === null || _301 === void 0 ? void 0 : _301.aiAssistant) === null || _302 === void 0 ? void 0 : _302.hideLogo) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideLogo) : true,
+                            showWelcomeMessage: typeof ((_304 = (_303 = this.embedOptions.settings) === null || _303 === void 0 ? void 0 : _303.aiAssistant) === null || _304 === void 0 ? void 0 : _304.hideWelcomeNote) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideWelcomeNote) : true,
+                            showDashboardCategory: typeof ((_306 = (_305 = this.embedOptions.settings) === null || _305 === void 0 ? void 0 : _305.aiAssistant) === null || _306 === void 0 ? void 0 : _306.hideDashboardTag) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideDashboardTag) : true,
+                            showDatasourceCategory: typeof ((_308 = (_307 = this.embedOptions.settings) === null || _307 === void 0 ? void 0 : _307.aiAssistant) === null || _308 === void 0 ? void 0 : _308.hideDatasourceTag) === 'boolean' ? !(this.embedOptions.settings.aiAssistant.hideDatasourceTag) : true,
+                            dashboardId: Array.isArray((_310 = (_309 = this.embedOptions.settings) === null || _309 === void 0 ? void 0 : _309.aiAssistant) === null || _310 === void 0 ? void 0 : _310.dashboards) && ((_312 = (_311 = this.embedOptions.settings) === null || _311 === void 0 ? void 0 : _311.aiAssistant) === null || _312 === void 0 ? void 0 : _312.dashboards.length) > 0 ? this.embedOptions.settings.aiAssistant.dashboards : [],
+                            datasourceId: Array.isArray((_314 = (_313 = this.embedOptions.settings) === null || _313 === void 0 ? void 0 : _313.aiAssistant) === null || _314 === void 0 ? void 0 : _314.dataSources) && ((_316 = (_315 = this.embedOptions.settings) === null || _315 === void 0 ? void 0 : _315.aiAssistant) === null || _316 === void 0 ? void 0 : _316.dataSources.length) > 0 ? this.embedOptions.settings.aiAssistant.dataSources : [],
+                            suggestionCount: typeof ((_318 = (_317 = this.embedOptions.settings) === null || _317 === void 0 ? void 0 : _317.aiAssistant) === null || _318 === void 0 ? void 0 : _318.queryDisplayLimit) === 'number' ? this.embedOptions.settings.aiAssistant.queryDisplayLimit : 6,
+                            customizedAITitle: !this._isEmptyOrSpaces(this.embedOptions.embedAiAssistant.name) ? this.embedOptions.embedAiAssistant.name : (_321 = (_320 = (_319 = this.embedOptions.settings) === null || _319 === void 0 ? void 0 : _319.aiAssistant) === null || _320 === void 0 ? void 0 : _320.name) !== null && _321 !== void 0 ? _321 : '',
+                            customizedUserName: (_324 = (_323 = (_322 = this.embedOptions.settings) === null || _322 === void 0 ? void 0 : _322.aiAssistant) === null || _323 === void 0 ? void 0 : _323.userName) !== null && _324 !== void 0 ? _324 : '',
+                            customDashboardSummaryIntroText: (_327 = (_326 = (_325 = this.embedOptions.settings) === null || _325 === void 0 ? void 0 : _325.aiAssistant) === null || _326 === void 0 ? void 0 : _326.aiSummaryIntroMessage) !== null && _327 !== void 0 ? _327 : '',
                             aiAssistantCustomPrompt: {
-                                welcomeMessage: (_326 = (_325 = (_324 = this.embedOptions.settings) === null || _324 === void 0 ? void 0 : _324.aiAssistant) === null || _325 === void 0 ? void 0 : _325.welcomeMessage) !== null && _326 !== void 0 ? _326 : '',
-                                exploreMessage: (_329 = (_328 = (_327 = this.embedOptions.settings) === null || _327 === void 0 ? void 0 : _327.aiAssistant) === null || _328 === void 0 ? void 0 : _328.exploreMessage) !== null && _329 !== void 0 ? _329 : '',
+                                welcomeMessage: (_330 = (_329 = (_328 = this.embedOptions.settings) === null || _328 === void 0 ? void 0 : _328.aiAssistant) === null || _329 === void 0 ? void 0 : _329.welcomeMessage) !== null && _330 !== void 0 ? _330 : '',
+                                exploreMessage: (_333 = (_332 = (_331 = this.embedOptions.settings) === null || _331 === void 0 ? void 0 : _331.aiAssistant) === null || _332 === void 0 ? void 0 : _332.exploreMessage) !== null && _333 !== void 0 ? _333 : '',
                             },
                             dashboardAiAssistantCustomPrompt: {
-                                welcomeMessage: (_332 = (_331 = (_330 = this.embedOptions.settings) === null || _330 === void 0 ? void 0 : _330.aiAssistant) === null || _331 === void 0 ? void 0 : _331.welcomeMessage) !== null && _332 !== void 0 ? _332 : '',
-                                exploreMessage: (_335 = (_334 = (_333 = this.embedOptions.settings) === null || _333 === void 0 ? void 0 : _333.aiAssistant) === null || _334 === void 0 ? void 0 : _334.exploreMessage) !== null && _335 !== void 0 ? _335 : '',
+                                welcomeMessage: (_336 = (_335 = (_334 = this.embedOptions.settings) === null || _334 === void 0 ? void 0 : _334.aiAssistant) === null || _335 === void 0 ? void 0 : _335.welcomeMessage) !== null && _336 !== void 0 ? _336 : '',
+                                exploreMessage: (_339 = (_338 = (_337 = this.embedOptions.settings) === null || _337 === void 0 ? void 0 : _337.aiAssistant) === null || _338 === void 0 ? void 0 : _338.exploreMessage) !== null && _339 !== void 0 ? _339 : '',
                                 widgetSuggestions: {
-                                    title: (_339 = (_338 = (_337 = (_336 = this.embedOptions.settings) === null || _336 === void 0 ? void 0 : _336.aiAssistant) === null || _337 === void 0 ? void 0 : _337.widgetSuggestions) === null || _338 === void 0 ? void 0 : _338.title) !== null && _339 !== void 0 ? _339 : '',
-                                    suggestionPrompt: (_343 = (_342 = (_341 = (_340 = this.embedOptions.settings) === null || _340 === void 0 ? void 0 : _340.aiAssistant) === null || _341 === void 0 ? void 0 : _341.widgetSuggestions) === null || _342 === void 0 ? void 0 : _342.prompt) !== null && _343 !== void 0 ? _343 : ''
+                                    title: (_343 = (_342 = (_341 = (_340 = this.embedOptions.settings) === null || _340 === void 0 ? void 0 : _340.aiAssistant) === null || _341 === void 0 ? void 0 : _341.widgetSuggestions) === null || _342 === void 0 ? void 0 : _342.title) !== null && _343 !== void 0 ? _343 : '',
+                                    suggestionPrompt: (_347 = (_346 = (_345 = (_344 = this.embedOptions.settings) === null || _344 === void 0 ? void 0 : _344.aiAssistant) === null || _345 === void 0 ? void 0 : _345.widgetSuggestions) === null || _346 === void 0 ? void 0 : _346.prompt) !== null && _347 !== void 0 ? _347 : ''
                                 },
                                 dashboardSuggestions: {
-                                    title: (_347 = (_346 = (_345 = (_344 = this.embedOptions.settings) === null || _344 === void 0 ? void 0 : _344.aiAssistant) === null || _345 === void 0 ? void 0 : _345.dashboardSuggestions) === null || _346 === void 0 ? void 0 : _346.title) !== null && _347 !== void 0 ? _347 : '',
-                                    suggestionPrompt: (_351 = (_350 = (_349 = (_348 = this.embedOptions.settings) === null || _348 === void 0 ? void 0 : _348.aiAssistant) === null || _349 === void 0 ? void 0 : _349.dashboardSuggestions) === null || _350 === void 0 ? void 0 : _350.prompt) !== null && _351 !== void 0 ? _351 : ''
+                                    title: (_351 = (_350 = (_349 = (_348 = this.embedOptions.settings) === null || _348 === void 0 ? void 0 : _348.aiAssistant) === null || _349 === void 0 ? void 0 : _349.dashboardSuggestions) === null || _350 === void 0 ? void 0 : _350.title) !== null && _351 !== void 0 ? _351 : '',
+                                    suggestionPrompt: (_355 = (_354 = (_353 = (_352 = this.embedOptions.settings) === null || _352 === void 0 ? void 0 : _352.aiAssistant) === null || _353 === void 0 ? void 0 : _353.dashboardSuggestions) === null || _354 === void 0 ? void 0 : _354.prompt) !== null && _355 !== void 0 ? _355 : ''
                                 }
                             }
                         };
                         if (this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
-                            dashboardOptions.customBrandSettings = Object.assign(Object.assign({}, dashboardOptions.customBrandSettings), { hideHelpLink: typeof ((_354 = (_353 = (_352 = this.embedOptions.settings) === null || _352 === void 0 ? void 0 : _352.aiAssistant) === null || _353 === void 0 ? void 0 : _353.hideIcons) === null || _354 === void 0 ? void 0 : _354.helpLink) === 'boolean' ? (_356 = (_355 = this.embedOptions.settings) === null || _355 === void 0 ? void 0 : _355.aiAssistant.hideIcons) === null || _356 === void 0 ? void 0 : _356.helpLink : false });
+                            dashboardOptions.customBrandSettings = Object.assign(Object.assign({}, dashboardOptions.customBrandSettings), { hideHelpLink: typeof ((_358 = (_357 = (_356 = this.embedOptions.settings) === null || _356 === void 0 ? void 0 : _356.aiAssistant) === null || _357 === void 0 ? void 0 : _357.hideIcons) === null || _358 === void 0 ? void 0 : _358.helpLink) === 'boolean' ? (_360 = (_359 = this.embedOptions.settings) === null || _359 === void 0 ? void 0 : _359.aiAssistant.hideIcons) === null || _360 === void 0 ? void 0 : _360.helpLink : false });
                         }
                     }
-                    dashboardOptions.isAiSummariesEnabledGlobally = typeof ((_358 = (_357 = this.embedOptions.embedAiAssistant) === null || _357 === void 0 ? void 0 : _357.summary) === null || _358 === void 0 ? void 0 : _358.enabled) === 'boolean' ? (_360 = (_359 = this.embedOptions.embedAiAssistant) === null || _359 === void 0 ? void 0 : _359.summary) === null || _360 === void 0 ? void 0 : _360.enabled : (_364 = (_363 = (_362 = (_361 = this.embedOptions.settings) === null || _361 === void 0 ? void 0 : _361.aiAssistant) === null || _362 === void 0 ? void 0 : _362.summary) === null || _363 === void 0 ? void 0 : _363.enabled) !== null && _364 !== void 0 ? _364 : false;
+                    dashboardOptions.isAiSummariesEnabledGlobally = typeof ((_362 = (_361 = this.embedOptions.embedAiAssistant) === null || _361 === void 0 ? void 0 : _361.summary) === null || _362 === void 0 ? void 0 : _362.enabled) === 'boolean' ? (_364 = (_363 = this.embedOptions.embedAiAssistant) === null || _363 === void 0 ? void 0 : _363.summary) === null || _364 === void 0 ? void 0 : _364.enabled : (_368 = (_367 = (_366 = (_365 = this.embedOptions.settings) === null || _365 === void 0 ? void 0 : _365.aiAssistant) === null || _366 === void 0 ? void 0 : _366.summary) === null || _367 === void 0 ? void 0 : _367.enabled) !== null && _368 !== void 0 ? _368 : false;
                     if (dashboardOptions.isAiSummariesEnabledGlobally) {
                         dashboardOptions.embedAiAssistant = dashboardOptions.embedAiAssistant || {};
                         dashboardOptions.embedAiAssistant.summarization = dashboardOptions.embedAiAssistant.summarization || {};
-                        dashboardOptions.embedAiAssistant.summarization.enableWidgetSummary = typeof ((_366 = (_365 = this.embedOptions.embedAiAssistant) === null || _365 === void 0 ? void 0 : _365.summary) === null || _366 === void 0 ? void 0 : _366.includeWidgetSummary) === 'boolean' ? (_368 = (_367 = this.embedOptions.embedAiAssistant) === null || _367 === void 0 ? void 0 : _367.summary) === null || _368 === void 0 ? void 0 : _368.includeWidgetSummary : (_371 = (_370 = (_369 = this.embedOptions.settings.aiAssistant) === null || _369 === void 0 ? void 0 : _369.summary) === null || _370 === void 0 ? void 0 : _370.widget) !== null && _371 !== void 0 ? _371 : false;
-                        dashboardOptions.embedAiAssistant.summarization.enableDashboardSummary = typeof ((_373 = (_372 = this.embedOptions.embedAiAssistant) === null || _372 === void 0 ? void 0 : _372.summary) === null || _373 === void 0 ? void 0 : _373.includeDashboardSummary) === 'boolean' ? (_375 = (_374 = this.embedOptions.embedAiAssistant) === null || _374 === void 0 ? void 0 : _374.summary) === null || _375 === void 0 ? void 0 : _375.includeDashboardSummary : (_379 = (_378 = (_377 = (_376 = this.embedOptions.settings) === null || _376 === void 0 ? void 0 : _376.aiAssistant) === null || _377 === void 0 ? void 0 : _377.summary) === null || _378 === void 0 ? void 0 : _378.dashboard) !== null && _379 !== void 0 ? _379 : false;
+                        dashboardOptions.embedAiAssistant.summarization.enableWidgetSummary = typeof ((_370 = (_369 = this.embedOptions.embedAiAssistant) === null || _369 === void 0 ? void 0 : _369.summary) === null || _370 === void 0 ? void 0 : _370.includeWidgetSummary) === 'boolean' ? (_372 = (_371 = this.embedOptions.embedAiAssistant) === null || _371 === void 0 ? void 0 : _371.summary) === null || _372 === void 0 ? void 0 : _372.includeWidgetSummary : (_375 = (_374 = (_373 = this.embedOptions.settings.aiAssistant) === null || _373 === void 0 ? void 0 : _373.summary) === null || _374 === void 0 ? void 0 : _374.widget) !== null && _375 !== void 0 ? _375 : false;
+                        dashboardOptions.embedAiAssistant.summarization.enableDashboardSummary = typeof ((_377 = (_376 = this.embedOptions.embedAiAssistant) === null || _376 === void 0 ? void 0 : _376.summary) === null || _377 === void 0 ? void 0 : _377.includeDashboardSummary) === 'boolean' ? (_379 = (_378 = this.embedOptions.embedAiAssistant) === null || _378 === void 0 ? void 0 : _378.summary) === null || _379 === void 0 ? void 0 : _379.includeDashboardSummary : (_383 = (_382 = (_381 = (_380 = this.embedOptions.settings) === null || _380 === void 0 ? void 0 : _380.aiAssistant) === null || _381 === void 0 ? void 0 : _381.summary) === null || _382 === void 0 ? void 0 : _382.dashboard) !== null && _383 !== void 0 ? _383 : false;
                     }
                     if (that.embedOptions.mode == BoldBI.Mode.AIAssistant) {
                         if (typeof window.BoldBIAI !== 'undefined' && window.BoldBIAI.UnifiedAIAgent) {
@@ -955,11 +1007,11 @@ class BoldBI {
                         throw new Error(embeddingLocalization_1.errorMessages['bbEmbedNotDefined']);
                     }
                     if (this.embedOptions.widgetList == '') {
-                        this._removeElementsClass(embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
+                        this._removeBlueLoaderUnlessEarlyFeedbackPending(embedContainerId);
                     }
                     if (this.isMultiTab && !this.embedOptions.token && !this.embedOptions.isPublicDashboard && !this.embedOptions.embedToken && embedResponse.ItemDetail.ItemViews) {
-                        const dashboardFilterSettings = (_380 = this.embedOptions.dashboardSettings) === null || _380 === void 0 ? void 0 : _380.filterOverviewSettings;
-                        const viewerFilterOverview = (_382 = (_381 = this.embedOptions.settings) === null || _381 === void 0 ? void 0 : _381.viewer) === null || _382 === void 0 ? void 0 : _382.filterOverview;
+                        const dashboardFilterSettings = (_384 = this.embedOptions.dashboardSettings) === null || _384 === void 0 ? void 0 : _384.filterOverviewSettings;
+                        const viewerFilterOverview = (_386 = (_385 = this.embedOptions.settings) === null || _385 === void 0 ? void 0 : _385.viewer) === null || _386 === void 0 ? void 0 : _386.filterOverview;
                         if (dashboardFilterSettings) {
                             dashboardFilterSettings.viewId = null;
                             dashboardFilterSettings.viewName = null;
@@ -1068,7 +1120,7 @@ class BoldBI {
                         dashboardItemDetail.Name = (dashboardId == val.dashboardId.replaceAll('-', '')) ? that._isEmptyOrSpaces(val.displayName) ? dashboardItemDetail.Name : val.displayName : dashboardItemDetail.Name;
                     });
                 }
-                tabHeader.append(bbEmbed('<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + dashboardItemDetail.TabName + '</div>'));
+                tabHeader.append(bbEmbed('<div style="display: inline-block; white-space: nowrap; overflow: visible; text-overflow: clip;">' + dashboardItemDetail.TabName + '</div>'));
                 const multitabDbrdEle = bbEmbed('<div style="height:100%;width:100%;overflow: hidden !important;" id="multi_' + dashboardId + '"></div>');
                 tabContent.append(bbEmbed('<div></div>').append(multitabDbrdEle.append('<div id="multi_' + dashboardId + '_embeddedbi" class="bbembed-multitab-dbrd"></div>')));
             });
@@ -1078,10 +1130,11 @@ class BoldBI {
                 selected: bbEmbed.proxy(this._tabSelected, this)
             });
             tabInstance.appendTo('#' + containerName);
-            bbEmbed('.e-tab-header .e-toolbar-item .e-tab-text').css({ 'display': 'inline-block', 'width': '150px', 'white-space': 'nowrap', 'overflow': 'hidden', 'text-overflow': 'ellipsis', 'color': '#000', 'font-family': 'var(--font-family)', 'text-transform': 'none' });
+            bbEmbed('.multitab-dbrd .e-tab-header .e-toolbar-item .e-tab-text').css({ 'display': 'inline-block', 'width': 'auto', 'max-width': 'none', 'white-space': 'nowrap', 'overflow': 'visible', 'text-overflow': 'clip', 'color': '#000', 'font-family': 'var(--font-family)', 'text-transform': 'none' });
+            bbEmbed('.multitab-dbrd .e-tab-header .e-toolbar-item').css({ 'flex': '0 0 auto', 'min-width': 'fit-content', 'max-width': 'none' });
             bbEmbed('<style type="text/css"> .embed-multi-tab-indicator{ background: var(--primary-branding-color) !important; border-radius: 4px; display: block !important; height: 5px !important;}</style>').appendTo('head');
             bbEmbed('.e-control.e-tab .e-tab-header .e-indicator').addClass('embed-multi-tab-indicator');
-            bbEmbed.map(bbEmbed('.e-tab-header .e-toolbar-item .e-tab-text'), function (value, index) {
+            bbEmbed.map(bbEmbed('.multitab-dbrd .e-tab-header .e-toolbar-item .e-tab-text'), function (value, index) {
                 bbEmbed(value).attr('title', bbEmbed(value).text());
                 bbEmbed(bbEmbed('.e-content').find('#e-content-multi_tab_dashboard_' + index).children()).css({ 'height': '100%', 'width': '100%', 'overflow': 'hidden', 'display': 'block', 'position': 'absolute', 'left': bbEmbed('.e-content.e-lib.e-touch').width() * index });
             });
@@ -1303,6 +1356,7 @@ class BoldBI {
         });
         this.loadDashboardWidget = this.Invoke(function (name, dashboardId) {
             this.deprecationMessage('loadDashboardWidget');
+            this.widgetName = name;
             this._loadDashboardWidget(name, dashboardId);
         });
         this.loadAIAssistant = this.Invoke(function () {
@@ -1310,6 +1364,7 @@ class BoldBI {
         });
         this.loadWidget = this.Invoke(function (name, dashboardId) {
             this.deprecated = false;
+            this.widgetName = name;
             this._loadDashboardWidget(name, dashboardId);
         });
         this.loadMultipleWidgets = this.Invoke(function (dashboardId) {
@@ -1370,6 +1425,210 @@ class BoldBI {
             this._isAIDepdencyLoaded(this);
         }
     }
+    _canOptimizeViewerAssets() {
+        var _a, _b, _c;
+        const options = this.embedOptions;
+        return ((_b = (_a = options.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.bundleOptimization) === true && options.mode === BoldBI.Mode.View &&
+            options.environment === BoldBI.Environment.Enterprise && this._shouldRenderComponent() &&
+            !options.enableDomainMasking && !options.isPublicDashboard && !options.isMultiTabDashboard && !this.isMultiTab &&
+            !this.isWidgetMode && !this.isMultipleWidgetMode && !options.widgetList && !options.pinboardName &&
+            !options.viewId && !options.viewName && !((_c = options.anonymousToken) === null || _c === void 0 ? void 0 : _c.isEnabled) &&
+            /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(options.dashboardId || '');
+    }
+    _cancelOptimizedAssetWait() {
+        this.optimizedAssetGeneration++;
+        if (this.optimizedWrapperWait) {
+            this.optimizedWrapperWait();
+            this.optimizedWrapperWait = null;
+        }
+    }
+    _startOptimizedViewerBootstrap() {
+        this.optimizedAssetAttempted = true;
+        this.optimizedAssetPending = true;
+        const generation = ++this.optimizedAssetGeneration;
+        const owner = this.childContainer;
+        const current = () => generation === this.optimizedAssetGeneration && owner && owner.isConnected && owner === this.childContainer;
+        const failure = () => {
+            if (!current()) {
+                return;
+            }
+            this.optimizedAssetPending = false;
+            this.failedDependencyScript = true;
+            this.invalidDetail = true;
+            this._cancelDependencyWait();
+            if (this.earlyFeedbackDisplay) {
+                this.earlyFeedbackDisplay();
+                this.earlyFeedbackDisplay = null;
+            }
+            if (this.earlyFeedbackProjection) {
+                this.earlyFeedbackProjection.abort();
+                this.earlyFeedbackProjection = null;
+            }
+            this._throwError('Dashboard resources could not be loaded. Reload the page to try again.', this.embedOptions.embedContainerId);
+        };
+        // Selective core evaluates localized defaults during registration. The
+        // aggregate loader formerly waited for this provider; preserve that order.
+        this._addedDependentFiles(this, ['designerlocalization.js'], false);
+        // The native foundation must bind to the SDK's established jQuery/UI.
+        // Do not inject the native dependency aggregate: it includes another jQuery.
+        let cancel;
+        const timer = setTimeout(() => { if (cancel) {
+            cancel();
+        } failure(); }, 15000);
+        cancel = (0, dependency_readiness_1.waitForDependencyReadiness)(() => {
+            var _a, _b;
+            return this.failedDependencyScript ||
+                (this.pendingDependencyScripts.size === 0 && !!((_a = window.bbEmbed) === null || _a === void 0 ? void 0 : _a.ui) && !!((_b = window.Designer) === null || _b === void 0 ? void 0 : _b.App));
+        }, current, () => {
+            clearTimeout(timer);
+            if (!current()) {
+                return;
+            }
+            if (this.failedDependencyScript) {
+                failure();
+                return;
+            }
+            void (0, viewer_assets_1.activateOptimizedViewerAssets)(this.rootUrl, this.embedOptions.nonce).then(active => {
+                if (!current()) {
+                    return;
+                }
+                this.optimizedAssetsActive = active;
+                // Localization is still loaded through the existing SDK endpoint.
+                // Pending stays true until the complete dependency list is inserted.
+                this._loadDepedentFiles();
+                this.optimizedAssetPending = false;
+                // A reused localization script may emit no new load event. Wake
+                // existing per-instance waiters without starting an unrequested open.
+                document.dispatchEvent(new Event('boldbi-sdk-resources-ready'));
+            }).catch(failure);
+        });
+        this.optimizedWrapperWait = () => { clearTimeout(timer); cancel(); };
+    }
+    _cancelDependencyWait() {
+        this.dependencyWaitGeneration++;
+        if (this.dependencyWait) {
+            this.dependencyWait();
+            this.dependencyWait = null;
+        }
+    }
+    _trackDependencyScript(node, inserted = false) {
+        var _a, _b, _c, _d;
+        if ((((_b = (_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.earlyFeedback) !== true && ((_d = (_c = this.embedOptions.settings) === null || _c === void 0 ? void 0 : _c.viewer) === null || _d === void 0 ? void 0 : _d.bundleOptimization) !== true) || this.embedOptions.mode !== BoldBI.Mode.View)
+            return;
+        let state = dependencyScriptStates.get(node);
+        if (!state) {
+            if (!inserted) {
+                this.unknownDependencyScript = true;
+                return;
+            }
+            state = { status: 'loading' };
+            dependencyScriptStates.set(node, state);
+            const loaded = () => { state.status = 'loaded'; clean(); };
+            const failed = () => { state.status = 'failed'; clean(); };
+            const clean = () => { node.removeEventListener('load', loaded); node.removeEventListener('error', failed); };
+            node.addEventListener('load', loaded);
+            node.addEventListener('error', failed);
+        }
+        if (state.status === 'loaded' || this.pendingDependencyScripts.has(node))
+            return;
+        if (state.status === 'failed') {
+            this.failedDependencyScript = true;
+            return;
+        }
+        this.pendingDependencyScripts.add(node);
+        const loaded = () => { this.pendingDependencyScripts.delete(node); clean(); };
+        const failed = () => { this.failedDependencyScript = true; this.pendingDependencyScripts.delete(node); clean(); };
+        const clean = () => { node.removeEventListener('load', loaded); node.removeEventListener('error', failed); };
+        node.addEventListener('load', loaded);
+        node.addEventListener('error', failed);
+        this.dependencyScriptCleanup.push(clean);
+    }
+    _areViewerDependenciesReady() {
+        return window.bbEmbed instanceof Function && window.BoldBIDashboard instanceof Object &&
+            !this._isNullOrUndefined(window.BoldBIDashboard) && window.BoldBIDashboard.Designer instanceof Object &&
+            window.BoldBIDashboardDesigner instanceof Function && !this._isEmptyOrSpaces(this.designerRootUrl) && window.Designer instanceof Object;
+    }
+    _canPrefetchSuppliedEarlyFeedback() {
+        var _a, _b, _c, _d, _e, _f;
+        return ((_b = (_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.earlyFeedback) === true && this.embedOptions.mode === BoldBI.Mode.View &&
+            !(this.embedOptions.enableDomainMasking || this.embedOptions.isPublicDashboard ||
+                ((_c = this.embedOptions.authorizationServer) === null || _c === void 0 ? void 0 : _c.url) || ((_d = this.embedOptions.authorizationServer) === null || _d === void 0 ? void 0 : _d.authorizionComplete) ||
+                ((_e = this.embedOptions.events) === null || _e === void 0 ? void 0 : _e.onAjaxStart) || this.embedOptions.ajaxBeforeLoad || this.isMultiTab || this.embedOptions.isMultiTabDashboard || this.isWidgetMode || this.isMultipleWidgetMode ||
+                this.embedOptions.pinboardName || this.embedOptions.viewId || this.embedOptions.viewName || ((_f = this.embedOptions.anonymousToken) === null || _f === void 0 ? void 0 : _f.isEnabled));
+    }
+    _prefetchSuppliedEarlyFeedback() {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+        if (this.earlyFeedbackDisplay) {
+            this.earlyFeedbackDisplay();
+            this.earlyFeedbackDisplay = null;
+        }
+        if (this.earlyFeedbackProjection) {
+            this.earlyFeedbackProjection.abort();
+            this.earlyFeedbackProjection = null;
+        }
+        // Existing private authorization is already available before heavy SDK dependencies.
+        // Custom authorization/Ajax hooks keep the normal runtime request path.
+        if (!this._canPrefetchSuppliedEarlyFeedback())
+            return;
+        try {
+            let path, token;
+            if (this.embedOptions.token || this.embedOptions.embedToken) {
+                // Existing private token contracts already identify the requested
+                // dashboard; the service freshly validates that identity/token.
+                path = this.embedOptions.dashboardId + '/' + this.embedOptions.customDashboardVersion;
+                token = this.embedOptions.token || this.embedOptions.embedToken;
+            }
+            else {
+                const response = (_a = this.embedOptions.authorizationServer) === null || _a === void 0 ? void 0 : _a.data;
+                if (!response || response.Status !== true || !response.Data || Array.isArray(response.Data))
+                    return;
+                const data = response.Data;
+                const item = typeof data.ItemDetail === 'string' ? JSON.parse(data.ItemDetail) : data.ItemDetail;
+                if (!item || item.IsPublic || !item.Id || item.Id.toLowerCase() !== this.embedOptions.dashboardId.toLowerCase() ||
+                    typeof item.ItemLocation !== 'string' || item.ItemLocation.split('/')[0].toLowerCase() !== item.Id.toLowerCase())
+                    return;
+                path = item.ItemLocation;
+                token = data.access_token;
+            }
+            const site = this.siteIdentifier ? this.siteIdentifier.replace(/^site\//i, '') : '';
+            this.earlyFeedbackProjection = (0, early_feedback_projection_1.prefetchEarlyFeedbackProjection)(this.childContainer, path, this.designerRootUrl, this.baseUrl, site, token, !this._isJwtFormat(token));
+            if (this.earlyFeedbackProjection && this.earlyFeedbackAssets) {
+                const receipt = this.earlyFeedbackProjection, owner = this.childContainer;
+                const dashboardId = this.embedOptions.dashboardId, serviceUrl = this.designerRootUrl, tenantUrl = this.baseUrl, siteIdentifier = this.siteIdentifier, serverUrl = this.embedOptions.serverUrl, requestedVersion = this.embedOptions.customDashboardVersion, legacyHeader = (_b = this.embedOptions.dashboardSettings) === null || _b === void 0 ? void 0 : _b.showHeader, viewerHeader = (_d = (_c = this.embedOptions.settings) === null || _c === void 0 ? void 0 : _c.viewer) === null || _d === void 0 ? void 0 : _d.header, directToken = this.embedOptions.token, embedToken = this.embedOptions.embedToken, suppliedAuthorization = (_e = this.embedOptions.authorizationServer) === null || _e === void 0 ? void 0 : _e.data;
+                const header = typeof ((_f = this.embedOptions.dashboardSettings) === null || _f === void 0 ? void 0 : _f.showHeader) === 'boolean'
+                    ? this.embedOptions.dashboardSettings.showHeader : (_j = (_h = (_g = this.embedOptions.settings) === null || _g === void 0 ? void 0 : _g.viewer) === null || _h === void 0 ? void 0 : _h.header) !== null && _j !== void 0 ? _j : true;
+                const deferral = { nodes: [], settled: false };
+                this.earlyFeedbackDisplay = (0, early_feedback_display_1.beginEarlyFeedbackDisplay)(owner, document.getElementById(this.embedOptions.embedContainerId), receipt, this.earlyFeedbackAssets, { showToolbar: header != false,
+                    // Same appearance that selects this embed's theme definition stylesheet.
+                    darkTheme: !this._resolveThemeBoolean((_l = (_k = this.embedOptions.settings) === null || _k === void 0 ? void 0 : _k.theme) === null || _l === void 0 ? void 0 : _l.localTheme, (_o = (_m = this.embedOptions.dashboardSettings) === null || _m === void 0 ? void 0 : _m.themeSettings) === null || _o === void 0 ? void 0 : _o.isLocalTheme) &&
+                        String(this._resolveThemeString((_r = (_q = (_p = this.embedOptions) === null || _p === void 0 ? void 0 : _p.settings) === null || _q === void 0 ? void 0 : _q.theme) === null || _r === void 0 ? void 0 : _r.appearance, (_u = (_t = (_s = this.embedOptions) === null || _s === void 0 ? void 0 : _s.dashboardSettings) === null || _t === void 0 ? void 0 : _t.themeSettings) === null || _u === void 0 ? void 0 : _u.appearance, 'light')).toLowerCase() === 'dark',
+                    isCurrent: () => {
+                        var _a, _b, _c, _d, _e;
+                        return this.earlyFeedbackProjection === receipt && this.childContainer === owner &&
+                            this.embedOptions.dashboardId === dashboardId && this.designerRootUrl === serviceUrl &&
+                            this.embedOptions.customDashboardVersion === requestedVersion &&
+                            ((_a = this.embedOptions.dashboardSettings) === null || _a === void 0 ? void 0 : _a.showHeader) === legacyHeader && ((_c = (_b = this.embedOptions.settings) === null || _b === void 0 ? void 0 : _b.viewer) === null || _c === void 0 ? void 0 : _c.header) === viewerHeader &&
+                            this.baseUrl === tenantUrl && this.siteIdentifier === siteIdentifier && this.embedOptions.serverUrl === serverUrl &&
+                            this.embedOptions.token === directToken && this.embedOptions.embedToken === embedToken &&
+                            ((_d = this.embedOptions.authorizationServer) === null || _d === void 0 ? void 0 : _d.data) === suppliedAuthorization &&
+                            (directToken || embedToken || ((suppliedAuthorization === null || suppliedAuthorization === void 0 ? void 0 : suppliedAuthorization.Status) === true ? (_e = suppliedAuthorization === null || suppliedAuthorization === void 0 ? void 0 : suppliedAuthorization.Data) === null || _e === void 0 ? void 0 : _e.access_token : null)) === token &&
+                            this._canPrefetchSuppliedEarlyFeedback();
+                    },
+                    onPendingEnd: () => {
+                        deferral.settled = true;
+                        if (this.earlyFeedbackLoaderDeferral === deferral) {
+                            this.earlyFeedbackLoaderDeferral = null;
+                        }
+                        // Same task as the display's restore/mount: no blank or duplicate loader frame.
+                        deferral.nodes.splice(0).forEach((node) => this._removeClass(node, 'viewer-blue-loader'));
+                    } });
+                if (!deferral.settled) {
+                    this.earlyFeedbackLoaderDeferral = deferral;
+                }
+            }
+        }
+        catch (_) { /* Invalid supplied data retains ordinary authorization/error handling. */ }
+    }
     _loadDashboard(dashboardId) {
         if (this._isInvalidEmbed(BoldBI.Mode.View, 'EmbedModeInvalid')) {
             return;
@@ -1398,6 +1657,8 @@ class BoldBI {
                 this.embedOptions.dashboardPaths = [];
                 this.isDashboardRendering = true;
                 this._setEmbedDefaults();
+                this._cancelDependencyWait();
+                this._prefetchSuppliedEarlyFeedback();
                 this._showLoader();
                 this._isDependencyLoaded(this);
             }
@@ -1603,6 +1864,8 @@ class BoldBI {
     }
     _setEmbedDefaults() {
         this.isWidgetMode = false;
+        this.isMultipleWidgetMode = false;
+        this.loadMultipleWidget = false;
         this.widgetName = '';
         this.isDashboardViewMode = false;
         this.dashboardViewName = '';
@@ -1943,6 +2206,7 @@ class BoldBI {
     }
     // Customer exposed functions
     static create(options) {
+        var _a, _b;
         const boldBIObj = new BoldBI();
         boldBIObj.isMultiTab = false;
         boldBIObj.parentDbrdId = '';
@@ -1980,6 +2244,23 @@ class BoldBI {
                         document.getElementById(boldBIObj.embedOptions.embedContainerId).append(boldBIObj.childContainer);
                     }
                     if (boldBIObj._initializeUrls()) {
+                        if (boldBIObj.embedOptions.mode === BoldBI.Mode.View &&
+                            ((_b = (_a = boldBIObj.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.earlyFeedback) === true &&
+                            !boldBIObj.embedOptions.enableDomainMasking) {
+                            // Optional visuals overlap normal dependencies and authentication.
+                            // This flag grants no access and never delays ordinary loading.
+                            boldBIObj.earlyFeedbackAssets = (0, early_feedback_assets_1.beginEarlyFeedbackAssets)(boldBIObj.rootUrl, boldBIObj.embedOptions.nonce);
+                        }
+                        // loadWidget is invoked immediately after create in component
+                        // embedding. Defer only the eligibility check by one microtask
+                        // so that call can mark widget mode; normal dashboard embeds
+                        // retain the existing selective bundle bootstrap.
+                        Promise.resolve().then(() => {
+                            if (!boldBIObj.optimizedAssetAttempted && boldBIObj._canOptimizeViewerAssets()) {
+                                boldBIObj.optimizedAssetPending = true;
+                                void (0, viewer_assets_1.prepareOptimizedViewerAssets)(boldBIObj.rootUrl);
+                            }
+                        });
                         if (!boldBIObj.embedOptions.width && !boldBIObj.embedOptions.height) {
                             boldBIObj._setDimensions();
                         }
@@ -2098,6 +2379,19 @@ class BoldBI {
         this.destroy();
     }
     destroy() {
+        this._cancelOptimizedAssetWait();
+        this._cancelDependencyWait();
+        this.dependencyScriptCleanup.forEach(clean => clean());
+        this.dependencyScriptCleanup = [];
+        this.pendingDependencyScripts.clear();
+        if (this.earlyFeedbackDisplay) {
+            this.earlyFeedbackDisplay();
+            this.earlyFeedbackDisplay = null;
+        }
+        if (this.earlyFeedbackProjection) {
+            this.earlyFeedbackProjection.abort();
+            this.earlyFeedbackProjection = null;
+        }
         this.deprecationMessage('destroy');
         const that = this;
         if (this.isMultiTab) {
@@ -3082,9 +3376,22 @@ class BoldBI {
     }
     // Internal functions. Will not be accessible outside of this scope.
     _initializeEmbedOptions(options) {
+        var _a, _b, _c, _d, _e;
         (0, sdk_deprecation_utils_1.checkDeprecatedEmbedOptions)(options);
         this.embedOptions = Object.assign(this.embedOptions, options);
         this.embedOptions = (0, sdk_deprecation_utils_1.migrateDeprecatedEventKeys)(this.embedOptions);
+        if (((_b = (_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.earlyFeedback) === undefined ||
+            ((_d = (_c = this.embedOptions.settings) === null || _c === void 0 ? void 0 : _c.viewer) === null || _d === void 0 ? void 0 : _d.bundleOptimization) === undefined) {
+            // The shared early-feedback and selective-resource paths default on only
+            // for their common Enterprise component host. Their narrower runtime
+            // eligibility checks still retain legacy delivery for public, multitab,
+            // widget-only and other unsupported modes. Explicit false is preserved.
+            const enabled = this.embedOptions.mode === BoldBI.Mode.View &&
+                this.embedOptions.environment === BoldBI.Environment.Enterprise &&
+                !this.embedOptions.enableDomainMasking && this._shouldRenderComponent();
+            const viewer = (_e = this.embedOptions.settings) === null || _e === void 0 ? void 0 : _e.viewer;
+            this.embedOptions.settings = Object.assign(Object.assign({}, this.embedOptions.settings), { viewer: Object.assign(Object.assign({}, viewer), { earlyFeedback: (viewer === null || viewer === void 0 ? void 0 : viewer.earlyFeedback) === undefined ? enabled : viewer.earlyFeedback, bundleOptimization: (viewer === null || viewer === void 0 ? void 0 : viewer.bundleOptimization) === undefined ? enabled : viewer.bundleOptimization }) });
+        }
     }
     _setDimensions() {
         // Get DOM elements
@@ -3134,6 +3441,22 @@ class BoldBI {
     }
     _loadDepedentFiles() {
         var _a, _b, _c, _d, _e, _f, _g, _h;
+        if (!this.optimizedAssetAttempted && this._canOptimizeViewerAssets()) {
+            this._startOptimizedViewerBootstrap();
+            return;
+        }
+        if (!this.optimizedAssetsActive) {
+            try {
+                (0, viewer_assets_1.reserveLegacyViewerAssets)();
+            }
+            catch (_) {
+                this.invalidDetail = true;
+                this.failedDependencyScript = true;
+                this._cancelDependencyWait();
+                this._throwError('This page contains incompatible dashboard resources. Reload using one asset mode.', this.embedOptions.embedContainerId);
+                return;
+            }
+        }
         const dashboardSettings = (_b = (_a = this.embedOptions) === null || _a === void 0 ? void 0 : _a.dashboardSettings) === null || _b === void 0 ? void 0 : _b.themeSettings;
         const globalSettings = (_d = (_c = this.embedOptions) === null || _c === void 0 ? void 0 : _c.settings) === null || _d === void 0 ? void 0 : _d.theme;
         const isLocalTheme = this._resolveThemeBoolean(globalSettings === null || globalSettings === void 0 ? void 0 : globalSettings.localTheme, dashboardSettings === null || dashboardSettings === void 0 ? void 0 : dashboardSettings.isLocalTheme);
@@ -3152,7 +3475,7 @@ class BoldBI {
             this._addedDependentFiles(this, this.designerScriptFiles, false);
         }
         else {
-            this._addedDependentFiles(this, this.viewerScriptFiles, false);
+            this._addedDependentFiles(this, this.optimizedAssetsActive ? ['designerlocalization.js'] : this.viewerScriptFiles, false);
         }
         const fontFamilyValue = this._resolveThemeString((_g = (_f = (_e = this.embedOptions) === null || _e === void 0 ? void 0 : _e.settings) === null || _f === void 0 ? void 0 : _f.theme) === null || _g === void 0 ? void 0 : _g.fontFamily, (_h = this.embedOptions.dashboardSettings) === null || _h === void 0 ? void 0 : _h.fontFamily);
         if (fontFamilyValue !== '') {
@@ -3166,7 +3489,10 @@ class BoldBI {
             this._addedDependentFiles(this, this.AIScriptFiles, false);
             this._addedDependentFiles(this, this.applicationThemeCssFiles, true);
         }
-        this._addedDependentFiles(this, this.cssFiles, true);
+        this._addedDependentFiles(this, this.optimizedAssetsActive ? ['font-server.min.css'] : this.cssFiles, true);
+        if (this._isDashboardCommentEnabled()) {
+            this._addedDependentFiles(this, this.dashboardCommentScriptFiles, false);
+        }
         if (this.embedOptions.pinboardName != '') {
             this._addedDependentFiles(this, this.pinboardCssFiles, true);
         }
@@ -3180,7 +3506,7 @@ class BoldBI {
         if (this.embedOptions.settings.azureMapRequired) {
             this._loadAzureMapDependentFiles();
         }
-        if (this.embedOptions.mode != BoldBI.Mode.AIAssistant) {
+        if (this.embedOptions.mode != BoldBI.Mode.AIAssistant && !this.optimizedAssetsActive) {
             this._loadDependentDesignerFiles(this);
         }
     }
@@ -3206,6 +3532,11 @@ class BoldBI {
         scriptTag.src = 'https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.js';
         scriptTag.async = true;
         document.head.appendChild(scriptTag);
+    }
+    _isDashboardCommentEnabled() {
+        var _a, _b;
+        return this.embedOptions.mode === BoldBI.Mode.View &&
+            ((_b = (_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.comment) === true;
     }
     _loadDependentDesignerFiles(that) {
         if (window.BoldBIDashboard instanceof Object &&
@@ -3235,6 +3566,7 @@ class BoldBI {
                     //scriptTag.src = this.maskedCdnUrl.slice(0, -1) + 'jquery-ui.min.js';
                     scriptTag.src = this._appendEmbedResourceVersion((that.embedOptions.environment == BoldBI.Environment.Enterprise) ? that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/script/" + file : that.rootUrl + '/cdn/scripts/' + file : that.cdnLink + '/scripts/' + file);
                 }
+                this._trackDependencyScript(scriptTag, true);
                 document.head.appendChild(scriptTag);
                 scriptTag.onerror = (arg) => this._handleEnvironmentError(arg);
             }
@@ -3425,11 +3757,15 @@ class BoldBI {
                     fileUri = that._appendEmbedResourceVersion(fileUri);
                     const scriptTag = document.createElement('script');
                     scriptTag.type = 'text/javascript';
+                    // Dynamically appended scripts are async by default. These files include
+                    // runtime prerequisites, so preserve the declared dependency order.
+                    scriptTag.async = false;
                     scriptTag.src = fileUri;
                     if (this.embedOptions.nonce) {
                         scriptTag.nonce = this.embedOptions.nonce;
                     }
                     if (bbEmbed('script[src= "' + fileUri + '"]').length < 1) {
+                        that._trackDependencyScript(scriptTag, true);
                         document.head.appendChild(scriptTag);
                     }
                     scriptTag.onerror = (arg) => this._handleEnvironmentError(arg);
@@ -3441,13 +3777,15 @@ class BoldBI {
         let isFileExists = false;
         const selectItem = isCSS ? 'link' : 'script';
         const tagList = document.head.querySelectorAll(selectItem);
-        tagList.forEach(function (tag) {
+        tagList.forEach((tag) => {
             if (!isFileExists) {
                 if (isCSS) {
                     isFileExists = tag.href.indexOf(file) != -1;
                 }
                 else {
                     isFileExists = tag.src.indexOf(file) != -1;
+                    if (isFileExists)
+                        this._trackDependencyScript(tag);
                 }
             }
         });
@@ -4246,12 +4584,10 @@ class BoldBI {
         }
     }
     _isDependencyLoaded(that, dashboardId) {
-        if (window.bbEmbed instanceof Function &&
-            window.BoldBIDashboard instanceof Object && !that._isNullOrUndefined(window.BoldBIDashboard) &&
-            window.BoldBIDashboard.Designer instanceof Object &&
-            window.BoldBIDashboardDesigner instanceof Function &&
-            !that._isEmptyOrSpaces(that.designerRootUrl) &&
-            window.Designer instanceof Object) {
+        var _a, _b, _c, _d;
+        const eager = (((_b = (_a = that.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.earlyFeedback) === true || ((_d = (_c = that.embedOptions.settings) === null || _c === void 0 ? void 0 : _c.viewer) === null || _d === void 0 ? void 0 : _d.bundleOptimization) === true) && that.embedOptions.mode === BoldBI.Mode.View && !that.embedOptions.enableDomainMasking && that._shouldRenderComponent();
+        if (!that.optimizedAssetPending && that._areViewerDependenciesReady() && (!eager || (!that.failedDependencyScript && that.pendingDependencyScripts.size === 0))) {
+            that._cancelDependencyWait();
             if (!that.IsDependencyLoaded) {
                 that.IsDependencyLoaded = true;
             }
@@ -4423,6 +4759,12 @@ class BoldBI {
             }
             else {
                 that._getAuthorizationToken(dashboardId);
+            }
+        }
+        else if (eager) {
+            if (!that.dependencyWait) {
+                const generation = that.dependencyWaitGeneration, owner = that.childContainer;
+                that.dependencyWait = (0, dependency_readiness_1.waitForDependencyReadiness)(() => !that.optimizedAssetPending && that._areViewerDependenciesReady() && !that.failedDependencyScript && that.pendingDependencyScripts.size === 0, () => generation === that.dependencyWaitGeneration && owner && owner.isConnected && that.childContainer === owner && !that.failedDependencyScript, () => that._isDependencyLoaded(that, dashboardId), !that.unknownDependencyScript);
             }
         }
         else {
@@ -6182,6 +6524,23 @@ class BoldBI {
     _throwError(errorMsg, embedContainerId) {
         var _a, _b, _c, _d, _e, _f, _g, _h;
         embedContainerId = this._isEmptyOrSpaces(embedContainerId) ? this.embedOptions.embedContainerId : embedContainerId;
+        if (embedContainerId === this.embedOptions.embedContainerId) {
+            const stop = this.earlyFeedbackDisplay, pending = this.earlyFeedbackProjection;
+            this.earlyFeedbackDisplay = null;
+            this.earlyFeedbackProjection = null;
+            try {
+                if (stop) {
+                    stop();
+                }
+            }
+            catch (_) { /* Preserve the original SDK error. */ }
+            try {
+                if (pending) {
+                    pending.abort();
+                }
+            }
+            catch (_) { /* Preserve the original SDK error. */ }
+        }
         const hideErrorMessageValue = typeof this.embedOptions.hideErrorMessage === 'boolean' ? this.embedOptions.hideErrorMessage : (_b = (_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.hideErrorMessage) !== null && _b !== void 0 ? _b : false;
         const showErrorMessage = !hideErrorMessageValue;
         if (embedContainerId) {
@@ -6228,6 +6587,17 @@ class BoldBI {
         if (this.embedOptions.events.onError instanceof Function) {
             this.embedOptions.events.onError.call(this, errorDetail);
         }
+    }
+    // Pending early feedback keeps the basic loader visible until it mounts or
+    // falls back; its settlement then removes exactly these loaders.
+    _removeBlueLoaderUnlessEarlyFeedbackPending(embedContainerId) {
+        const deferral = this.earlyFeedbackLoaderDeferral;
+        const container = document.getElementById(embedContainerId);
+        if (deferral && container && embedContainerId === this.embedOptions.embedContainerId) {
+            container.querySelectorAll('.preloader-wrap').forEach((node) => { deferral.nodes.push(node); });
+            return;
+        }
+        this._removeElementsClass(embedContainerId, '.preloader-wrap', 'viewer-blue-loader');
     }
     _removeElementsClass(id, childElement, targeClass) {
         let nodeList = [];
