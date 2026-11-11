@@ -1356,7 +1356,6 @@ class BoldBI {
         });
         this.loadDashboardWidget = this.Invoke(function (name, dashboardId) {
             this.deprecationMessage('loadDashboardWidget');
-            this.widgetName = name;
             this._loadDashboardWidget(name, dashboardId);
         });
         this.loadAIAssistant = this.Invoke(function () {
@@ -1655,8 +1654,8 @@ class BoldBI {
             if (this._shouldRenderComponent()) {
                 this.embedOptions.dashboardIds = [];
                 this.embedOptions.dashboardPaths = [];
-                this.isDashboardRendering = true;
                 this._setEmbedDefaults();
+                this.isDashboardRendering = true;
                 this._cancelDependencyWait();
                 this._prefetchSuppliedEarlyFeedback();
                 this._showLoader();
@@ -1705,8 +1704,8 @@ class BoldBI {
         if (this._shouldRenderComponent()) {
             this.embedOptions.dashboardIds = [];
             this.embedOptions.dashboardPaths = [];
-            this.isDashboardViewRendering = true;
             this._setEmbedDefaults();
+            this.isDashboardViewRendering = true;
             this._showLoader();
             this._isDependencyLoaded(this);
         }
@@ -1784,8 +1783,8 @@ class BoldBI {
         }
         if (!this._checkWidgetList()) {
             if (this._shouldRenderComponent()) {
-                this.isDashboardRendering = true;
                 this._setEmbedDefaults();
+                this.isDashboardRendering = true;
                 this._showLoader();
                 this._isDependencyLoaded(this);
             }
@@ -1869,6 +1868,9 @@ class BoldBI {
         this.widgetName = '';
         this.isDashboardViewMode = false;
         this.dashboardViewName = '';
+        this.isDashboardRendering = false;
+        this.isPinboardRendering = false;
+        this.isDashboardViewRendering = false;
     }
     _isInvalidEmbed(expectedMode, errorMessage) {
         if (this.invalidDetail) {
@@ -2251,16 +2253,10 @@ class BoldBI {
                             // This flag grants no access and never delays ordinary loading.
                             boldBIObj.earlyFeedbackAssets = (0, early_feedback_assets_1.beginEarlyFeedbackAssets)(boldBIObj.rootUrl, boldBIObj.embedOptions.nonce);
                         }
-                        // loadWidget is invoked immediately after create in component
-                        // embedding. Defer only the eligibility check by one microtask
-                        // so that call can mark widget mode; normal dashboard embeds
-                        // retain the existing selective bundle bootstrap.
-                        Promise.resolve().then(() => {
-                            if (!boldBIObj.optimizedAssetAttempted && boldBIObj._canOptimizeViewerAssets()) {
-                                boldBIObj.optimizedAssetPending = true;
-                                void (0, viewer_assets_1.prepareOptimizedViewerAssets)(boldBIObj.rootUrl);
-                            }
-                        });
+                        if (boldBIObj._canOptimizeViewerAssets()) {
+                            boldBIObj.optimizedAssetPending = true;
+                            void (0, viewer_assets_1.prepareOptimizedViewerAssets)(boldBIObj.rootUrl);
+                        }
                         if (!boldBIObj.embedOptions.width && !boldBIObj.embedOptions.height) {
                             boldBIObj._setDimensions();
                         }
@@ -3376,21 +3372,17 @@ class BoldBI {
     }
     // Internal functions. Will not be accessible outside of this scope.
     _initializeEmbedOptions(options) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c;
         (0, sdk_deprecation_utils_1.checkDeprecatedEmbedOptions)(options);
         this.embedOptions = Object.assign(this.embedOptions, options);
         this.embedOptions = (0, sdk_deprecation_utils_1.migrateDeprecatedEventKeys)(this.embedOptions);
-        if (((_b = (_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.earlyFeedback) === undefined ||
-            ((_d = (_c = this.embedOptions.settings) === null || _c === void 0 ? void 0 : _c.viewer) === null || _d === void 0 ? void 0 : _d.bundleOptimization) === undefined) {
-            // The shared early-feedback and selective-resource paths default on only
-            // for their common Enterprise component host. Their narrower runtime
-            // eligibility checks still retain legacy delivery for public, multitab,
-            // widget-only and other unsupported modes. Explicit false is preserved.
+        if (((_b = (_a = this.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.earlyFeedback) === undefined) {
+            // The shared early-feedback path defaults on only for the common
+            // Enterprise component host. Explicit false is preserved.
             const enabled = this.embedOptions.mode === BoldBI.Mode.View &&
                 this.embedOptions.environment === BoldBI.Environment.Enterprise &&
                 !this.embedOptions.enableDomainMasking && this._shouldRenderComponent();
-            const viewer = (_e = this.embedOptions.settings) === null || _e === void 0 ? void 0 : _e.viewer;
-            this.embedOptions.settings = Object.assign(Object.assign({}, this.embedOptions.settings), { viewer: Object.assign(Object.assign({}, viewer), { earlyFeedback: (viewer === null || viewer === void 0 ? void 0 : viewer.earlyFeedback) === undefined ? enabled : viewer.earlyFeedback, bundleOptimization: (viewer === null || viewer === void 0 ? void 0 : viewer.bundleOptimization) === undefined ? enabled : viewer.bundleOptimization }) });
+            this.embedOptions.settings = Object.assign(Object.assign({}, this.embedOptions.settings), { viewer: Object.assign(Object.assign({}, (_c = this.embedOptions.settings) === null || _c === void 0 ? void 0 : _c.viewer), { earlyFeedback: enabled }) });
         }
     }
     _setDimensions() {
@@ -4585,7 +4577,7 @@ class BoldBI {
     }
     _isDependencyLoaded(that, dashboardId) {
         var _a, _b, _c, _d;
-        const eager = (((_b = (_a = that.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.earlyFeedback) === true || ((_d = (_c = that.embedOptions.settings) === null || _c === void 0 ? void 0 : _c.viewer) === null || _d === void 0 ? void 0 : _d.bundleOptimization) === true) && that.embedOptions.mode === BoldBI.Mode.View && !that.embedOptions.enableDomainMasking && that._shouldRenderComponent();
+        const eager = (((_b = (_a = that.embedOptions.settings) === null || _a === void 0 ? void 0 : _a.viewer) === null || _b === void 0 ? void 0 : _b.earlyFeedback) === true || ((_d = (_c = that.embedOptions.settings) === null || _c === void 0 ? void 0 : _c.viewer) === null || _d === void 0 ? void 0 : _d.bundleOptimization) === true) && that.embedOptions.mode === BoldBI.Mode.View && !that.embedOptions.enableDomainMasking && that._shouldRenderComponent() && !that.isWidgetMode && !that.isMultipleWidgetMode;
         if (!that.optimizedAssetPending && that._areViewerDependenciesReady() && (!eager || (!that.failedDependencyScript && that.pendingDependencyScripts.size === 0))) {
             that._cancelDependencyWait();
             if (!that.IsDependencyLoaded) {
