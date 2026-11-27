@@ -3,9 +3,9 @@
 import { errorMessages, successMessages } from './types/embeddingLocalization';
 import { beginEarlyFeedbackAssets } from './utils/early_feedback_assets';
 import { beginEarlyFeedbackDisplay } from './utils/early_feedback_display';
-import { EarlyFeedbackProjection, prefetchEarlyFeedbackProjection } from './utils/early_feedback_projection';
+import { EarlyFeedbackProjection, earlyLayoutWidgetTypes, prefetchEarlyFeedbackProjection } from './utils/early_feedback_projection';
 import { waitForDependencyReadiness } from './utils/dependency_readiness';
-import { prepareOptimizedViewerAssets, activateOptimizedViewerAssets, reserveLegacyViewerAssets } from './utils/viewer_assets';
+import { prepareOptimizedViewerAssets, activateOptimizedViewerAssets, reserveLegacyViewerAssets, selectiveViewerAssetsActive } from './utils/viewer_assets';
 import { IDashboardOptions } from './types/dashboard-options';
 import { Mode, EmbedType, Environment, Theme, WidgetPanelDisplayMode} from './types/enum';
 import { DefaultConstructor } from './types/default';
@@ -263,19 +263,58 @@ export class BoldBI {
         }
     }
 
+    private editDesignerWait: any = null;
     private optimizedAssetAttempted = false;
     private optimizedAssetPending = false;
     private optimizedAssetsActive = false;
+    private fullBundleOverSelective: boolean = false;
     private optimizedAssetGeneration = 0;
     private optimizedWrapperWait: (() => void) = null;
     private _canOptimizeViewerAssets(): boolean {
         const options = this.embedOptions;
         return options.settings?.viewer?.bundleOptimization === true && options.mode === BoldBI.Mode.View &&
             options.environment === BoldBI.Environment.Enterprise && this._shouldRenderComponent() &&
-            !options.enableDomainMasking && !options.isPublicDashboard && !options.isMultiTabDashboard && !this.isMultiTab &&
+            // Public and anonymous-token embeds use the same viewer and widget code. Multi-tab embeds, views
+            // (saved filters), widget/pinboard modes and domain masking keep the complete legacy bundles.
+            !options.enableDomainMasking && !options.isMultiTabDashboard && !this.isMultiTab &&
             !this.isWidgetMode && !this.isMultipleWidgetMode && !options.widgetList && !options.pinboardName &&
-            !options.viewId && !options.viewName && !options.anonymousToken?.isEnabled &&
+            !options.viewId && !options.viewName &&
             /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(options.dashboardId || '');
+    }
+    // An anonymous public prefetch starts before the public authorization, so it requested <id>/<requested version>
+    // without a token. The designer accepts a supplied layout only for its own path and token, which the
+    // authorization supplies (ItemLocation and access token). Bind them here for the same dashboard; the designer still
+    // checks the layout revision against its path. Anything else cancels the prefetch and keeps the normal request.
+    private _bindPublicEarlyFeedback(options: any): void {
+        const receipt: any = this.earlyFeedbackProjection;
+        if (!receipt || receipt.isPublic !== true || !options || options._earlyFeedbackProjection !== receipt) { return; }
+        const path = options.dashboardPath, token = options.serviceAuthorizationToken;
+        const match = typeof path === 'string' && /^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\/(0|[1-9][0-9]{0,8})$/i.exec(path);
+        if (match && typeof token === 'string' && token && match[1].toLowerCase() === String(receipt.path).split('/')[0].toLowerCase()) {
+            receipt.path = path;
+            receipt.authorizationToken = token;
+            return;
+        }
+        options._earlyFeedbackProjection = null;
+        if (this.earlyFeedbackDisplay) { this.earlyFeedbackDisplay(); this.earlyFeedbackDisplay = null; }
+        receipt.abort();
+        this.earlyFeedbackProjection = null;
+    }
+    // A private prefetch of the latest version (<id>/0) starts before the SDK knows the version. Some
+    // flows (for example viewer edit) read the published version first and open <id>/<version>, which the
+    // designer would reject as a different path: it retires the shown layout, shows its own loader, and
+    // requests the layout again. Bind the path for the same dashboard and token instead; the display and
+    // the designer still require the layout revision to equal that version.
+    private _bindEarlyFeedbackVersion(options: any): void {
+        const receipt: any = this.earlyFeedbackProjection;
+        if (!receipt || receipt.isPublic === true || !options || options._earlyFeedbackProjection !== receipt ||
+            typeof receipt.isCancelled === 'function' && receipt.isCancelled()) { return; }
+        const path = options.dashboardPath, current = String(receipt.path).split('/');
+        const match = typeof path === 'string' && /^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\/([1-9][0-9]{0,8})$/i.exec(path);
+        if (match && current.length === 2 && current[1] === '0' && match[1].toLowerCase() === current[0].toLowerCase() &&
+            receipt.authorizationToken === options.serviceAuthorizationToken) {
+            receipt.path = path;
+        }
     }
     private _cancelOptimizedAssetWait(): void {
         this.optimizedAssetGeneration++;
@@ -309,7 +348,12 @@ export class BoldBI {
             clearTimeout(timer);
             if (!current()) { return; }
             if (this.failedDependencyScript) { failure(); return; }
-            void activateOptimizedViewerAssets(this.rootUrl, this.embedOptions.nonce).then(active => {
+            // Same rule as the server viewer (ViewerWidgetTypeGate): when the early layout names a widget
+            // type the release cannot render, keep legacy delivery before any selective script runs.
+            // The layout is awaited only when the release leaves some widget type unsupported; unknown types
+            // (no early layout) then also keep legacy, whether bundleOptimization was defaulted or set explicitly.
+            void activateOptimizedViewerAssets(this.rootUrl, this.embedOptions.nonce, {types: () => this._earlyLayoutWidgetTypes(),
+                isCurrent: current}).then(active => {
                 if (!current()) { return; }
                 this.optimizedAssetsActive = active;
                 // Localization is still loaded through the existing SDK endpoint.
@@ -322,6 +366,27 @@ export class BoldBI {
             }).catch(failure);
         });
         this.optimizedWrapperWait = () => { clearTimeout(timer); cancel(); };
+    }
+    // Widget types from this instance's prefetched early layout, or null when it is unknown
+    // (no prefetch, no layout, failure or a slow response).
+    private _earlyLayoutWidgetTypes(): Promise<string[] | null> {
+        const owner = this.childContainer;
+        const fromReceipt = (): Promise<string[] | null> => {
+            const receipt = this.earlyFeedbackProjection;
+            if (!receipt || receipt.owner !== owner || owner !== this.childContainer || receipt.isCancelled()) { return Promise.resolve(null); }
+            return receipt.promise.then(earlyLayoutWidgetTypes, () => null);
+        };
+        // An authorizationServer.url host has no layout request until its early authorization returns
+        // (_startEarlyAuthorization); wait for it within the same deadline instead of treating the types as unknown.
+        const authorization = this.earlyAuthorization;
+        const awaitAuthorization = !this.earlyFeedbackProjection && authorization && authorization.owner === owner && authorization.state === 'pending';
+        if (!awaitAuthorization && (!this.earlyFeedbackProjection || this.earlyFeedbackProjection.owner !== owner || this.earlyFeedbackProjection.isCancelled())) {
+            return Promise.resolve(null);
+        }
+        let timer: any;
+        const deadline = new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), 5000); });
+        return Promise.race([awaitAuthorization ? authorization.settled.then(fromReceipt) : fromReceipt(), deadline])
+            .finally(() => clearTimeout(timer));
     }
     private dependencyWait: (() => void) = null;
     private dependencyWaitGeneration = 0;
@@ -356,7 +421,20 @@ export class BoldBI {
     private _areViewerDependenciesReady(): boolean {
         return window.bbEmbed instanceof Function && window.BoldBIDashboard instanceof Object &&
             !this._isNullOrUndefined(window.BoldBIDashboard) && window.BoldBIDashboard.Designer instanceof Object &&
-            window.BoldBIDashboardDesigner instanceof Function && !this._isEmptyOrSpaces(this.designerRootUrl) && window.Designer instanceof Object;
+            window.BoldBIDashboardDesigner instanceof Function && !this._isEmptyOrSpaces(this.designerRootUrl) && window.Designer instanceof Object &&
+            this._isFullBundleReady();
+    }
+    // A lightweight (selective) viewer page already defines the shared designer globals above, so an embed that added the
+    // full bundle on top (see _loadDepedentFiles) must also wait for what only the full bundle defines: its own authoring
+    // mode, and for legacy viewers (saved view, pinboard, multi-tab) the DesignMode constructor the selective release lacks.
+    private _isFullBundleReady(): boolean {
+        if (this.fullBundleOverSelective && typeof window.BoldBIDashboard.DesignMode !== 'function') { return false; }
+        switch (this.embedOptions.mode) {
+        case BoldBI.Mode.Design: return typeof window.BoldBIDashboard.DesignMode === 'function';
+        case BoldBI.Mode.DataSource: return typeof window.BoldBIDashboard.DataSourceMode === 'function';
+        case BoldBI.Mode.Connection: return typeof window.BoldBIDashboard.ConnectionMode === 'function';
+        default: return true;
+        }
     }
     private earlyFeedbackProjection: EarlyFeedbackProjection = null;
     private earlyFeedbackAssets: Promise<boolean> = null;
@@ -366,26 +444,157 @@ export class BoldBI {
     private earlyFeedbackLoaderDeferral: { nodes: HTMLElement[] } = null;
     private _canPrefetchSuppliedEarlyFeedback(): boolean {
         return this.embedOptions.settings?.viewer?.earlyFeedback === true && this.embedOptions.mode === BoldBI.Mode.View &&
-            !(this.embedOptions.enableDomainMasking || this.embedOptions.isPublicDashboard ||
+            !(this.embedOptions.enableDomainMasking ||
             this.embedOptions.authorizationServer?.url || this.embedOptions.authorizationServer?.authorizionComplete ||
             this.embedOptions.events?.onAjaxStart || this.embedOptions.ajaxBeforeLoad || this.isMultiTab || this.embedOptions.isMultiTabDashboard || this.isWidgetMode || this.isMultipleWidgetMode ||
-            this.embedOptions.pinboardName || this.embedOptions.viewId || this.embedOptions.viewName || this.embedOptions.anonymousToken?.isEnabled);
+            // Anonymous-token and public embeds have their own layout request (see _prefetchSuppliedEarlyFeedback);
+            // multi-tab parents (no single layout) keep the normal loader.
+            this.embedOptions.pinboardName || this.embedOptions.viewId || this.embedOptions.viewName);
     }
-    private _prefetchSuppliedEarlyFeedback(): void {
+    // authorizationServer.url request started by loadDashboard (see _startEarlyAuthorization). One per load: its response
+    // is handed to the first _getAuthorizationToken, so the host endpoint is still called once.
+    private earlyAuthorization: {
+        owner: HTMLElement; dashboardId: string; url: string; headers: string; request: XMLHttpRequest;
+        state: 'pending' | 'ready' | 'failed'; response: any; status: number; statusText: string;
+        consumed: boolean; waiters: Array<() => void>; settled: Promise<void>; settle: () => void;
+    } = null;
+    // Same single-dashboard scope as _canPrefetchSuppliedEarlyFeedback, for a host that authorizes through
+    // authorizationServer.url. Without this, the URL is only called after every heavy dependency loads, so neither the
+    // early layout (skeleton) nor the widget types for selective bundles are known in time. Hosts with authorization
+    // hooks, domain masking, multi-tab, pinboard, widget, saved-view, public, anonymous or token flows keep the
+    // ordinary path unchanged.
+    private _canPrefetchEarlyAuthorization(): boolean {
+        const options = this.embedOptions, server = options.authorizationServer;
+        return options.settings?.viewer?.earlyFeedback === true && options.mode === BoldBI.Mode.View &&
+            typeof server?.url === 'string' && server.url.trim() !== '' && !server.data && !server.authorizionComplete &&
+            !options.token && !options.embedToken && !options.isPublicDashboard && !options.anonymousToken?.isEnabled &&
+            !(options.enableDomainMasking || options.events?.onAjaxStart || options.ajaxBeforeLoad ||
+            this.isMultiTab || options.isMultiTabDashboard || this.isWidgetMode || this.isMultipleWidgetMode || options.widgetList ||
+            options.pinboardName || options.viewId || options.viewName) &&
+            /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(options.dashboardId || '');
+    }
+    private _cancelEarlyAuthorization(): void {
+        const record = this.earlyAuthorization;
+        if (!record) { return; }
+        this.earlyAuthorization = null;
+        if (record.state === 'pending') {
+            record.state = 'failed';
+            try { record.request?.abort(); } catch (_) { /* already finished */ }
+        }
+        record.waiters = [];
+        record.settle();
+    }
+    // Starts the host's authorization URL request in parallel with the heavy dependencies. A successful response starts
+    // the same early layout request and skeleton as supplied authorization data. Any error or failure here only leaves
+    // the ordinary path: the response (or error) is delivered to the normal render through _useEarlyAuthorization.
+    private _startEarlyAuthorization(): void {
+        this._cancelEarlyAuthorization();
+        if (!this._canPrefetchEarlyAuthorization()) { return; }
+        const server = this.embedOptions.authorizationServer;
+        let settle: () => void = null;
+        const settled = new Promise<void>(resolve => { settle = resolve; });
+        const record: any = { owner: this.childContainer, dashboardId: this.embedOptions.dashboardId, url: server.url,
+            headers: this._authorizationHeadersKey(server.headers), request: null,
+            state: 'pending', response: null, status: 0, statusText: '', consumed: false, waiters: [], settled,
+            settle: () => { if (settle) { const done = settle; settle = null; done(); } } };
+        const finish = (state: 'ready' | 'failed', response: any, status: number, statusText: string): void => {
+            if (this.earlyAuthorization !== record || record.state !== 'pending') { return; }
+            record.state = state; record.response = response; record.status = status; record.statusText = statusText;
+            if (state === 'ready' && response && response.Status === true) {
+                try { this._prefetchSuppliedEarlyFeedback(record); } catch (_) { /* optional feedback only */ }
+            }
+            record.settle();
+            record.waiters.splice(0).forEach((waiter: () => void) => waiter());
+        };
+        try {
+            const http: XMLHttpRequest = new XMLHttpRequest();
+            record.request = http;
+            http.open('POST', server.url, true);
+            http.responseType = 'json';
+            http.setRequestHeader('Content-type', 'application/json');
+            for (const key in server.headers) {
+                if (Object.prototype.hasOwnProperty.call(server.headers, key)) {
+                    http.setRequestHeader(key, server.headers[`${key}`]);
+                }
+            }
+            http.onreadystatechange = (): void => {
+                if (http.readyState !== 4) { return; }
+                if (http.status === 200) {
+                    let response: any = http.response;
+                    try { response = typeof http.response === 'object' ? http.response : JSON.parse(http.response); }
+                    catch (_) { finish('failed', null, http.status, http.statusText); return; }
+                    finish('ready', response, http.status, http.statusText);
+                } else {
+                    finish('failed', null, http.status, http.statusText);
+                }
+            };
+            this.earlyAuthorization = record;
+            http.send(JSON.stringify(this._authorizationRequest().data));
+        } catch (_) {
+            // Request could not start: the normal authorization request runs after dependencies, as before.
+            if (this.earlyAuthorization === record) { this._cancelEarlyAuthorization(); } else { record.settle(); }
+        }
+    }
+    // The headers the early request was sent with, as a comparable value: a host that changes them (for example a new
+    // Authorization token) before the normal request gets a fresh request with the new headers instead of the early one.
+    private _authorizationHeadersKey(headers: any): string {
+        if (!headers || typeof headers !== 'object') { return '{}'; }
+        const own: any = {};
+        Object.keys(headers).sort().forEach((key: string) => { own[`${key}`] = String(headers[`${key}`]); });
+        return JSON.stringify(own);
+    }
+    // Hands the early response to the normal render once, in place of a second request. Returns false (the caller then
+    // makes the ordinary request) when there is no early request for this same load, dashboard, URL and headers.
+    private _useEarlyAuthorization(dashboardId: string): boolean {
+        const record = this.earlyAuthorization;
+        if (!record || record.consumed) { return false; }
+        if (record.owner !== this.childContainer || record.dashboardId !== dashboardId ||
+            record.url !== this.embedOptions.authorizationServer?.url ||
+            record.headers !== this._authorizationHeadersKey(this.embedOptions.authorizationServer?.headers) ||
+            !this._canPrefetchEarlyAuthorization()) {
+            this._cancelEarlyAuthorization();
+            return false;
+        }
+        record.consumed = true;
+        const deliver = (): void => {
+            if (this.earlyAuthorization !== record) { return; }
+            // Same outcomes as _xhrRequestHelper for the ordinary request.
+            if (record.state === 'ready') {
+                this._authorizeResponse = record.response;
+                this._renderDashboard(record.response);
+            } else if (record.status === 404) {
+                this._throwError(errorMessages['ServerNotFound']);
+            } else {
+                this._throwError(record.statusText);
+            }
+        };
+        if (record.state === 'pending') { record.waiters.push(deliver); } else { deliver(); }
+        return true;
+    }
+    private _prefetchSuppliedEarlyFeedback(earlyAuthorization?: any): void {
         if (this.earlyFeedbackDisplay) { this.earlyFeedbackDisplay(); this.earlyFeedbackDisplay = null; }
         if (this.earlyFeedbackProjection) { this.earlyFeedbackProjection.abort(); this.earlyFeedbackProjection = null; }
         // Existing private authorization is already available before heavy SDK dependencies.
         // Custom authorization/Ajax hooks keep the normal runtime request path.
-        if (!this._canPrefetchSuppliedEarlyFeedback()) return;
+        // earlyAuthorization: the response of the early authorizationServer.url request (_startEarlyAuthorization),
+        // used exactly like supplied authorizationServer.data.
+        if (earlyAuthorization ? !(this.earlyAuthorization === earlyAuthorization && this._canPrefetchEarlyAuthorization())
+            : !this._canPrefetchSuppliedEarlyFeedback()) return;
         try {
-            let path: string, token: string;
-            if (this.embedOptions.token || this.embedOptions.embedToken) {
+            let path: string, token: string, isPublic = false;
+            if (!earlyAuthorization && this.embedOptions.isPublicDashboard && !this.embedOptions.token && !this.embedOptions.embedToken && !this.embedOptions.authorizationServer?.data) {
+                // Anonymous public dashboard: no token yet. The service validates the dashboard as public; the path and
+                // token are bound to the designer's values once the public authorization arrives (_bindPublicEarlyFeedback).
+                path = this.embedOptions.dashboardId + '/' + this.embedOptions.customDashboardVersion;
+                token = null;
+                isPublic = true;
+            } else if (!earlyAuthorization && (this.embedOptions.token || this.embedOptions.embedToken)) {
                 // Existing private token contracts already identify the requested
                 // dashboard; the service freshly validates that identity/token.
                 path = this.embedOptions.dashboardId + '/' + this.embedOptions.customDashboardVersion;
                 token = this.embedOptions.token || this.embedOptions.embedToken;
             } else {
-                const response = this.embedOptions.authorizationServer?.data;
+                const response = earlyAuthorization ? earlyAuthorization.response : this.embedOptions.authorizationServer?.data;
                 if (!response || response.Status !== true || !response.Data || Array.isArray(response.Data)) return;
                 const data = response.Data;
                 const item = typeof data.ItemDetail === 'string' ? JSON.parse(data.ItemDetail) : data.ItemDetail;
@@ -395,7 +604,7 @@ export class BoldBI {
             }
             const site = this.siteIdentifier ? this.siteIdentifier.replace(/^site\//i, '') : '';
             this.earlyFeedbackProjection = prefetchEarlyFeedbackProjection(this.childContainer, path,
-                this.designerRootUrl, this.baseUrl, site, token, !this._isJwtFormat(token));
+                this.designerRootUrl, this.baseUrl, site, token, isPublic ? false : !this._isJwtFormat(token), isPublic);
             if (this.earlyFeedbackProjection && this.earlyFeedbackAssets) {
                 const receipt = this.earlyFeedbackProjection, owner = this.childContainer;
                 const dashboardId = this.embedOptions.dashboardId, serviceUrl = this.designerRootUrl,
@@ -418,9 +627,15 @@ export class BoldBI {
                             this.embedOptions.dashboardSettings?.showHeader === legacyHeader && this.embedOptions.settings?.viewer?.header === viewerHeader &&
                             this.baseUrl === tenantUrl && this.siteIdentifier === siteIdentifier && this.embedOptions.serverUrl === serverUrl &&
                             this.embedOptions.token === directToken && this.embedOptions.embedToken === embedToken &&
-                            this.embedOptions.authorizationServer?.data === suppliedAuthorization &&
-                            (directToken || embedToken || (suppliedAuthorization?.Status === true ? suppliedAuthorization?.Data?.access_token : null)) === token &&
-                            this._canPrefetchSuppliedEarlyFeedback(),
+                            (earlyAuthorization
+                                // Early URL response: still this load's request, same URL, same token, same scope.
+                                ? this.earlyAuthorization === earlyAuthorization &&
+                                    this.embedOptions.authorizationServer?.url === earlyAuthorization.url &&
+                                    earlyAuthorization.response?.Data?.access_token === token &&
+                                    this._canPrefetchEarlyAuthorization()
+                                : this.embedOptions.authorizationServer?.data === suppliedAuthorization &&
+                                    (directToken || embedToken || (suppliedAuthorization?.Status === true ? suppliedAuthorization?.Data?.access_token : null)) === token &&
+                                    this._canPrefetchSuppliedEarlyFeedback()),
                         onPendingEnd: () => {
                             deferral.settled = true;
                             if (this.earlyFeedbackLoaderDeferral === deferral) { this.earlyFeedbackLoaderDeferral = null; }
@@ -458,6 +673,7 @@ export class BoldBI {
                 this._setEmbedDefaults();
                 this.isDashboardRendering = true;
                 this._cancelDependencyWait();
+                this._startEarlyAuthorization();
                 this._prefetchSuppliedEarlyFeedback();
                 this._showLoader();
                 this._isDependencyLoaded(this);
@@ -1043,7 +1259,7 @@ export class BoldBI {
                         }
                         if (boldBIObj._canOptimizeViewerAssets()) {
                             boldBIObj.optimizedAssetPending = true;
-                            void prepareOptimizedViewerAssets(boldBIObj.rootUrl);
+                            void prepareOptimizedViewerAssets(boldBIObj.rootUrl, boldBIObj.embedOptions.nonce);
                         }
                         if (!boldBIObj.embedOptions.width && !boldBIObj.embedOptions.height) {
                             boldBIObj._setDimensions();
@@ -1160,9 +1376,11 @@ export class BoldBI {
     }
 
     destroy(): any {
+        if (this.editDesignerWait) { clearInterval(this.editDesignerWait); this.editDesignerWait = null; }
         this._cancelOptimizedAssetWait();this._cancelDependencyWait();this.dependencyScriptCleanup.forEach(clean => clean());this.dependencyScriptCleanup = [];this.pendingDependencyScripts.clear();
         if (this.earlyFeedbackDisplay) { this.earlyFeedbackDisplay(); this.earlyFeedbackDisplay = null; }
         if (this.earlyFeedbackProjection) { this.earlyFeedbackProjection.abort(); this.earlyFeedbackProjection = null; }
+        this._cancelEarlyAuthorization();
         this.deprecationMessage('destroy');
         const that: BoldBI = this;
         if (this.isMultiTab) {
@@ -2373,18 +2591,45 @@ export class BoldBI {
     }
 
     // Internal functions. Will not be accessible outside of this scope.
+    // The shallow options merge replaces the default authorizationServer object, so a host that supplies only
+    // `{ data }` would leave `url` undefined. Authorization selection compares `url` with '' (for example
+    // `url != ''`), so undefined chose the URL flow and posted to "undefined", reported as "server Not Found".
+    // Restore the documented defaults for any member the host omitted (undefined or null).
+    _normalizeAuthorizationServer(): void {
+        const supplied: any = this.embedOptions.authorizationServer;
+        // Fill the host's own object in place (as before, embedOptions keeps the host's reference), so a host that later
+        // sets `url` or `headers` on that object still reaches the SDK. Supplied members, including `data`, are untouched.
+        const authorizationServer: any = supplied && typeof supplied === 'object' ? supplied : {};
+        if (authorizationServer.url === undefined || authorizationServer.url === null) { authorizationServer.url = ''; }
+        if (authorizationServer.data === undefined || authorizationServer.data === null) { authorizationServer.data = ''; }
+        if (!authorizationServer.headers || typeof authorizationServer.headers !== 'object') { authorizationServer.headers = {}; }
+        if (authorizationServer.authorizionComplete === undefined || authorizationServer.authorizionComplete === null) {
+            authorizationServer.authorizionComplete = '';
+        }
+        this.embedOptions.authorizationServer = authorizationServer;
+    }
+
     _initializeEmbedOptions(options: { embedContainerId?: string, serverUrl?: string, pinboardName?: string, mode?: any, dashboardId?: string, dashboardPath?: string, environment?: any, datasourceId?: string, datasourceName?: string }): any {
         checkDeprecatedEmbedOptions(options);
         this.embedOptions = Object.assign(this.embedOptions, options);
         this.embedOptions = migrateDeprecatedEventKeys(this.embedOptions);
-        if (this.embedOptions.settings?.viewer?.earlyFeedback === undefined) {
-            // The shared early-feedback path defaults on only for the common
-            // Enterprise component host. Explicit false is preserved.
+        this._normalizeAuthorizationServer();
+        if (this.embedOptions.settings?.viewer?.earlyFeedback === undefined ||
+            this.embedOptions.settings?.viewer?.bundleOptimization === undefined) {
+            // The shared early-feedback and selective-resource paths default on only
+            // for their common Enterprise component host. Their narrower runtime
+            // eligibility checks still retain legacy delivery for public, multitab,
+            // widget-only and other unsupported modes, and a dashboard whose early
+            // layout names an unsupported widget type falls back to legacy bundles.
+            // Explicit false is preserved.
             const enabled = this.embedOptions.mode === BoldBI.Mode.View &&
                 this.embedOptions.environment === BoldBI.Environment.Enterprise &&
                 !this.embedOptions.enableDomainMasking && this._shouldRenderComponent();
+            const viewer = this.embedOptions.settings?.viewer;
             this.embedOptions.settings = { ...this.embedOptions.settings,
-                viewer: { ...this.embedOptions.settings?.viewer, earlyFeedback: enabled } };
+                viewer: { ...viewer,
+                    earlyFeedback: viewer?.earlyFeedback === undefined ? enabled : viewer.earlyFeedback,
+                    bundleOptimization: viewer?.bundleOptimization === undefined ? enabled : viewer.bundleOptimization } };
         }
     }
 
@@ -2533,7 +2778,11 @@ export class BoldBI {
             this._startOptimizedViewerBootstrap();
             return;
         }
-        if (!this.optimizedAssetsActive) {
+        // An embed that needs the full bundle (designer, data source, connection, saved view, pinboard, multi-tab, ...)
+        // opened after a lightweight viewer on the same page, for example a dropdown switch without a page reload, adds
+        // the full bundle on top of the lightweight resources instead of failing; readiness then waits for it.
+        this.fullBundleOverSelective = !this.optimizedAssetsActive && selectiveViewerAssetsActive();
+        if (!this.optimizedAssetsActive && !this.fullBundleOverSelective) {
             try { reserveLegacyViewerAssets(); }
             catch (_) {
                 this.invalidDetail = true;
@@ -2574,6 +2823,10 @@ export class BoldBI {
             this._addedDependentFiles(this, this.pinBoardScriptFiles, false);
         }
 
+        if (this.embedOptions.mode != BoldBI.Mode.AIAssistant && (this.embedOptions.embedAiAssistant?.enabled || this.embedOptions.settings?.aiAssistant?.enabled)) {
+            // AI Agent / "Ask about your data" panels render in every mode (including the viewer shown after publish).
+            this._addedDependentFiles(this, this.AICssFiles, true);
+        }
         if(this.embedOptions.mode == BoldBI.Mode.AIAssistant) {
             this._addedDependentFiles(this,this.AICssFiles,true);
             this._addedDependentFiles(this,this.AIScriptFiles,false);
@@ -2686,7 +2939,7 @@ export class BoldBI {
         return url.indexOf('/cdn/scripts/') >= 0 ||
             url.indexOf('/cdn/css/') >= 0 ||
             url.indexOf('/designer/localization/') >= 0 ||
-            url.indexOf('/webdesignerservice/themes/') >= 0 ||
+            url.indexOf('/cdn/css/designer/') >= 0 ||
             url.indexOf('/scripts/designer/') >= 0 ||
             url.indexOf('/css/designer/') >= 0 ||
             url.indexOf('/localization/') >= 0;
@@ -2788,7 +3041,7 @@ export class BoldBI {
                             fileUri = fontFamilyUrl + '?family=' + fontFamilyValue;
                         }
                         else {
-                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/" + file : that.rootUrl + '/webdesignerservice/themes/' + file;
+                            fileUri = that.embedOptions.enableDomainMasking ? this.maskedCdnUrl + this.embedSDKWrapperVersion + "/css/" + file : that.rootUrl + '/cdn/css/designer/' + file;
                         }
                     }
                     else {
@@ -3411,7 +3664,7 @@ export class BoldBI {
                         dashboardId: !this._isEmptyOrSpaces(this.embedOptions?.preConfiguredWidgets?.dashboardId) ? this.embedOptions.preConfiguredWidgets.dashboardId : !this._isEmptyOrSpaces(this.embedOptions?.settings?.designer?.preConfiguredWidgets?.dashboardId) ? this.embedOptions.settings.designer.preConfiguredWidgets.dashboardId : ''
                     };
                     if (this.embedOptions.environment == BoldBI.Environment.Enterprise) {
-                        dashboardOptions.configuration = this.embedOptions.enableDomainMasking ? ' ' : this.rootUrl + '/webdesignerservice/scripts/settings/' + embedResponse.Branding + '/settings.min.js';
+                        dashboardOptions.configuration = this.embedOptions.enableDomainMasking ? ' ' : this.rootUrl + '/cdn/scripts/designer/settings/' + embedResponse.Branding + '/settings.min.js';
                     } else {
                         dashboardOptions.configuration = this.cdnLink + '/scripts/settings/' + embedResponse.Branding + '/settings.min.js';
                     }
@@ -3565,6 +3818,8 @@ export class BoldBI {
                     }
                 }
 
+                this._bindPublicEarlyFeedback(dashboardOptions);
+                this._bindEarlyFeedbackVersion(dashboardOptions);
                 if (that.embedOptions.mode != BoldBI.Mode.AIAssistant && window.bbEmbed instanceof Function) {
                     let embedContainer: any = window.bbEmbed.call(that, '#' + (that.pinboardIds.length > 0 ? (embedContainerId + '_embeddedbi') : that.childContainer.id));
                     let embedChildId: any;
@@ -5649,7 +5904,28 @@ export class BoldBI {
         if (arg.name.toLowerCase() == 'editdashboard') {
             this._initializeDashboardContainer();
             this.embedOptions.mode = BoldBI.Mode.Design;
-            this._renderDashboard(this._authorizeResponse);
+            this._showLoader(this.embedOptions.embedContainerId);
+            // The viewer may have loaded only viewer (or selective) assets; add the designer assets and
+            // render only once the designer constructor exists.
+            this.optimizedAssetsActive = false;
+            // The flag is only ever set elsewhere; clear a stale failure so a retry is not rejected on the first poll.
+            this.failedDependencyScript = false;
+            this._loadDepedentFiles();
+            // _addedDependentFiles skips files that already exist, so repeating _loadDepedentFiles does not inject duplicates.
+            if (this.editDesignerWait) { clearInterval(this.editDesignerWait); }
+            const waitStart: number = Date.now();
+            this.editDesignerWait = setInterval(() => {
+                if (this._areViewerDependenciesReady()) {
+                    clearInterval(this.editDesignerWait);
+                    this.editDesignerWait = null;
+                    this._renderDashboard(this._authorizeResponse);
+                }
+                else if (this.failedDependencyScript || Date.now() - waitStart > 30000) {
+                    clearInterval(this.editDesignerWait);
+                    this.editDesignerWait = null;
+                    this._throwError('Dashboard resources could not be loaded. Reload the page to try again.', this.embedOptions.embedContainerId);
+                }
+            }, 100);
         }
         if (arg.name.toLowerCase() == 'dashboardparameters') {
             const styleElement: any = document.createElement('style');
@@ -6532,8 +6808,9 @@ export class BoldBI {
         document.getElementById(this.embedOptions.embedContainerId).insertAdjacentHTML('afterbegin', loader);
     }
 
-    _getAuthorizationToken: any = this.Invoke(function (dashboardId?: string): any {
-        const that: BoldBI = this;
+    // Authorization request body for authorizationServer.url (and the query for the server's own authorize endpoint).
+    // Shared by _getAuthorizationToken and the early request (_startEarlyAuthorization) so both send the same query.
+    _authorizationRequest(dashboardId?: string): { query: string, data: any } {
         const embedDbrdId: any = dashboardId ? dashboardId : this.embedOptions.dashboardId;
         const embedDbrdIds: any = this.embedOptions.dashboardIds.join(',');
         const embedDbrbPaths: any = this.embedOptions.dashboardPaths.join(',');
@@ -6597,9 +6874,21 @@ export class BoldBI {
             embedQueryString: encodeURI(embedQueryString),
             dashboardServerApiUrl: this.dashboardServerApiUrl
         };
+        return { query: embedQueryString, data };
+    }
+
+    _getAuthorizationToken: any = this.Invoke(function (dashboardId?: string): any {
+        const that: BoldBI = this;
+        const embedDbrdId: any = dashboardId ? dashboardId : this.embedOptions.dashboardId;
+        const request: { query: string, data: any } = this._authorizationRequest(dashboardId);
+        const embedQueryString: any = request.query;
+        const data: any = request.data;
 
         if (this.embedOptions.authorizationServer.url != '') {
-            this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._renderDashboard);
+            // The first load may already have requested this URL (_startEarlyAuthorization): reuse that one response.
+            if (!this._useEarlyAuthorization(embedDbrdId)) {
+                this._xhrRequestHelper('POST', this.embedOptions.authorizationServer.url, data, this.embedOptions.authorizationServer.headers, this._renderDashboard);
+            }
         } else if (!(this._isNullOrUndefined(this.embedOptions.authorizationServer.data)) && this.embedOptions.authorizationServer.data != '' && this.embedOptions.authorizationServer.url == '') {
             this._renderDashboard(this.embedOptions.authorizationServer.data);
         } else if (this.embedOptions.enableDomainMasking) {

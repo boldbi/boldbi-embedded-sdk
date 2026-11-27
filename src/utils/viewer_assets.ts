@@ -23,9 +23,18 @@ function safePath(value: any): boolean {
     return typeof value === 'string' && /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+$/.test(value) &&
         value.split('.').every(key => !['__proto__', 'prototype', 'constructor'].includes(key));
 }
+// A runtime dependency is either a pinned runtime family or one of the vendor scripts whose controls the always-loaded
+// shared "common" bundle already provides (the native loader lists them for the Modern ComboBox/ListBox and Slider).
+// Only these exact names, each bound to its namespace, are accepted; any other unpinned script rejects the release at
+// manifest time so the viewer falls back to legacy delivery cleanly. The SDK never loads an unpinned script.
+const sharedProvidedScripts: { [name: string]: RegExp } = {
+    'ej2.dropdown.min.js': /^ejdashboard\.dropdowns\.(?:ComboBox|ListBox)$/,
+    'ej2.inputs.min.js': /^ejdashboard\.inputs\.Slider$/
+};
 function runtimeDescriptor(value: any, families: any): void {
     if (!record(value) || Object.keys(value).sort().join(',') !== 'NameSpace,ScriptName' || !safePath(value.NameSpace) ||
-        !/^(?:ej|ejdashboard|BoldBIDashboard)\./.test(value.NameSpace) || !own(families, value.ScriptName)) { throw Error('Invalid viewer runtime dependency'); }
+        !/^(?:ej|ejdashboard|BoldBIDashboard)\./.test(value.NameSpace) ||
+        !(own(families, value.ScriptName) || (own(sharedProvidedScripts, value.ScriptName) && sharedProvidedScripts[value.ScriptName].test(value.NameSpace)))) { throw Error('Invalid viewer runtime dependency'); }
 }
 function validate(contract: any): void {
     if (!record(contract) || contract.schemaVersion !== 1 || contract.kind !== 'sdk-viewer-selective' || !digest(contract.releaseId)) { throw Error('Unsupported viewer release'); }
@@ -85,7 +94,34 @@ function validate(contract: any): void {
         if (value && typeof value === 'object') { Object.keys(value).forEach(key => { if (['__proto__', 'prototype'].includes(key)) { throw Error('Unsafe viewer metadata key'); } freeze(value[key], depth + 1); }); Object.freeze(value); }
     }; freeze(contract);
 }
-export function prepareOptimizedViewerAssets(root: string): Promise<OptimizedViewerAssetPlan | null> {
+const hintedReleases = new Set<string>();
+/**
+ * Start downloading the fixed selective startup chain (common styles, foundation, shared loader and common bundle,
+ * core/entry/common/loader) in parallel. Activation still inserts and executes these in their required order; the
+ * preload hints only fill the HTTP cache, so on a slow server the chain no longer waits one round trip per file.
+ * The hints carry the same URL, integrity and CORS mode as the later script/link nodes so the browser reuses them.
+ */
+function hintStartupAssets(plan: OptimizedViewerAssetPlan, nonce: string): void {
+    try {
+        if (hintedReleases.has(plan.releaseId) || legacyPresent()) { return; }
+        const state = coordinator(); if (state && state.mode !== 'loading' && state.mode !== 'selective') { return; }
+        hintedReleases.add(plan.releaseId);
+        const contract = plan.contract, selected = contract.selective, scriptBase = plan.root + '/cdn/scripts/designer/';
+        const selectiveBase = scriptBase + 'viewer-selective/', sharedBase = scriptBase + 'viewer-shared/', styleBase = plan.root + '/cdn/css/designer/';
+        const hint = (entry: any, base: string, kind: string): void => {
+            const link: any = document.createElement('link');
+            link.rel = 'preload'; link.as = kind; link.href = new URL(entry.file, base).href;
+            link.crossOrigin = 'anonymous'; link.integrity = sri(entry.sha256); if (nonce) { link.nonce = nonce; }
+            document.head.appendChild(link);
+        };
+        hint(selected.styles.common, styleBase, 'style');
+        hint(contract.foundation, selectiveBase, 'script');
+        hint(contract.sharedLoader, sharedBase, 'script');
+        hint(contract.shared.bundles.common, sharedBase, 'script');
+        for (const name of ['core', 'entry', 'common', 'loader']) { hint(selected[name], selectiveBase, 'script'); }
+    } catch (_) { /* Hints are an optimization only; activation loads every file itself. */ }
+}
+export function prepareOptimizedViewerAssets(root: string, nonce: string = ''): Promise<OptimizedViewerAssetPlan | null> {
     const url = rootUrl(root); if (!url || typeof fetch !== 'function' || typeof AbortController !== 'function') { return Promise.resolve(null); }
     const canonical = url.href.replace(/\/$/, ''); if (metadata.has(canonical)) { return metadata.get(canonical); }
     const controller = new AbortController(); let timer: any, bodyComplete = false;
@@ -99,7 +135,11 @@ export function prepareOptimizedViewerAssets(root: string): Promise<OptimizedVie
             if (controller.signal.aborted) { return null; }
             const bytes = new Uint8Array(length); let offset = 0; chunks.forEach(chunk => { bytes.set(chunk, offset); offset += chunk.length; });
             const contract = JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(bytes)); validate(contract);
-            return Object.freeze({root: canonical, releaseId: contract.releaseId, contract});
+            const plan: OptimizedViewerAssetPlan = Object.freeze({root: canonical, releaseId: contract.releaseId, contract});
+            // Without the widget-type gate this release activates selectively (unless legacy is already present, which
+            // the hint checks), so its startup files can download now, in parallel with authorization and the layout.
+            if (viewerReleaseRendersAllTypes(contract)) { hintStartupAssets(plan, nonce); }
+            return plan;
         } catch (_) { return null; }
     })();
     // Keep default-on discovery bounded: a slow but healthy resource origin gets
@@ -111,6 +151,13 @@ export function prepareOptimizedViewerAssets(root: string): Promise<OptimizedVie
         .finally(() => { clearTimeout(timer); if (!bodyComplete) { controller.abort(); } });
     metadata.set(canonical, result); return result;
 }
+const widgetTypePrefix = 'Syncfusion.Dashboard.Web.Serialization.Model.DOM.';
+/** Layout widget types the validated release cannot render (mirrors the server's ViewerWidgetTypeGate). */
+export function unsupportedViewerWidgetTypes(contract: any, nativeTypes: any[]): any[] {
+    const types = contract && contract.selective && contract.selective.types;
+    return nativeTypes.filter(type => typeof type !== 'string' || !/^[A-Za-z0-9]{1,64}$/.test(type) ||
+        !own(types, widgetTypePrefix + type + 'Properties') || !Array.isArray(types[widgetTypePrefix + type + 'Properties']));
+}
 function conflict(): Error { return Error('Viewer resource mode or release conflict; clean reload required'); }
 function coordinator(): any { return (window as any)[coordinatorKey]; }
 function install(state: any): void { Object.defineProperty(window, coordinatorKey, {value: state}); }
@@ -120,17 +167,47 @@ function legacyPresent(): boolean {
     return !!view.BoldBIDashboardDesigner || !!view.BoldBIDashboard || !!view.ejdashboard ||
         Array.from(document.querySelectorAll('script[src]')).some((node: any) => /\/(?:ej\.dashboarddesigner|ej[12]\.web\.all|ej[12]\.common\.all|bbi-core)(?:\.min)?\.js(?:[?#]|$)/.test(node.src));
 }
+/**
+ * Whether this document already runs selective viewer resources (an authoring embed may then add the full designer).
+ *
+ * @returns {boolean} True once selective activation completed on this page.
+ */
+export function selectiveViewerAssetsActive(): boolean { const state: any = coordinator(); return !!state && state.mode === 'selective'; }
 export function reserveLegacyViewerAssets(): void {
     const state = coordinator(); if (state && state.mode !== 'legacy' || existingResources()) { throw conflict(); }
     if (!state) { install({mode: 'legacy'}); }
 }
-export async function activateOptimizedViewerAssets(root: string, nonce: string = ''): Promise<boolean> {
+/** Whether the release renders every widget type it knows; then no dashboard type can need legacy delivery. */
+export function viewerReleaseRendersAllTypes(contract: any): boolean {
+    const types = contract && contract.selective && contract.selective.types;
+    return record(types) && Object.keys(types).every(key => Array.isArray(types[key]));
+}
+/**
+ * Optional server-parity widget-type gate (ViewerWidgetTypeGate). Consulted only when the release leaves some widget
+ * type unsupported: the dashboard's early-layout types are then awaited and any unsupported type keeps legacy delivery
+ * before a selective node is inserted. Unknown types (no layout, failure or a slow response) also keep legacy, even when
+ * the caller set bundleOptimization explicitly: a selective page cannot render an unsupported widget and cannot switch to
+ * legacy later, so it would end in an unrecoverable viewer. isCurrent false after the wait means no side effect.
+ */
+export interface ViewerWidgetTypeGate { types: () => Promise<any[] | null>; isCurrent?: () => boolean; }
+export async function activateOptimizedViewerAssets(root: string, nonce: string = '', gate: ViewerWidgetTypeGate | null = null): Promise<boolean> {
     const url = rootUrl(root); if (!url) { return false; }
-    const canonical = url.href.replace(/\/$/, ''); let state = coordinator();
+    const canonical = url.href.replace(/\/$/, '');
+    if (gate) {
+        const plan = await prepareOptimizedViewerAssets(canonical);
+        if (plan && !viewerReleaseRendersAllTypes(plan.contract)) {
+            const types = await gate.types();
+            if (gate.isCurrent && !gate.isCurrent()) { return false; }
+            // Throws when this page already runs selective resources: one document cannot hold both modes.
+            if (!Array.isArray(types) || unsupportedViewerWidgetTypes(plan.contract, types).length > 0) { reserveLegacyViewerAssets(); return false; }
+        }
+    }
+    let state = coordinator();
     if (state) { if (state.mode === 'legacy') { return false; } if (state.mode === 'poison' || state.root !== canonical) { throw conflict(); } return state.promise; }
     if (existingResources()) { throw conflict(); }
     if (legacyPresent()) { reserveLegacyViewerAssets(); return false; }
-    const plan = await prepareOptimizedViewerAssets(canonical); if (!plan) { return false; }
+    const plan = await prepareOptimizedViewerAssets(canonical, nonce); if (!plan) { return false; }
+    hintStartupAssets(plan, nonce);
     state = coordinator(); if (state) { if (state.mode === 'legacy') { return false; } if (state.mode === 'poison' || state.root !== canonical || state.releaseId !== plan.releaseId) { throw conflict(); } return state.promise; }
     if (existingResources()) { throw conflict(); } if (legacyPresent()) { reserveLegacyViewerAssets(); return false; }
     state = {mode: 'loading', promise: null}; Object.defineProperties(state, {root: {value: canonical}, releaseId: {value: plan.releaseId}}); install(state);
@@ -191,8 +268,8 @@ export async function activateOptimizedViewerAssets(root: string, nonce: string 
                         const alias = aliases[name];
                         if (alias && shared.has(alias)) { await shared.load(alias); }
                         else if (resolveNamespace(value.NameSpace) == null) {
-                            const pinned = widgets.resolveRuntimeScript(name, scriptBase), entry = selected.runtimeFamilies.files[name];
-                            if (!pinned || pinned.url !== new URL(entry.file, selectiveBase).href || pinned.integrity !== sri(entry.sha256) || pinned.crossOrigin !== 'anonymous') { throw conflict(); }
+                            const pinned = widgets.resolveRuntimeScript(name, scriptBase), entry = own(selected.runtimeFamilies.files, name) ? selected.runtimeFamilies.files[name] : null;
+                            if (!entry || !pinned || pinned.url !== new URL(entry.file, selectiveBase).href || pinned.integrity !== sri(entry.sha256) || pinned.crossOrigin !== 'anonymous') { throw conflict(); }
                             await resource(entry, selectiveBase);
                         }
                         if (typeof resolveNamespace(value.NameSpace) !== 'function') { throw Error('Viewer runtime constructor missing; clean reload required'); }

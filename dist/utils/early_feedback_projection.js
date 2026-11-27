@@ -10,10 +10,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.prefetchEarlyFeedbackProjection = prefetchEarlyFeedbackProjection;
-function prefetchEarlyFeedbackProjection(owner, path, serviceUrl, tenantUrl, site, token, hasAPIKey) {
+exports.earlyLayoutWidgetTypes = earlyLayoutWidgetTypes;
+// isPublic: an anonymous public dashboard. The request carries no Authorization; the designer service validates
+// the dashboard as public (IsPublic header) and bi-api returns its layout only when the item is marked public.
+function prefetchEarlyFeedbackProjection(owner, path, serviceUrl, tenantUrl, site, token, hasAPIKey, isPublic = false) {
     if (!owner || !owner.isConnected || typeof fetch !== 'function' || typeof AbortController !== 'function' ||
         !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/(0|[1-9][0-9]{0,8})$/i.test(path) ||
-        typeof token !== 'string' || !token || /[\r\n]/.test(token) || !/^[a-z0-9_-]{1,128}$/i.test(site))
+        (isPublic ? token !== null : (typeof token !== 'string' || !token || /[\r\n]/.test(token))) || !/^[a-z0-9_-]{1,128}$/i.test(site))
         return null;
     let endpoint, tenant;
     try {
@@ -37,8 +40,7 @@ function prefetchEarlyFeedbackProjection(owner, path, serviceUrl, tenantUrl, sit
     const promise = (() => __awaiter(this, void 0, void 0, function* () {
         try {
             const response = yield fetch(endpoint.href, { method: 'POST', credentials: 'omit', redirect: 'error', cache: 'no-store', signal: controller.signal,
-                headers: { 'Content-Type': 'application/json; charset=utf-8', Authorization: token, DashboardPath: path,
-                    TenantURL: tenant.href, siteidentifier: site, hasAPIKey: String(hasAPIKey), isembed: 'true', IsPublic: 'false', Mode: 'view' },
+                headers: Object.assign(Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, (isPublic ? {} : { Authorization: token })), { DashboardPath: path, TenantURL: tenant.href, siteidentifier: site, hasAPIKey: String(hasAPIKey), isembed: 'true', IsPublic: isPublic ? 'true' : 'false', Mode: 'view' }),
                 body: JSON.stringify({ dashboardId: parts[0].toLowerCase(), version: Number(parts[1]) }) });
             // An explicit no-layout outcome is a completed optional request, not a
             // transport failure. Consume that result once and keep canonical Open;
@@ -90,11 +92,24 @@ function prefetchEarlyFeedbackProjection(owner, path, serviceUrl, tenantUrl, sit
             }
         }
     }))();
-    return { owner, path, serviceUrl: serviceUrl.trim().replace(/\/?$/, '/'), tenantUrl, siteIdentifier: site, authorizationToken: token, promise,
+    return { owner, path, serviceUrl: serviceUrl.trim().replace(/\/?$/, '/'), tenantUrl, siteIdentifier: site, authorizationToken: token, isPublic, promise,
         claim: () => { if (claimed || cancelled || state === 'failed')
             return false; claimed = true; return true; },
         isCancelled: () => cancelled,
         abort: () => { cancelled = true; clearTimeout(timer); if (!bodyComplete) {
             controller.abort();
         } } };
+}
+// Native widget types named by an early layout projection: every laid-out widget plus the types a
+// Tabbed outer coverage omitted. Null when the projection carries no widget list (layout unknown).
+function earlyLayoutWidgetTypes(projection) {
+    if (!projection || typeof projection !== 'object' || !Array.isArray(projection.widgets)) {
+        return null;
+    }
+    const types = projection.widgets.map((widget) => widget && widget.nativeType);
+    const omitted = projection.coverage && projection.coverage.omittedTypes;
+    if (Array.isArray(omitted)) {
+        types.push(...omitted);
+    }
+    return types.filter((type, index) => types.indexOf(type) === index);
 }
