@@ -42,14 +42,7 @@ Please refer to the `Bold BI` Product Release Notes on this [Release History](ht
 
 ### Improvement
 
-* `#857536` - `Dashboard Comments in SDK Embedding` - Added dashboard comment support in embedded dashboards.
-* `#881732` - `Loading Screen Logo Customization in SDK Embedding` - Added support for customizing the loading screen logo in embedded dashboards.
-
-### Bug
-
-* `#880041` - Fixed an issue where dashboard header titles were truncated in multi-tabbed dashboards embedded using SDK-based embedding.
-
-
+* Added native Public and Specific Group visibility controls for Server dashboard/widget comments and dashboard comments in JavaScript-based embedding.
 
 ## License Information
 

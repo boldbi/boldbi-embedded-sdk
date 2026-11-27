@@ -149,14 +149,19 @@ export declare class BoldBI {
     loadMultipleWidget: boolean;
     constructor(config?: Partial<typeof DefaultConstructor>);
     private _loadAIAssistant;
+    private editDesignerWait;
     private optimizedAssetAttempted;
     private optimizedAssetPending;
     private optimizedAssetsActive;
+    private fullBundleOverSelective;
     private optimizedAssetGeneration;
     private optimizedWrapperWait;
     private _canOptimizeViewerAssets;
+    private _bindPublicEarlyFeedback;
+    private _bindEarlyFeedbackVersion;
     private _cancelOptimizedAssetWait;
     private _startOptimizedViewerBootstrap;
+    private _earlyLayoutWidgetTypes;
     private dependencyWait;
     private dependencyWaitGeneration;
     private pendingDependencyScripts;
@@ -166,11 +171,18 @@ export declare class BoldBI {
     private _cancelDependencyWait;
     private _trackDependencyScript;
     private _areViewerDependenciesReady;
+    private _isFullBundleReady;
     private earlyFeedbackProjection;
     private earlyFeedbackAssets;
     private earlyFeedbackDisplay;
     private earlyFeedbackLoaderDeferral;
     private _canPrefetchSuppliedEarlyFeedback;
+    private earlyAuthorization;
+    private _canPrefetchEarlyAuthorization;
+    private _cancelEarlyAuthorization;
+    private _startEarlyAuthorization;
+    private _authorizationHeadersKey;
+    private _useEarlyAuthorization;
     private _prefetchSuppliedEarlyFeedback;
     private _loadDashboard;
     private _loadMultitabDashboard;
@@ -381,6 +393,7 @@ export declare class BoldBI {
      * @param {string} containerId - This should be the container id where you want to embed the dashboard
      */
     updateWidgetFilters(containerId: string): any;
+    _normalizeAuthorizationServer(): void;
     _initializeEmbedOptions(options: {
         embedContainerId?: string;
         serverUrl?: string;
@@ -621,6 +634,10 @@ export declare class BoldBI {
     _onBoldBIBeforeNavigateToDashboard(arg: object): any;
     _onBoldBIAuthorizionComplete(arg: object): any;
     _showLoader(container?: any): any;
+    _authorizationRequest(dashboardId?: string): {
+        query: string;
+        data: any;
+    };
     _getAuthorizationToken: any;
     _xhrRequestHelper(type: string, url: string, data: object, headers: object, callBackFn: Function): any;
     _emptyHtml(elementID: string): any;

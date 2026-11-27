@@ -6,17 +6,21 @@ export interface EarlyFeedbackProjection {
     authorizationToken: string;
     tenantUrl: string;
     siteIdentifier: string;
+    // Anonymous public prefetch: path and token are bound to the designer's values once the public authorization is known.
+    isPublic?: boolean;
     claim(): boolean;
     isCancelled(): boolean;
     promise: Promise<any>;
     abort(): void;
 }
 
+// isPublic: an anonymous public dashboard. The request carries no Authorization; the designer service validates
+// the dashboard as public (IsPublic header) and bi-api returns its layout only when the item is marked public.
 export function prefetchEarlyFeedbackProjection(owner: HTMLElement, path: string, serviceUrl: string,
-    tenantUrl: string, site: string, token: string, hasAPIKey: boolean): EarlyFeedbackProjection | null {
+    tenantUrl: string, site: string, token: string, hasAPIKey: boolean, isPublic: boolean = false): EarlyFeedbackProjection | null {
     if (!owner || !owner.isConnected || typeof fetch !== 'function' || typeof AbortController !== 'function' ||
         !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/(0|[1-9][0-9]{0,8})$/i.test(path) ||
-        typeof token !== 'string' || !token || /[\r\n]/.test(token) || !/^[a-z0-9_-]{1,128}$/i.test(site)) return null;
+        (isPublic ? token !== null : (typeof token !== 'string' || !token || /[\r\n]/.test(token))) || !/^[a-z0-9_-]{1,128}$/i.test(site)) return null;
     let endpoint: URL, tenant: URL;
     try {
         endpoint = new URL(serviceUrl.replace(/\/$/, '') + '/v1.0/design/earlylayout/'); tenant = new URL(tenantUrl);
@@ -34,8 +38,8 @@ export function prefetchEarlyFeedbackProjection(owner: HTMLElement, path: string
     const promise = (async () => {
         try {
             const response = await fetch(endpoint.href, {method: 'POST', credentials: 'omit', redirect: 'error', cache: 'no-store', signal: controller.signal,
-                headers: {'Content-Type': 'application/json; charset=utf-8', Authorization: token, DashboardPath: path,
-                    TenantURL: tenant.href, siteidentifier: site, hasAPIKey: String(hasAPIKey), isembed: 'true', IsPublic: 'false', Mode: 'view'},
+                headers: {'Content-Type': 'application/json; charset=utf-8', ...(isPublic ? {} : {Authorization: token}), DashboardPath: path,
+                    TenantURL: tenant.href, siteidentifier: site, hasAPIKey: String(hasAPIKey), isembed: 'true', IsPublic: isPublic ? 'true' : 'false', Mode: 'view'},
                 body: JSON.stringify({dashboardId: parts[0].toLowerCase(), version: Number(parts[1])})});
             // An explicit no-layout outcome is a completed optional request, not a
             // transport failure. Consume that result once and keep canonical Open;
@@ -59,8 +63,18 @@ export function prefetchEarlyFeedbackProjection(owner: HTMLElement, path: string
         } catch (_) { return null; }
         finally {if (state === 'pending') state = 'failed';clearTimeout(timer); if (!bodyComplete) { controller.abort(); }}
     })();
-    return {owner, path, serviceUrl: serviceUrl.trim().replace(/\/?$/, '/'), tenantUrl, siteIdentifier: site, authorizationToken: token, promise,
+    return {owner, path, serviceUrl: serviceUrl.trim().replace(/\/?$/, '/'), tenantUrl, siteIdentifier: site, authorizationToken: token, isPublic, promise,
         claim: () => {if (claimed || cancelled || state === 'failed') return false; claimed = true; return true;},
         isCancelled: () => cancelled,
         abort: () => {cancelled = true;clearTimeout(timer);if (!bodyComplete) {controller.abort();}}};
+}
+
+// Native widget types named by an early layout projection: every laid-out widget plus the types a
+// Tabbed outer coverage omitted. Null when the projection carries no widget list (layout unknown).
+export function earlyLayoutWidgetTypes(projection: any): string[] | null {
+    if (!projection || typeof projection !== 'object' || !Array.isArray(projection.widgets)) { return null; }
+    const types: any[] = projection.widgets.map((widget: any) => widget && widget.nativeType);
+    const omitted = projection.coverage && projection.coverage.omittedTypes;
+    if (Array.isArray(omitted)) { types.push(...omitted); }
+    return types.filter((type, index) => types.indexOf(type) === index);
 }
